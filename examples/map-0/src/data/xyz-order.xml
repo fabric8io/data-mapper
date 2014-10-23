@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XYZOrder>
+    <order-id>ORDER1</order-id>
+    <priority>HIGH</priority>
+    <cust-id>ACME-123</cust-id>
+    <line-items amount="1000" cost="2.25">
+        <item-id>PICKLE</item-id>
+    </line-items>
+</XYZOrder>

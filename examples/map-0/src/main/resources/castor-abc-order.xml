@@ -1,0 +1,16 @@
+<mapping>
+
+    <class name="org.example.order.abc.ABCOrder">
+        <field name="header"/>
+        <field name="orderItems" type="org.example.order.abc.OrderItem" collection="arraylist">
+            <bind-xml name="item" location="items"/>
+        </field>
+    </class>
+    
+    <class name="org.example.order.abc.OrderItem">
+        <field name="id"><bind-xml node="attribute"/></field>
+        <field name="price"><bind-xml node="element"/></field>
+        <field name="quantity"><bind-xml node="element"/></field>
+    </class>
+
+</mapping>
