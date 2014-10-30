@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "title": "XYZOrder"
+  "title": "XYZOrder",
   "properties": {
     "custId": {
       "type": "string"
@@ -12,19 +12,22 @@
       "type": "string"
     },
     "lineItems": {
-        "type": "object",
-        "title": "LineItem"
-        "properties": {
-            "itemId": {
-                "type": "number"
-            },
-            "amount": {
-                "type": "integer"
-            },
-            "cost": {
-                "type": "double"
+        "type": "array",
+        "items": {
+            "type": "object",
+            "title": "LineItem",
+            "properties": {
+                "itemId": {
+                    "type": "number"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "cost": {
+                    "type": "double"
+                }
             }
-        }
+       }
     }
   }
 }
