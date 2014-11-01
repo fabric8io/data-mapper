@@ -18,13 +18,13 @@
             "title": "LineItem",
             "properties": {
                 "itemId": {
-                    "type": "number"
+                    "type": "string"
                 },
                 "amount": {
                     "type": "integer"
                 },
                 "cost": {
-                    "type": "double"
+                    "type": "number"
                 }
             }
        }
