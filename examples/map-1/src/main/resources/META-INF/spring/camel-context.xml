@@ -28,7 +28,7 @@
         </unmarshal>
         <convertBodyTo type="org.example.order.xyz.XYZOrder"/>
         <marshal ref="json"/>
-        <to uri="file:target/messages?fileName=abc-order.json"/>
+        <to uri="file:target/messages?fileName=xyz-order.json"/>
     </route>
 </camelContext>
 
