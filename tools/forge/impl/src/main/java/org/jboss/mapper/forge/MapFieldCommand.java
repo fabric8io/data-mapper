@@ -13,16 +13,21 @@
  */
 package org.jboss.mapper.forge;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.inject.Inject;
 
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.mapper.dozer.config.Field;
+import org.jboss.mapper.dozer.config.Mapping;
+import org.jboss.mapper.dozer.config.Mappings;
 
 public class MapFieldCommand extends AbstractMapperCommand  {
 	
@@ -43,11 +48,13 @@ public class MapFieldCommand extends AbstractMapperCommand  {
 		Project project = getSelectedProject(builder.getUIContext());
 		Model sourceModel = getMapperContext(project).getSourceModel();
 		if (sourceModel != null) {
-			sourceField.setValueChoices(sourceModel.listFields());
+			sourceField.setValueChoices(getEligibleSourceFields(
+					getMapperContext(project), sourceModel));
 		}
 		Model targetModel = getMapperContext(project).getTargetModel();
 		if (targetModel != null) {
-			targetField.setValueChoices(targetModel.listFields());
+			targetField.setValueChoices(getEligibleTargetFields(
+					getMapperContext(project), targetModel));
 		}
 		builder.add(sourceField).add(targetField);
 	}
@@ -86,4 +93,40 @@ public class MapFieldCommand extends AbstractMapperCommand  {
 			return getModel(model.get(nextField), path.substring(sepIdx + 1));
 		}
 	}
+	
+	List<String> getEligibleSourceFields(MapperContext context, Model model) {
+		List<String> mappedFields = getMappedFields(
+				context.getConfig().getMappings(), FieldType.FROM);
+		List<String> eligibleFields = model.listFields();
+		for (String field : mappedFields) {
+			eligibleFields.remove(field);
+		}
+		return eligibleFields;
+	}
+	
+	List<String> getEligibleTargetFields(MapperContext context, Model model) {
+		List<String> mappedFields = getMappedFields(
+				context.getConfig().getMappings(), FieldType.TO);
+		List<String> eligibleFields = model.listFields();
+		for (String field : mappedFields) {
+			eligibleFields.remove(field);
+		}
+		return eligibleFields;
+	}
+	
+	List<String> getMappedFields(Mappings mappings, FieldType type) {
+		List<String> mappedFields = new ArrayList<String>();
+		for (Mapping map : mappings.getMapping()) {
+			for (Object f :  map.getFieldOrFieldExclude()) {
+				if (f instanceof Field) {
+					Field field = (Field)f;
+					mappedFields.add(type == FieldType.FROM 
+							? field.getA().getContent() : field.getB().getContent());
+				}
+			}
+		}
+		return mappedFields;
+	}
+	
+	private enum FieldType {TO, FROM};
 }
