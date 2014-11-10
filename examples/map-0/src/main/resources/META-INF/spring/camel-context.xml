@@ -6,30 +6,11 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
-   <!-- Dozer configuration -->
-   <bean id="dozerConverterLoader" class="org.apache.camel.converter.dozer.DozerTypeConverterLoader" />
-   <bean id="mapper" class="org.dozer.DozerBeanMapper">
-      <property name="mappingFiles">
-         <list>
-            <value>dozerBeanMapping.xml</value>
-         </list>
-      </property>
-   </bean>
-
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <dataFormats>
-        <json library="Jackson" id="json"/>
-    </dataFormats>
     <route>
         <from uri="file:src/data?fileName=abc-order.xml&amp;noop=true"/>
-        <unmarshal>
-            <jaxb contextPath="org.example.order.abc"/>
-        </unmarshal>
-        <convertBodyTo type="org.example.order.xyz.XYZOrder"/>
-        <marshal ref="json"/>
         <to uri="file:target/messages?fileName=xyz-order.json"/>
     </route>
-</camelContext>
-
+   </camelContext>
 </beans>

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <mappings xmlns="http://dozer.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
     <mapping>
-        <class-a>org.example.order.abc.ABCOrder</class-a>
-        <class-b>org.example.order.xyz.XYZOrder</class-b>
+        <class-a>xml.ABCOrder</class-a>
+        <class-b>json.XYZOrder</class-b>
         <field>
-            <a>header.orderNum</a>
-            <b>orderId</b>
+            <a>header.customerNum</a>
+            <b>custId</b>
         </field>
         <field>
             <a>header.status</a>
             <b>priority</b>
         </field>
         <field>
-            <a>header.customerNum</a>
-            <b>custId</b>
+            <a>header.orderNum</a>
+            <b>orderId</b>
         </field>
         <field>
             <a>orderItems.item</a>
@@ -21,19 +21,27 @@
         </field>
     </mapping>
     <mapping>
-        <class-a>org.example.order.abc.ABCOrder$OrderItems$Item</class-a>
-        <class-b>org.example.order.xyz.LineItem</class-b>
+        <class-a>xml.ABCOrder$OrderItems$Item</class-a>
+        <class-b>json.LineItem</class-b>
         <field>
-            <a>quantity</a>
-            <b>amount</b>
-        </field>
-        <field>
-            <a>price</a>
-            <b>cost</b>
+            <a>id</a>
+            <b>itemId</b>
         </field>
         <field>
             <a>id</a>
             <b>itemId</b>
+        </field>
+        <field>
+            <a>id</a>
+            <b>itemId</b>
+        </field>
+        <field>
+            <a>price</a>
+            <b>amount</b>
+        </field>
+        <field>
+            <a>quantity</a>
+            <b>amount</b>
         </field>
     </mapping>
 </mappings>

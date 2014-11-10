@@ -1,5 +1,5 @@
 
-package org.example.order.xyz;
+package json;
 
 import javax.annotation.Generated;
 import com.fasterxml.jackson.annotation.JsonInclude;

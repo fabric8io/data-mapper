@@ -1,5 +1,5 @@
 
-package org.example.order.xyz;
+package json;
 
 import java.util.ArrayList;
 import java.util.List;
