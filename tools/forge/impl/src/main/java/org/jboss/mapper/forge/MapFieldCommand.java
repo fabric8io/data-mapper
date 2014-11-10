@@ -29,6 +29,7 @@ import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
 import org.jboss.mapper.dozer.config.Mappings;
 
+
 public class MapFieldCommand extends AbstractMapperCommand  {
 	
 	public static final String NAME = "map-field";
@@ -48,13 +49,13 @@ public class MapFieldCommand extends AbstractMapperCommand  {
 		Project project = getSelectedProject(builder.getUIContext());
 		Model sourceModel = getMapperContext(project).getSourceModel();
 		if (sourceModel != null) {
-			sourceField.setValueChoices(getEligibleSourceFields(
-					getMapperContext(project), sourceModel));
+			sourceField.setValueChoices(getEligibleFields(
+					getMapperContext(project), sourceModel, FieldType.FROM));
 		}
 		Model targetModel = getMapperContext(project).getTargetModel();
 		if (targetModel != null) {
-			targetField.setValueChoices(getEligibleTargetFields(
-					getMapperContext(project), targetModel));
+			targetField.setValueChoices(getEligibleFields(
+					getMapperContext(project), targetModel, FieldType.TO));
 		}
 		builder.add(sourceField).add(targetField);
 	}
@@ -94,22 +95,22 @@ public class MapFieldCommand extends AbstractMapperCommand  {
 		}
 	}
 	
-	List<String> getEligibleSourceFields(MapperContext context, Model model) {
+	List<String> getEligibleFields(MapperContext context, Model model, FieldType fieldType) {
 		List<String> mappedFields = getMappedFields(
-				context.getConfig().getMappings(), FieldType.FROM);
+				context.getConfig().getMappings(), fieldType);
 		List<String> eligibleFields = model.listFields();
+		
 		for (String field : mappedFields) {
-			eligibleFields.remove(field);
-		}
-		return eligibleFields;
-	}
-	
-	List<String> getEligibleTargetFields(MapperContext context, Model model) {
-		List<String> mappedFields = getMappedFields(
-				context.getConfig().getMappings(), FieldType.TO);
-		List<String> eligibleFields = model.listFields();
-		for (String field : mappedFields) {
-			eligibleFields.remove(field);
+			if (!eligibleFields.remove(field)) {
+				// Crappy fallback logic in case the model field name is
+				// qualified by a parent which has already been mapped
+				for (String fullName : eligibleFields) {
+					if (fullName.endsWith("." + field)) {
+						eligibleFields.remove(fullName);
+						break;
+					}
+				}
+			}
 		}
 		return eligibleFields;
 	}
