@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
@@ -38,6 +39,10 @@ public class CreateMappingCommand extends AbstractMapperCommand  {
 
 	@Override
 	public void initializeUI(UIBuilder builder) throws Exception {
+		UICompleter<String> modelTypes = getModelCompleter(
+				getSelectedProject(builder.getUIContext()));
+		sourceModel.setCompleter(modelTypes);
+		targetModel.setCompleter(modelTypes);
 		builder.add(sourceModel).add(targetModel);
 	}
 

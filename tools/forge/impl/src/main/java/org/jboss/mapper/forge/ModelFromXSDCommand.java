@@ -67,6 +67,8 @@ public class ModelFromXSDCommand extends AbstractMapperCommand {
 		JCodeModel jcm = s2.generateCode(null, null);
 		jcm.build(new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName()));
 		
+        addGeneratedTypes(project, jcm);
+		
 		return Results.success("Model classes created for " + schemaPath.getValue());
 	}
 

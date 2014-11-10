@@ -23,6 +23,7 @@ public class ModelBuilder {
 	public static Model fromJavaClass(Class<?> javaClass) {
 		Model model = new Model(javaClass.getSimpleName(), javaClass.getName());
 		addFieldsToModel(javaClass.getDeclaredFields(), model);
+		model.setModelClass(javaClass);
 		return model;
 	}
 	

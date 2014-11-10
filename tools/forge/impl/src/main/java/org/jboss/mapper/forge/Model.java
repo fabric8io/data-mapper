@@ -21,6 +21,7 @@ import java.util.List;
 
 public class Model {
 
+	private Class<?> modelClass;
 	private String name;
 	private String type;
 	private Model parent;
@@ -100,4 +101,11 @@ public class Model {
 		return sb.toString();
 	}
 
+	public Class<?> getModelClass() {
+		return modelClass;
+	}
+
+	public void setModelClass(Class<?> modelClass) {
+		this.modelClass = modelClass;
+	}
 }

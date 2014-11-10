@@ -16,6 +16,9 @@ package org.jboss.mapper.forge;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -26,8 +29,14 @@ import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.DirectoryResource;
 import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIContext;
+import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JPackage;
 
 public abstract class AbstractMapperCommand extends AbstractProjectCommand  {
 
@@ -111,5 +120,27 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand  {
 	
 	public abstract String getDescription();
 	
+
+	protected void addGeneratedTypes(Project project, JCodeModel codeModel) {
+		List<String> types = getMapperContext(project).getGeneratedTypes();
+		Iterator<JPackage> ip = codeModel.packages();
+        while (ip.hasNext()) {
+        	Iterator<JDefinedClass> ic = ip.next().classes();
+        	while (ic.hasNext()) {
+        		types.add(ic.next().fullName());
+        	}
+        }
+	}
 	
+	protected UICompleter<String> getModelCompleter(Project project) {
+		final List<String> options = new LinkedList<String>();
+		options.addAll(getMapperContext(project).getGeneratedTypes());
+		return new UICompleter<String>() {
+			@Override
+			public Iterable<String> getCompletionProposals(UIContext context,
+					InputComponent<?, String> input, String value) {
+				return options;
+			}
+		};
+	}
 }

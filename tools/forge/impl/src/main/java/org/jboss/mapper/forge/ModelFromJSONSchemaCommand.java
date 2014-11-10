@@ -78,7 +78,9 @@ public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
         
         mapper.generate(codeModel, className.getValue(), packageName.getValue(), jsonSchemaUrl);
         codeModel.build(new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName()));
-		
+        
+        addGeneratedTypes(project, codeModel);
+        
 		return Results.success("Model classes created for " + schemaPath.getValue());
 	}
 

@@ -13,12 +13,23 @@
  */
 package org.jboss.mapper.forge;
 
+import java.util.LinkedList;
+import java.util.List;
+
 
 public class MapperContext {
-	
+
+	public static final String XML_TYPE = "XML";
+	public static final String JAVA_TYPE = "Java";
+	public static final String JSON_TYPE = "JSON";
+
 	private Model sourceModel;
 	private Model targetModel;
 	private ConfigBuilder config;
+	private List<String> generatedTypes = new LinkedList<String>();
+	private String sourceType;
+	private String targetType;
+	private String transformId;
 	
 	public Model getSourceModel() {
 		return sourceModel;
@@ -44,4 +55,31 @@ public class MapperContext {
 		this.config = config;
 	}
 	
+	public List<String> getGeneratedTypes() {
+		return generatedTypes;
+	}
+
+	public String getSourceType() {
+		return sourceType;
+	}
+
+	public void setSourceType(String sourceType) {
+		this.sourceType = sourceType;
+	}
+
+	public String getTargetType() {
+		return targetType;
+	}
+
+	public void setTargetType(String targetType) {
+		this.targetType = targetType;
+	}
+
+	public String getTransformId() {
+		return transformId;
+	}
+
+	public void setTransformId(String transformId) {
+		this.transformId = transformId;
+	}
 }
