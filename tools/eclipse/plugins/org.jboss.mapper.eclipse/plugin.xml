@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <wizard
+            class="org.jboss.mapper.eclipse.DataMapperWizard"
+            id="org.jboss.datamapper.eclipse.DataMapperWizard"
+            name="Data Mapping">
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            base-type="org.eclipse.core.runtime.xml"
+            describer="org.jboss.mapper.eclipse.DozerConfigContentTypeDescriber"
+            file-extensions="xml"
+            id="org.jboss.mapper.eclipse.dozerconfigcontenttype"
+            name="Dozer Configuration"
+            priority="normal">
+      </content-type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="org.jboss.mapper.eclipse.DataMapperEditor"
+            contributorClass="org.jboss.mapper.eclipse.DataMapperEditorContributor"
+            default="false"
+            extensions="xml"
+            id="org.jboss.mapper.eclipse.datamappereditor"
+            name="Data Mapping">
+         <contentTypeBinding
+               contentTypeId="org.jboss.mapper.eclipse.dozerconfigcontenttype">
+         </contentTypeBinding>
+      </editor>
+   </extension>
+
+</plugin>
