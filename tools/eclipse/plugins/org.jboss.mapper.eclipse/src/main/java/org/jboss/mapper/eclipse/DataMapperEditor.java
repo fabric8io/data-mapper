@@ -21,7 +21,7 @@ public class DataMapperEditor extends MultiPageEditorPart {
     @Override
     protected void createPages() {
         try {
-            addPage( new DataMapperMappingPage(), getEditorInput() );
+            addPage( new DataMapperEditorMappingPage(), getEditorInput() );
         } catch ( final PartInitException e ) {
             e.printStackTrace();
         }

@@ -4,35 +4,33 @@
  */
 package org.jboss.mapper.eclipse;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
+import org.eclipse.ui.part.FileEditorInput;
+import org.jboss.mapper.forge.ConfigBuilder;
 
 /**
  * 
  */
-public class DataMapperMappingPage extends EditorPart {
+public class DataMapperEditorMappingPage extends EditorPart {
+    
+    ConfigBuilder configBuilder;
     
     /**
      * {@inheritDoc}
      * 
      * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
      */
+    @SuppressWarnings( "unused" )
     @Override
     public void createPartControl( final Composite parent ) {
-        new Mapper( parent );
-        // jpav: remove
-        // try {
-        // final Class< ? > abcOrderClass = ( ( FileEditorInput ) getEditorInput()
-        // ).getFile().getClass().getClassLoader().loadClass( "org.example.order.abc.ABCOrder" );
-        // // jpav: remove
-        // System.out.println( abcOrderClass );
-        // } catch ( final ClassNotFoundException e ) {
-        // e.printStackTrace();
-        // }
+        new DataMapper( parent, new File( ( ( FileEditorInput ) getEditorInput() ).getURI() ) );
     }
     
     /**

@@ -6,7 +6,7 @@
       <wizard
             class="org.jboss.mapper.eclipse.DataMapperWizard"
             id="org.jboss.datamapper.eclipse.DataMapperWizard"
-            name="Data Mapping">
+            name="%wizard.name">
       </wizard>
    </extension>
    <extension
@@ -16,7 +16,7 @@
             describer="org.jboss.mapper.eclipse.DozerConfigContentTypeDescriber"
             file-extensions="xml"
             id="org.jboss.mapper.eclipse.dozerconfigcontenttype"
-            name="Dozer Configuration"
+            name="%content-type.name"
             priority="normal">
       </content-type>
    </extension>
@@ -28,7 +28,7 @@
             default="false"
             extensions="xml"
             id="org.jboss.mapper.eclipse.datamappereditor"
-            name="Data Mapping">
+            name="%editor.name">
          <contentTypeBinding
                contentTypeId="org.jboss.mapper.eclipse.dozerconfigcontenttype">
          </contentTypeBinding>

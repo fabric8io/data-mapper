@@ -1,13 +1,12 @@
 package org.jboss.mapper.eclipse;
 
-import java.io.ByteArrayInputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.File;
+import java.io.FileOutputStream;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -32,6 +31,7 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.dialogs.ResourceSelectionDialog;
+import org.jboss.mapper.forge.ConfigBuilder;
 
 /**
  * 
@@ -192,20 +192,13 @@ public class DataMapperWizard extends Wizard implements INewWizard {
      */
     @Override
     public boolean performFinish() {
-        try {
-            // TODO temporary until I can figure out how to pull in data-mapper-impl
-            final String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                   "<mappings xmlns=\"http://dozer.sourceforge.net\"\n" +
-                                   "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                   "          xsi:schemaLocation=\"http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd\" >\n" +
-                                   "    <mapping>\n" +
-                                   "        <class-a>org.example.order.abc.ABCOrder</class-a>\n" +
-                                   "        <class-b>org.example.order.xyz.XYZOrder</class-b>\n" +
-                                   "    </mapping>\n" +
-                                   "</mappings>\n";
-            configFile.create( new ByteArrayInputStream( content.getBytes( "UTF-8" ) ), IResource.NONE, null );
-        } catch ( final CoreException | UnsupportedEncodingException e ) {
+        final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
+        configBuilder.addClassMapping( "xml.ABCOrder", "json.XYZOrder" );
+        try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
+            configBuilder.saveConfig( stream );
+        } catch ( final Exception e ) {
             e.printStackTrace();
+            return false;
         }
         return true;
     }
