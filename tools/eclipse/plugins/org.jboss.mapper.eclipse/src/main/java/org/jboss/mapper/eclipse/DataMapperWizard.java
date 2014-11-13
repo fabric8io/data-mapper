@@ -2,15 +2,11 @@ package org.jboss.mapper.eclipse;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -20,7 +16,6 @@ import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardPage;
@@ -34,14 +29,12 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.forge.ConfigBuilder;
 
@@ -54,7 +47,6 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     
     IProject project;
     IFile configFile;
-    IFile sourceModel, targetModel;
     Text sourceModelText, targetModelText;
     
     /**
@@ -132,7 +124,8 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        sourceModel = selectModel( "Source", sourceModelText );
+                        final String name = DataBrowser.selectModel( getShell(), project, null, "Source" );
+                        if ( name != null ) sourceModelText.setText( name );
                     }
                 } );
                 label = new Label( page, SWT.NONE );
@@ -147,7 +140,8 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        targetModel = selectModel( "Target", targetModelText );
+                        final String name = DataBrowser.selectModel( getShell(), project, null, "Target" );
+                        if ( name != null ) targetModelText.setText( name );
                     }
                 } );
                 page.addPaintListener( new PaintListener() {
@@ -160,49 +154,6 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     }
                 } );
                 validatePage();
-            }
-            
-            private void findClasses( final IFolder folder,
-                                      final List< IResource > classes ) throws CoreException {
-                for ( final IResource resource : folder.members() ) {
-                    if ( resource instanceof IFolder ) findClasses( ( IFolder ) resource, classes );
-                    else if ( resource.getName().endsWith( ".class" ) ) classes.add( resource );
-                }
-            }
-            
-            IFile selectModel( final String modelType,
-                               final Text text ) {
-                final IFolder classesFolder = project.getFolder( "target/classes" );
-                final List< IResource > classes = new ArrayList<>();
-                try {
-                    findClasses( classesFolder, classes );
-                    final ResourceListSelectionDialog dlg =
-                        new ResourceListSelectionDialog( getShell(), classes.toArray( new IResource[ classes.size() ] ) ) {
-                            
-                            @Override
-                            protected Control createDialogArea( final Composite parent ) {
-                                final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
-                                for ( final Control child : dlgArea.getChildren() ) {
-                                    if ( child instanceof Text ) {
-                                        ( ( Text ) child ).setText( "*" );
-                                        break;
-                                    }
-                                }
-                                return dlgArea;
-                            }
-                        };
-                    dlg.setTitle( "Select " + modelType + " Model" );
-                    if ( dlg.open() == Window.OK ) {
-                        final IFile file = ( IFile ) dlg.getResult()[ 0 ];
-                        final String name =
-                            file.getFullPath().makeRelativeTo( classesFolder.getFullPath() ).toString().replace( '/', '.' );
-                        text.setText( name.substring( 0, name.length() - ".class".length() ) );
-                        return file;
-                    }
-                } catch ( final CoreException e ) {
-                    Activator.error( e );
-                }
-                return null;
             }
             
             void validatePage() {
@@ -244,8 +195,8 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     public boolean performFinish() {
         if ( configFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) ) return false;
         final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
-        if ( sourceModel != null && targetModel != null )
-            configBuilder.addClassMapping( sourceModelText.getText(), targetModelText.getText() );
+        if ( !sourceModelText.getText().trim().isEmpty() && !targetModelText.getText().trim().isEmpty() )
+            configBuilder.addClassMapping( sourceModelText.getText().trim(), targetModelText.getText().trim() );
         try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
             configBuilder.saveConfig( stream );
             project.refreshLocal( IProject.DEPTH_INFINITE, null );
@@ -255,7 +206,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
             PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( configFile ),
                                                                                              desc.getId() );
         } catch ( final Exception e ) {
-            Activator.error( e );
+            Activator.error( getShell(), e );
             return false;
         }
         return true;

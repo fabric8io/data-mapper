@@ -2,6 +2,7 @@ package org.jboss.mapper.eclipse;
 
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -14,12 +15,14 @@ public class Activator extends AbstractUIPlugin {
     private static Activator plugin;
     
     /**
+     * @param shell
      * @param e
      */
-    public static void error( final Throwable e ) {
+    public static void error( final Shell shell,
+                              final Throwable e ) {
         // jpav: remove
         System.out.println( e.getMessage() );
-        MessageDialog.openError( null, "Error", e.getMessage() );
+        MessageDialog.openError( shell, "Error", e.getMessage() );
         Activator.plugin().getLog().log( new Status( Status.ERROR,
                                                      Activator.plugin().getBundle().getSymbolicName(),
                                                      e.getMessage() == null ? e.getClass().getName() : e.getMessage() ) );

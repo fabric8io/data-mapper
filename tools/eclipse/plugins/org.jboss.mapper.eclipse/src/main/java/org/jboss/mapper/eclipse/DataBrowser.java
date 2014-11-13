@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -25,6 +26,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
@@ -34,9 +36,54 @@ class DataBrowser extends Composite {
     
     static final Field[] NO_FIELDS = new Field[ 0 ];
     
+    private static void findClasses( final IFolder folder,
+                                     final List< IResource > classes ) throws CoreException {
+        for ( final IResource resource : folder.members() ) {
+            if ( resource instanceof IFolder ) findClasses( ( IFolder ) resource, classes );
+            else if ( resource.getName().endsWith( ".class" ) ) classes.add( resource );
+        }
+    }
+    
+    static String selectModel( final Shell shell,
+                               final IProject project,
+                               final Model existingModel,
+                               final String modelType ) {
+        final IFolder classesFolder = project.getFolder( "target/classes" );
+        final List< IResource > classes = new ArrayList<>();
+        try {
+            findClasses( classesFolder, classes );
+            final ResourceListSelectionDialog dlg =
+                new ResourceListSelectionDialog( shell, classes.toArray( new IResource[ classes.size() ] ) ) {
+                    
+                    @Override
+                    protected Control createDialogArea( final Composite parent ) {
+                        final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
+                        for ( final Control child : dlgArea.getChildren() ) {
+                            if ( child instanceof Text ) {
+                                ( ( Text ) child ).setText( existingModel == null ? "*" : existingModel.getName() );
+                                break;
+                            }
+                        }
+                        return dlgArea;
+                    }
+                };
+            dlg.setTitle( "Select " + modelType );
+            if ( dlg.open() == Window.OK ) {
+                final IFile file = ( IFile ) dlg.getResult()[ 0 ];
+                String name = file.getFullPath().makeRelativeTo( classesFolder.getFullPath() ).toString().replace( '/', '.' );
+                name = name.substring( 0, name.length() - ".class".length() );
+                return name;
+            }
+        } catch ( final Exception e ) {
+            Activator.error( shell, e );
+        }
+        return null;
+    }
+    
     Model model;
+    final Listener listener;
+    final Button modelButton;
     final TreeViewer viewer;
-    Button addButton;
     
     DataBrowser( final DataMapper mapper,
                  final String modelType,
@@ -44,63 +91,20 @@ class DataBrowser extends Composite {
                  final Listener listener ) {
         super( mapper, SWT.NONE );
         this.model = model;
+        this.listener = listener;
         setLayout( GridLayoutFactory.fillDefaults().numColumns( 2 ).create() );
         
         final Label label = new Label( this, SWT.NONE );
-        if ( model == null ) {
-            label.setText( modelType + ":" );
-            addButton = new Button( this, SWT.NONE );
-            addButton.setText( "Add" );
-            addButton.addSelectionListener( new SelectionAdapter() {
-                
-                private void findClasses( final IFolder folder,
-                                          final List< IResource > classes ) throws CoreException {
-                    for ( final IResource resource : folder.members() ) {
-                        if ( resource instanceof IFolder ) findClasses( ( IFolder ) resource, classes );
-                        else if ( resource.getName().endsWith( ".class" ) ) classes.add( resource );
-                    }
-                }
-                
-                @Override
-                public void widgetSelected( final SelectionEvent event ) {
-                    final IFolder classesFolder = mapper.configFile.getProject().getFolder( "target/classes" );
-                    final List< IResource > classes = new ArrayList<>();
-                    try {
-                        findClasses( classesFolder, classes );
-                        final ResourceListSelectionDialog dlg =
-                            new ResourceListSelectionDialog( getShell(), classes.toArray( new IResource[ classes.size() ] ) ) {
-                                
-                                @Override
-                                protected Control createDialogArea( final Composite parent ) {
-                                    final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
-                                    for ( final Control child : dlgArea.getChildren() ) {
-                                        if ( child instanceof Text ) {
-                                            ( ( Text ) child ).setText( "*" );
-                                            break;
-                                        }
-                                    }
-                                    return dlgArea;
-                                }
-                            };
-                        dlg.setTitle( "Select " + modelType );
-                        if ( dlg.open() == Window.OK ) {
-                            final IFile file = ( IFile ) dlg.getResult()[ 0 ];
-                            final String name =
-                                file.getFullPath().makeRelativeTo( classesFolder.getFullPath() ).toString().replace( '/', '.' );
-                            DataBrowser.this.model =
-                                listener.modelSelected( name.substring( 0, name.length() - ".class".length() ) );
-                            addButton.removeSelectionListener( this );
-                            addButton.dispose();
-                            label.setText( modelType + ": " + DataBrowser.this.model.getName() );
-                            viewer.setInput( DataBrowser.this.model );
-                            layout();
-                        }
-                    } catch ( final Exception e ) {
-                        Activator.error( e );
-                    }
-                }
-            } );
-        } else label.setText( modelType + ": " + model.getName() );
+        label.setText( modelType + ":" );
+        modelButton = new Button( this, SWT.NONE );
+        modelButton.setText( model == null ? "Add" : model.getName() );
+        modelButton.addSelectionListener( new SelectionAdapter() {
+            
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                selectModel( mapper.configFile.getProject(), modelType );
+            }
+        } );
         viewer = new TreeViewer( this );
         final TreeViewerColumn column = new TreeViewerColumn( viewer, SWT.NONE );
         final Tree tree = viewer.getTree();
@@ -158,6 +162,17 @@ class DataBrowser extends Composite {
             }
         } );
         viewer.setInput( model );
+    }
+    
+    void selectModel( final IProject project,
+                      final String modelType ) {
+        final String name = selectModel( getShell(), project, model, modelType );
+        if ( name == null ) return;
+        if ( name.equals( modelButton.getText() ) ) return;
+        model = listener.modelSelected( name );
+        modelButton.setText( model.getName() );
+        viewer.setInput( model );
+        layout();
     }
     
     static interface Listener {

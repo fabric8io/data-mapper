@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -47,6 +48,7 @@ class DataMapper extends Composite {
     URLClassLoader loader;
     Model sourceModel = null;
     Model targetModel = null;
+    TableViewer viewer;
     
     DataMapper( final Composite parent,
                 final IFile configFile ) {
@@ -68,7 +70,7 @@ class DataMapper extends Composite {
             
             setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
             
-            final TableViewer viewer = new TableViewer( this );
+            viewer = new TableViewer( this );
             final Table table = viewer.getTable();
             table.setLayoutData( GridDataFactory.fillDefaults().span( 3, 1 ).grab( true, true ).create() );
             table.setHeaderVisible( true );
@@ -149,9 +151,10 @@ class DataMapper extends Composite {
                 public Model modelSelected( final String className ) {
                     try {
                         sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
+                        updateMappings();
                         updateBrowserText( text );
                     } catch ( final ClassNotFoundException e ) {
-                        Activator.error( e );
+                        Activator.error( getShell(), e );
                     }
                     return sourceModel;
                 }
@@ -177,9 +180,10 @@ class DataMapper extends Composite {
                 public Model modelSelected( final String className ) {
                     try {
                         targetModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
+                        updateMappings();
                         updateBrowserText( text );
                     } catch ( final ClassNotFoundException e ) {
-                        Activator.error( e );
+                        Activator.error( getShell(), e );
                     }
                     return targetModel;
                 }
@@ -194,9 +198,10 @@ class DataMapper extends Composite {
                     configBuilder.map( sourceModel, targetModel );
                     try ( FileOutputStream stream = new FileOutputStream( file ) ) {
                         configBuilder.saveConfig( stream );
+                        configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
                         viewer.refresh();
                     } catch ( final Exception e ) {
-                        Activator.error( e );
+                        Activator.error( getShell(), e );
                     }
                     return true;
                 }
@@ -209,7 +214,7 @@ class DataMapper extends Composite {
                 }
             } );
         } catch ( final Exception e ) {
-            Activator.error( e );
+            Activator.error( getShell(), e );
         }
     }
     
@@ -235,18 +240,21 @@ class DataMapper extends Composite {
         if ( sourceModel == null && targetModel == null ) text.setText( "Select the source and target models below." );
         else if ( sourceModel == null ) text.setText( "Select the source model below." );
         else if ( targetModel == null ) text.setText( "Select the target model below." );
-        else {
-            text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
-                          sourceModel.getName() + " to target " + targetModel.getName() );
-            final List< Mapping > mappings = configBuilder.getMappings().getMapping();
-            if ( mappings.isEmpty() ) {
-                configBuilder.addClassMapping( sourceModel.getType(), targetModel.getType() );
-                try {
-                    configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
-                } catch ( final Exception e ) {
-                    Activator.error( e );
-                }
-            }
+        else text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
+                           sourceModel.getName() + " to target " + targetModel.getName() );
+    }
+    
+    void updateMappings() {
+        if ( sourceModel == null || targetModel == null ) return;
+        final List< Mapping > mappings = configBuilder.getMappings().getMapping();
+        mappings.clear();
+        configBuilder.addClassMapping( sourceModel.getType(), targetModel.getType() );
+        try {
+            configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
+            configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
+            viewer.refresh();
+        } catch ( final Exception e ) {
+            Activator.error( getShell(), e );
         }
     }
 }
