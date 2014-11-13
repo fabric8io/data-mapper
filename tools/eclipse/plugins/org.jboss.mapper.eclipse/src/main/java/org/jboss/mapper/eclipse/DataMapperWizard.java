@@ -9,11 +9,10 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -55,7 +54,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     
     IProject project;
     IFile configFile;
-    IWorkspaceRoot workspace = ResourcesPlugin.getWorkspace().getRoot();
+    IFile sourceModel, targetModel;
     Text sourceModelText, targetModelText;
     
     /**
@@ -68,6 +67,8 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     private IWizardPage constructMainPage() {
         return new WizardPage( "New Data Mapping", "New Data Mapping", null ) {
             
+            Text nameText;
+            
             /**
              * {@inheritDoc}
              * 
@@ -75,7 +76,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
              */
             @Override
             public void createControl( final Composite parent ) {
-                setDescription( "Select the project and name for the the new mapping file\n" +
+                setDescription( "Select the project and name for the the new mapping file.\n" +
                                 "Optionally, select the source and target models to be mapped." );
                 final Composite page = new Composite( parent, SWT.NONE );
                 setControl( page );
@@ -96,18 +97,19 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                         return ( ( IProject ) element ).getName();
                     }
                 } );
-                projectViewer.add( workspace.getProjects() );
+                projectViewer.add( ResourcesPlugin.getWorkspace().getRoot().getProjects() );
                 if ( project != null ) projectViewer.setSelection( new StructuredSelection( project ) );
                 projectViewer.getCombo().addSelectionListener( new SelectionAdapter() {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         project = ( IProject ) ( ( IStructuredSelection ) projectViewer.getSelection() ).getFirstElement();
+                        validatePage();
                     }
                 } );
                 label = new Label( page, SWT.NONE );
                 label.setText( "Name:" );
-                final Text nameText = new Text( page, SWT.BORDER );
+                nameText = new Text( page, SWT.BORDER );
                 nameText.setText( DEFAULT_DOZER_CONFIG_FILE_NAME );
                 nameText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                        .align( SWT.FILL, SWT.CENTER ).create() );
@@ -115,15 +117,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     
                     @Override
                     public void keyReleased( final KeyEvent event ) {
-                        String path = nameText.getText();
-                        if ( project == null || path.isEmpty() ) {
-                            configFile = null;
-                        } else {
-                            if ( !path.endsWith( ".xml" ) ) path = path + ".xml";
-                            configFile = workspace.getFile( project.getFullPath().append( "src/main/resources/" + path ) );
-                            setErrorMessage( configFile.exists() ? "A file with that name already exists." : null );
-                        }
-                        setPageComplete( project != null && configFile != null );
+                        validatePage();
                     }
                 } );
                 label = new Label( page, SWT.NONE );
@@ -138,7 +132,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        selectModel( "Source", sourceModelText );
+                        sourceModel = selectModel( "Source", sourceModelText );
                     }
                 } );
                 label = new Label( page, SWT.NONE );
@@ -153,7 +147,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        selectModel( "Target", targetModelText );
+                        targetModel = selectModel( "Target", targetModelText );
                     }
                 } );
                 page.addPaintListener( new PaintListener() {
@@ -165,6 +159,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                         page.removePaintListener( this );
                     }
                 } );
+                validatePage();
             }
             
             private void findClasses( final IFolder folder,
@@ -175,8 +170,8 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                 }
             }
             
-            void selectModel( final String modelType,
-                              final Text text ) {
+            IFile selectModel( final String modelType,
+                               final Text text ) {
                 final IFolder classesFolder = project.getFolder( "target/classes" );
                 final List< IResource > classes = new ArrayList<>();
                 try {
@@ -202,13 +197,23 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                         final String name =
                             file.getFullPath().makeRelativeTo( classesFolder.getFullPath() ).toString().replace( '/', '.' );
                         text.setText( name.substring( 0, name.length() - ".class".length() ) );
+                        return file;
                     }
                 } catch ( final CoreException e ) {
-                    MessageDialog.openError( getShell(), "Error", e.getMessage() );
-                    Activator.plugin().getLog().log( new Status( Status.ERROR,
-                                                                 Activator.plugin().getBundle().getSymbolicName(),
-                                                                 e.getMessage() ) );
+                    Activator.error( e );
                 }
+                return null;
+            }
+            
+            void validatePage() {
+                String path = nameText.getText();
+                if ( project == null || path.isEmpty() ) {
+                    configFile = null;
+                } else {
+                    if ( !path.endsWith( ".xml" ) ) path = path + ".xml";
+                    configFile = project.getFile( "src/main/resources/" + path );
+                }
+                setPageComplete( project != null && configFile != null );
             }
         };
     }
@@ -222,11 +227,12 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     public void init( final IWorkbench workbench,
                       final IStructuredSelection selection ) {
         if ( selection.size() != 1 ) {
-            final IProject[] projects = workspace.getProjects();
+            final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
             if ( projects.length == 1 ) project = projects[ 0 ];
             return;
         }
         project = ( ( IResource ) ( ( IAdaptable ) selection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
+        if ( project != null ) configFile = project.getFile( "src/main/resources/" + DEFAULT_DOZER_CONFIG_FILE_NAME );
     }
     
     /**
@@ -238,18 +244,18 @@ public class DataMapperWizard extends Wizard implements INewWizard {
     public boolean performFinish() {
         if ( configFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) ) return false;
         final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
-        configBuilder.addClassMapping( sourceModelText.getText(), targetModelText.getText() );
+        if ( sourceModel != null && targetModel != null )
+            configBuilder.addClassMapping( sourceModelText.getText(), targetModelText.getText() );
         try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
             configBuilder.saveConfig( stream );
             project.refreshLocal( IProject.DEPTH_INFINITE, null );
-            final IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor( configFile.getName() );
+            final IEditorDescriptor desc =
+                PlatformUI.getWorkbench().getEditorRegistry().getEditors( configFile.getName(),
+                                                                          Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID ) )[ 0 ];
             PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( configFile ),
                                                                                              desc.getId() );
         } catch ( final Exception e ) {
-            MessageDialog.openError( getShell(), "Error", e.getMessage() );
-            Activator.plugin().getLog().log( new Status( Status.ERROR,
-                                                         Activator.plugin().getBundle().getSymbolicName(),
-                                                         e.getMessage() ) );
+            Activator.error( e );
             return false;
         }
         return true;

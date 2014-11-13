@@ -28,14 +28,6 @@
             <b>itemId</b>
         </field>
         <field>
-            <a>id</a>
-            <b>itemId</b>
-        </field>
-        <field>
-            <a>id</a>
-            <b>itemId</b>
-        </field>
-        <field>
             <a>price</a>
             <b>amount</b>
         </field>

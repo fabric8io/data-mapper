@@ -1,5 +1,7 @@
 package org.jboss.mapper.eclipse;
 
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -10,6 +12,18 @@ public class Activator extends AbstractUIPlugin {
     
     // The shared instance
     private static Activator plugin;
+    
+    /**
+     * @param e
+     */
+    public static void error( final Throwable e ) {
+        // jpav: remove
+        System.out.println( e.getMessage() );
+        MessageDialog.openError( null, "Error", e.getMessage() );
+        Activator.plugin().getLog().log( new Status( Status.ERROR,
+                                                     Activator.plugin().getBundle().getSymbolicName(),
+                                                     e.getMessage() == null ? e.getClass().getName() : e.getMessage() ) );
+    }
     
     /**
      * Returns the shared instance

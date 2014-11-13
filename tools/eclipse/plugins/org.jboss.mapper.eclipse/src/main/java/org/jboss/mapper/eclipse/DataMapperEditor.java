@@ -25,6 +25,8 @@ public class DataMapperEditor extends MultiPageEditorPart {
         } catch ( final PartInitException e ) {
             e.printStackTrace();
         }
+        setPartName( getEditorInput().getName() );
+        setPageText( 0, "Mappings" );
     }
     
     /**

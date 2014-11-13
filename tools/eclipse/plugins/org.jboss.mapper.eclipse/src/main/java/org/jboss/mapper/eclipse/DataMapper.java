@@ -8,6 +8,9 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.util.LocalSelectionTransfer;
@@ -32,28 +35,36 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
+import org.jboss.mapper.eclipse.DataBrowser.Listener;
 import org.jboss.mapper.forge.ConfigBuilder;
 import org.jboss.mapper.forge.Model;
 import org.jboss.mapper.forge.ModelBuilder;
 
 class DataMapper extends Composite {
     
-    URLClassLoader loader;
+    final IFile configFile;
     ConfigBuilder configBuilder;
+    URLClassLoader loader;
+    Model sourceModel = null;
+    Model targetModel = null;
     
     DataMapper( final Composite parent,
-            final File configFile ) {
+                final IFile configFile ) {
         super( parent, SWT.NONE );
+        this.configFile = configFile;
+        final File file = new File( configFile.getLocationURI() );
         
         try {
-            configBuilder = ConfigBuilder.loadConfig( configFile );
-            final List< Mapping > mappings = configBuilder.getMappings().getMapping();
-            final Mapping mainMapping = mappings.get( 0 );
+            configBuilder = ConfigBuilder.loadConfig( file );
             loader = new URLClassLoader( new URL[] {
-                new File( configFile.getParentFile().getParentFile().getParentFile().getParentFile(), "target/classes" ).toURI().toURL()
+                new File( file.getParentFile().getParentFile().getParentFile().getParentFile(), "target/classes" ).toURI().toURL()
             } );
-            final Model sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassA().getContent() ) );
-            final Model targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
+            final List< Mapping > mappings = configBuilder.getMappings().getMapping();
+            if ( !mappings.isEmpty() ) {
+                final Mapping mainMapping = mappings.get( 0 );
+                sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassA().getContent() ) );
+                targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
+            }
             
             setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
             
@@ -128,13 +139,24 @@ class DataMapper extends Composite {
             
             final Text text = new Text( this, SWT.MULTI | SWT.WRAP );
             text.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
-            text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
-                          sourceModel.getName() + " to target " + targetModel.getName() );
+            text.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
+            updateBrowserText( text );
             text.setBackground( getBackground() );
             
-            final DataBrowser sourceBrowser = new DataBrowser( this );
+            final DataBrowser sourceBrowser = new DataBrowser( this, "Source", sourceModel, new Listener() {
+                
+                @Override
+                public Model modelSelected( final String className ) {
+                    try {
+                        sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
+                        updateBrowserText( text );
+                    } catch ( final ClassNotFoundException e ) {
+                        Activator.error( e );
+                    }
+                    return sourceModel;
+                }
+            } );
             sourceBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-            sourceBrowser.setInput( "Source", sourceModel );
             final Transfer[] xfers = new Transfer[] { LocalSelectionTransfer.getTransfer() };
             sourceBrowser.viewer.addDragSupport( DND.DROP_MOVE, xfers, new DragSourceAdapter() {
                 
@@ -149,9 +171,20 @@ class DataMapper extends Composite {
             final Label label = new Label( this, SWT.NONE );
             label.setText( "=>" );
             
-            final DataBrowser targetBrowser = new DataBrowser( this );
+            final DataBrowser targetBrowser = new DataBrowser( this, "Target", targetModel, new Listener() {
+                
+                @Override
+                public Model modelSelected( final String className ) {
+                    try {
+                        targetModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
+                        updateBrowserText( text );
+                    } catch ( final ClassNotFoundException e ) {
+                        Activator.error( e );
+                    }
+                    return targetModel;
+                }
+            } );
             targetBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-            targetBrowser.setInput( "Target", targetModel );
             targetBrowser.viewer.addDropSupport( DND.DROP_MOVE, xfers, new ViewerDropAdapter( targetBrowser.viewer ) {
                 
                 @Override
@@ -159,11 +192,11 @@ class DataMapper extends Composite {
                     final Model sourceModel = ( Model ) ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
                     final Model targetModel = ( Model ) getCurrentTarget();
                     configBuilder.map( sourceModel, targetModel );
-                    try ( FileOutputStream stream = new FileOutputStream( configFile ) ) {
+                    try ( FileOutputStream stream = new FileOutputStream( file ) ) {
                         configBuilder.saveConfig( stream );
                         viewer.refresh();
                     } catch ( final Exception e ) {
-                        e.printStackTrace();
+                        Activator.error( e );
                     }
                     return true;
                 }
@@ -176,7 +209,7 @@ class DataMapper extends Composite {
                 }
             } );
         } catch ( final Exception e ) {
-            e.printStackTrace();
+            Activator.error( e );
         }
     }
     
@@ -191,7 +224,29 @@ class DataMapper extends Composite {
         if ( loader != null ) try {
             loader.close();
         } catch ( final IOException e ) {
-            e.printStackTrace();
+            MessageDialog.openError( getShell(), "Error", e.getMessage() );
+            Activator.plugin().getLog().log( new Status( Status.ERROR,
+                                                         Activator.plugin().getBundle().getSymbolicName(),
+                                                         e.getMessage() ) );
+        }
+    }
+    
+    void updateBrowserText( final Text text ) {
+        if ( sourceModel == null && targetModel == null ) text.setText( "Select the source and target models below." );
+        else if ( sourceModel == null ) text.setText( "Select the source model below." );
+        else if ( targetModel == null ) text.setText( "Select the target model below." );
+        else {
+            text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
+                          sourceModel.getName() + " to target " + targetModel.getName() );
+            final List< Mapping > mappings = configBuilder.getMappings().getMapping();
+            if ( mappings.isEmpty() ) {
+                configBuilder.addClassMapping( sourceModel.getType(), targetModel.getType() );
+                try {
+                    configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
+                } catch ( final Exception e ) {
+                    Activator.error( e );
+                }
+            }
         }
     }
 }

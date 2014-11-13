@@ -4,9 +4,9 @@
  */
 package org.jboss.mapper.eclipse;
 
-import java.io.File;
-
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
@@ -30,7 +30,7 @@ public class DataMapperEditorMappingPage extends EditorPart {
     @SuppressWarnings( "unused" )
     @Override
     public void createPartControl( final Composite parent ) {
-        new DataMapper( parent, new File( ( ( FileEditorInput ) getEditorInput() ).getURI() ) );
+        new DataMapper( parent, ( ( FileEditorInput ) getEditorInput() ).getFile() );
     }
     
     /**
@@ -57,6 +57,9 @@ public class DataMapperEditorMappingPage extends EditorPart {
     @Override
     public void init( final IEditorSite site,
                       final IEditorInput input ) throws PartInitException {
+        final IContentType contentType = Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID );
+        if ( !contentType.isAssociatedWith( input.getName() ) )
+            throw new PartInitException( "The Data Mapping editor can only be opened with a Dozer configuration file." );
         setSite( site );
         setInput( input );
     }
