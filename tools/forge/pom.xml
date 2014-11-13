@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <parent>
+    <groupId>org.jboss.mapper</groupId>
+    <artifactId>data-mapper-parent</artifactId>
+    <version>1.0.0.m1</version>
+    <relativePath>../..</relativePath>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jboss.mapper.forge</groupId>
-  <artifactId>data-mapper-parent</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <artifactId>data-mapper-forge-parent</artifactId>
   <packaging>pom</packaging>
   <modules>
     <module>addon</module>
@@ -12,93 +17,6 @@
     <module>impl</module>
     <module>tests</module>
   </modules>
-  <properties>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <version.furnace>2.12.1.Final</version.furnace>
-    <maven.compiler.target>1.7</maven.compiler.target>
-  </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.jboss.forge.furnace</groupId>
-        <artifactId>furnace-api</artifactId>
-        <version>${version.furnace}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.furnace.container</groupId>
-        <artifactId>cdi</artifactId>
-        <version>2.12.1.Final</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.furnace.container</groupId>
-        <artifactId>cdi-api</artifactId>
-        <version>${version.furnace}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.furnace.test</groupId>
-        <artifactId>arquillian-furnace-classpath</artifactId>
-        <version>${version.furnace}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.furnace.test</groupId>
-        <artifactId>furnace-test-harness</artifactId>
-        <version>${version.furnace}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge</groupId>
-        <artifactId>forge-bom</artifactId>
-        <version>${version.furnace}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.mapper.forge</groupId>
-        <artifactId>data-mapper</artifactId>
-        <version>${project.version}</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.mapper.forge</groupId>
-        <artifactId>data-mapper-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.mapper.forge</groupId>
-        <artifactId>data-mapper-impl</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.mapper.forge</groupId>
-        <artifactId>data-mapper-spi</artifactId>
-        <version>${project.version}</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.addon</groupId>
-        <artifactId>core</artifactId>
-        <version>2.12.1.Final</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.addon</groupId>
-        <artifactId>projects</artifactId>
-        <version>2.12.1.Final</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.forge.addon</groupId>
-        <artifactId>ui</artifactId>
-        <version>2.12.1.Final</version>
-        <classifier>forge-addon</classifier>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <build>
     <finalName>data-mapper</finalName>
   </build>

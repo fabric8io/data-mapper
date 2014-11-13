@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.jboss.mapper.forge</groupId>
-    <artifactId>data-mapper-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>data-mapper-forge-parent</artifactId>
+    <version>1.0.0.m1</version>
   </parent>
   <artifactId>data-mapper-api</artifactId>
   <dependencies>
