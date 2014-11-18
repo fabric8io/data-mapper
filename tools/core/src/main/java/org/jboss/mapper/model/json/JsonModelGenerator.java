@@ -54,13 +54,15 @@ public class JsonModelGenerator {
 	 * @param targetPath directory where class source will be generated
 	 * @throws Exception failure during model generation
 	 */
-	public void generateFromSchema(
+	public JCodeModel generateFromSchema(
 			String className, String packageName, URL schemaUrl, File targetPath) 
 			throws Exception {
 		SchemaMapper mapper = createSchemaMapper();
 		JCodeModel codeModel = new JCodeModel();
 		mapper.generate(codeModel, className, packageName, schemaUrl);
         codeModel.build(targetPath);
+        
+        return codeModel;
 	}
 	
 	private SchemaMapper createSchemaMapper() {

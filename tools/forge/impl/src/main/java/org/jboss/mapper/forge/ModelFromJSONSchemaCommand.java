@@ -15,8 +15,6 @@ package org.jboss.mapper.forge;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Iterator;
 
 import javax.inject.Inject;
 
@@ -28,12 +26,7 @@ import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jsonschema2pojo.Annotator;
-import org.jsonschema2pojo.DefaultGenerationConfig;
-import org.jsonschema2pojo.Jackson2Annotator;
-import org.jsonschema2pojo.SchemaGenerator;
-import org.jsonschema2pojo.SchemaMapper;
-import org.jsonschema2pojo.rules.RuleFactory;
+import org.jboss.mapper.model.json.JsonModelGenerator;
 
 import com.sun.codemodel.JCodeModel;
 
@@ -64,22 +57,15 @@ public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
 	public Result execute(UIExecutionContext context) throws Exception {
 		Project project = getSelectedProject(context);
 		FileResource<?> schemaFile = getFile(project, schemaPath.getValue());
-		
-		CustomGenerationConfig config = new CustomGenerationConfig();
-		Annotator annotator = new Jackson2Annotator() {
-			public boolean isAdditionalPropertiesSupported() { return false; }
-		};
-        RuleFactory ruleFactory = new RuleFactory();
-		ruleFactory.setAnnotator(annotator);
-        ruleFactory.setGenerationConfig(config);
 		URL jsonSchemaUrl = schemaFile.getUnderlyingResourceObject().toURI().toURL();
-        SchemaMapper mapper = new SchemaMapper(ruleFactory, new SchemaGenerator());
-        JCodeModel codeModel = new JCodeModel();
+		File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
+
+		JsonModelGenerator modelGen = new JsonModelGenerator();
+		
+		JCodeModel model = modelGen.generateFromSchema(
+				className.getValue(), packageName.getValue(), jsonSchemaUrl, targetPath);
         
-        mapper.generate(codeModel, className.getValue(), packageName.getValue(), jsonSchemaUrl);
-        codeModel.build(new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName()));
-        
-        addGeneratedTypes(project, codeModel);
+        addGeneratedTypes(project, model);
         
 		return Results.success("Model classes created for " + schemaPath.getValue());
 	}
@@ -92,26 +78,5 @@ public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
 	@Override
 	public String getDescription() {
 		return DESCRIPTION;
-	}
-	
-	private class CustomGenerationConfig extends DefaultGenerationConfig {
-		private File source;
-		
-		@Override
-		public Iterator<File> getSource() {
-			return Arrays.asList(new File[] {source}).iterator();
-		}
-		@Override
-		public boolean isIncludeHashcodeAndEquals() {
-			return false;
-		}
-		@Override
-		public boolean isIncludeToString() {
-			return false;
-		}
-		@Override
-		public boolean isUsePrimitives() {
-			return true;
-		}
 	}
 }

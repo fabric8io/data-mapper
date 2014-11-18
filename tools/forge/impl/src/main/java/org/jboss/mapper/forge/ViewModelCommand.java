@@ -23,6 +23,7 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.output.UIOutput;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.mapper.model.Model;
 
 public class ViewModelCommand extends AbstractMapperCommand  {
 	public static final String NAME = "view-model";

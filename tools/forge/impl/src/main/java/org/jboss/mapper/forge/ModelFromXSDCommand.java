@@ -25,13 +25,9 @@ import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.xml.sax.InputSource;
+import org.jboss.mapper.model.xml.XmlModelGenerator;
 
 import com.sun.codemodel.JCodeModel;
-import com.sun.tools.xjc.api.S2JJAXBModel;
-import com.sun.tools.xjc.api.SchemaCompiler;
-import com.sun.tools.xjc.api.XJC;
-
 
 public class ModelFromXSDCommand extends AbstractMapperCommand {
 	
@@ -55,20 +51,13 @@ public class ModelFromXSDCommand extends AbstractMapperCommand {
 	public Result execute(UIExecutionContext context) throws Exception {
 		Project project = getSelectedProject(context);
 		FileResource<?> schemaFile = getFile(project, schemaPath.getValue());
+		File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
 		
-		SchemaCompiler sc = XJC.createSchemaCompiler();
-		InputSource is = new InputSource(schemaFile.getResourceInputStream());
-		is.setSystemId(schemaFile.getFullyQualifiedName());
+		XmlModelGenerator xmlGen = new XmlModelGenerator();
+		JCodeModel model = xmlGen.generateFromSchema(
+				schemaFile.getUnderlyingResourceObject(), packageName.getValue(), targetPath);
 		
-		sc.parseSchema(is);
-		sc.forcePackageName(packageName.getValue());
-		
-		S2JJAXBModel s2 = sc.bind();
-		JCodeModel jcm = s2.generateCode(null, null);
-		jcm.build(new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName()));
-		
-        addGeneratedTypes(project, jcm);
-		
+        addGeneratedTypes(project, model);
 		return Results.success("Model classes created for " + schemaPath.getValue());
 	}
 

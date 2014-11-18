@@ -16,6 +16,9 @@ package org.jboss.mapper.forge;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.model.Model;
+
 
 public class MapperContext {
 

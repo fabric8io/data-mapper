@@ -33,6 +33,9 @@ import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.model.Model;
+import org.jboss.mapper.model.ModelBuilder;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;

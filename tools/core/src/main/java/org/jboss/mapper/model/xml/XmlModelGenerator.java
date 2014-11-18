@@ -37,7 +37,7 @@ public class XmlModelGenerator {
 	 * @param targetPath directory where class source will be generated
 	 * @throws Exception failure during model generation
 	 */
-	public void generateFromSchema(File schemaFile, String packageName, File targetPath) 
+	public JCodeModel generateFromSchema(File schemaFile, String packageName, File targetPath) 
 			throws Exception {
 		
 		SchemaCompiler sc = XJC.createSchemaCompiler();
@@ -52,5 +52,6 @@ public class XmlModelGenerator {
 		JCodeModel jcm = s2.generateCode(null, null);
 		jcm.build(targetPath);
 		
+		return jcm;
 	}
 }

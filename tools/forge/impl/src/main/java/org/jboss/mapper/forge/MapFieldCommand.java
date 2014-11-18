@@ -25,9 +25,11 @@ import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
 import org.jboss.mapper.dozer.config.Mappings;
+import org.jboss.mapper.model.Model;
 
 
 public class MapFieldCommand extends AbstractMapperCommand  {

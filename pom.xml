@@ -100,6 +100,11 @@
 
       <!--  Internal Dependencies -->
       <dependency>
+        <groupId>org.jboss.mapper</groupId>
+        <artifactId>data-mapper-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.jboss.mapper.forge</groupId>
         <artifactId>data-mapper</artifactId>
         <version>${project.version}</version>
