@@ -24,55 +24,57 @@ import org.jsonschema2pojo.rules.RuleFactory;
 import com.sun.codemodel.JCodeModel;
 
 /**
- * Model generator for JSON type definitions.  This generator supports 
- * model generation from JSON schema and JSON instance data.
+ * Model generator for JSON type definitions. This generator supports model
+ * generation from JSON schema and JSON instance data.
  */
 public class JsonModelGenerator {
-	
-	private JsonGenerationConfig config;
-	
-	/**
-	 * Create a new XmlModelGenerator with default configuration.
-	 */
-	public JsonModelGenerator() {
-		this(new JsonGenerationConfig());
-	}
-	
-	/**
-	 * Configuration used to control model generation behavior.
-	 * @param config
-	 */
-	public JsonModelGenerator(JsonGenerationConfig config) {
-		this.config = config;
-	}
-	
-	/**
-	 * Generates Java classes in targetPath directory given a JSON schema.
-	 * @param className name of the top-level class used for the generated model
-	 * @param packageName package name for generated model classes
-	 * @param schemaUrl url for the JSON schema
-	 * @param targetPath directory where class source will be generated
-	 * @throws Exception failure during model generation
-	 */
-	public JCodeModel generateFromSchema(
-			String className, String packageName, URL schemaUrl, File targetPath) 
-			throws Exception {
-		SchemaMapper mapper = createSchemaMapper();
-		JCodeModel codeModel = new JCodeModel();
-		mapper.generate(codeModel, className, packageName, schemaUrl);
-        codeModel.build(targetPath);
+
+    private JsonGenerationConfig config;
+
+    /**
+     * Create a new XmlModelGenerator with default configuration.
+     */
+    public JsonModelGenerator() {
+        this(new JsonGenerationConfig());
+    }
+
+    /**
+     * Configuration used to control model generation behavior.
+     * 
+     * @param config
+     */
+    public JsonModelGenerator(JsonGenerationConfig config) {
+        this.config = config;
+    }
+
+    /**
+     * Generates Java classes in targetPath directory given a JSON schema.
+     * 
+     * @param className name of the top-level class used for the generated model
+     * @param packageName package name for generated model classes
+     * @param schemaUrl url for the JSON schema
+     * @param targetPath directory where class source will be generated
+     * @throws Exception failure during model generation
+     */
+    public JCodeModel generateFromSchema(String className, String packageName,
+            URL schemaUrl, File targetPath) throws Exception {
         
+        SchemaMapper mapper = createSchemaMapper();
+        JCodeModel codeModel = new JCodeModel();
+        mapper.generate(codeModel, className, packageName, schemaUrl);
+        codeModel.build(targetPath);
+
         return codeModel;
-	}
-	
-	private SchemaMapper createSchemaMapper() {
+    }
+
+    private SchemaMapper createSchemaMapper() {
         RuleFactory ruleFactory = new RuleFactory();
-		ruleFactory.setAnnotator(new Jackson2Annotator() {
-			public boolean isAdditionalPropertiesSupported() { 
-				return false; 
-			}
-		});
+        ruleFactory.setAnnotator(new Jackson2Annotator() {
+            public boolean isAdditionalPropertiesSupported() {
+                return false;
+            }
+        });
         ruleFactory.setGenerationConfig(config);
         return new SchemaMapper(ruleFactory, new SchemaGenerator());
-	}
+    }
 }

@@ -24,34 +24,34 @@ import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.XJC;
 
 /**
- * Model generator for XML type definitions.  This generator supports 
- * model generation from XML schema and XML instance data.
+ * Model generator for XML type definitions. This generator supports model
+ * generation from XML schema and XML instance data.
  */
 public class XmlModelGenerator {
-	
-	
-	/**
-	 * Generates Java classes in targetPath directory given an XML schema.
-	 * @param schemaFile file reference to the XML schema
-	 * @param packageName package name for generated model classes
-	 * @param targetPath directory where class source will be generated
-	 * @throws Exception failure during model generation
-	 */
-	public JCodeModel generateFromSchema(File schemaFile, String packageName, File targetPath) 
-			throws Exception {
-		
-		SchemaCompiler sc = XJC.createSchemaCompiler();
-		FileInputStream schemaStream = new FileInputStream(schemaFile);
-		InputSource is = new InputSource(schemaStream);
-		is.setSystemId(schemaFile.getAbsolutePath());
-		
-		sc.parseSchema(is);
-		sc.forcePackageName(packageName);
-		
-		S2JJAXBModel s2 = sc.bind();
-		JCodeModel jcm = s2.generateCode(null, null);
-		jcm.build(targetPath);
-		
-		return jcm;
-	}
+
+    /**
+     * Generates Java classes in targetPath directory given an XML schema.
+     * 
+     * @param schemaFile file reference to the XML schema
+     * @param packageName package name for generated model classes
+     * @param targetPath directory where class source will be generated
+     * @throws Exception failure during model generation
+     */
+    public JCodeModel generateFromSchema(File schemaFile, String packageName,
+            File targetPath) throws Exception {
+
+        SchemaCompiler sc = XJC.createSchemaCompiler();
+        FileInputStream schemaStream = new FileInputStream(schemaFile);
+        InputSource is = new InputSource(schemaStream);
+        is.setSystemId(schemaFile.getAbsolutePath());
+
+        sc.parseSchema(is);
+        sc.forcePackageName(packageName);
+
+        S2JJAXBModel s2 = sc.bind();
+        JCodeModel jcm = s2.generateCode(null, null);
+        jcm.build(targetPath);
+
+        return jcm;
+    }
 }

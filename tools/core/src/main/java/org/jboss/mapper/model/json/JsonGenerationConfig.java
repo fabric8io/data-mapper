@@ -23,44 +23,44 @@ import org.jsonschema2pojo.DefaultGenerationConfig;
  * Used to override default model configuration behavior of JsonSchema2Pojo.
  */
 public class JsonGenerationConfig extends DefaultGenerationConfig {
-	
-	private File source;
-	private boolean includeHashcodeAndEquals;
-	private boolean includeToString;
-	private boolean usePrimitives = true;
-	
-	@Override
-	public Iterator<File> getSource() {
-		return Arrays.asList(new File[] {source}).iterator();
-	}
-	
-	@Override
-	public boolean isIncludeHashcodeAndEquals() {
-		return includeHashcodeAndEquals;
-	}
-	
-	public JsonGenerationConfig setIncludeHashcodeAndEquals(boolean includeHashcodeAndEquals) {
-		this.includeHashcodeAndEquals = includeHashcodeAndEquals;
-		return this;
-	}
-	
-	@Override
-	public boolean isIncludeToString() {
-		return includeToString;
-	}
-	
-	public JsonGenerationConfig setIncludeToString(boolean includeToString) {
-		this.includeToString = includeToString;
-		return this;
-	}
-	
-	@Override
-	public boolean isUsePrimitives() {
-		return usePrimitives;
-	}
-	
-	public JsonGenerationConfig setUsePrimitives(boolean usePrimitives) {
-		this.usePrimitives = usePrimitives;
-		return this;
-	}
+
+    private File source;
+    private boolean includeHashcodeAndEquals;
+    private boolean includeToString;
+    private boolean usePrimitives = true;
+
+    @Override
+    public Iterator<File> getSource() {
+        return Arrays.asList(new File[] { source }).iterator();
+    }
+
+    @Override
+    public boolean isIncludeHashcodeAndEquals() {
+        return includeHashcodeAndEquals;
+    }
+
+    public JsonGenerationConfig setIncludeHashcodeAndEquals(boolean includeHashcodeAndEquals) {
+        this.includeHashcodeAndEquals = includeHashcodeAndEquals;
+        return this;
+    }
+
+    @Override
+    public boolean isIncludeToString() {
+        return includeToString;
+    }
+
+    public JsonGenerationConfig setIncludeToString(boolean includeToString) {
+        this.includeToString = includeToString;
+        return this;
+    }
+
+    @Override
+    public boolean isUsePrimitives() {
+        return usePrimitives;
+    }
+
+    public JsonGenerationConfig setUsePrimitives(boolean usePrimitives) {
+        this.usePrimitives = usePrimitives;
+        return this;
+    }
 }

@@ -21,91 +21,93 @@ import java.util.List;
 
 public class Model {
 
-	private Class<?> modelClass;
-	private String name;
-	private String type;
-	private Model parent;
-	private HashMap<String, Model> children = new HashMap<String, Model>();
-	private boolean isCollection;
-	
-	public Model(String name, String type) {
-		this.name = name;
-		this.type = type;
-	}
+    private Class<?> modelClass;
+    private String name;
+    private String type;
+    private Model parent;
+    private HashMap<String, Model> children = new HashMap<String, Model>();
+    private boolean isCollection;
 
-	public Model addChild(String name, String type) {
-		Model n = new Model(name, type);
-		n.parent = this;
-		n.name = name;
-		n.type = type;
-		children.put(name, n);
-		return n;
-	}
+    public Model(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
 
-	public void print(PrintStream out) {
-		printModel(this, 0, out);
-	}
+    public Model addChild(String name, String type) {
+        Model n = new Model(name, type);
+        n.parent = this;
+        n.name = name;
+        n.type = type;
+        children.put(name, n);
+        return n;
+    }
 
-	public Model get(String nodeName) {
-		return children.get(nodeName);
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public String getType() {
-		return type;
-	}
-	
-	public Model getParent() {
-		return parent;
-	}
-	
-	public boolean isCollection() {
-		return isCollection;
-	}
-	
-	public Model setIsCollection(boolean isCollection) {
-		this.isCollection = isCollection;
-		return this;
-	}
-	
-	public List<String> listFields() {
-		List<String> fields = new LinkedList<String>();
-		return listFields(fields, this.children.values(), "");
-	}
-	
-	public List<String> listFields(List<String> fieldList, Collection<Model> fields, String prefix) {
-		for (Model field : fields) {
-			fieldList.add(prefix + field.getName());
-			listFields(fieldList, field.children.values(), prefix + field.getName() + ".");
-		}
-		return fieldList;
-	}
+    public void print(PrintStream out) {
+        printModel(this, 0, out);
+    }
 
-	private void printModel(Model node, int depth, PrintStream out) {
-		out.println(format(node, depth));
-		for (Model child : node.children.values()) {
-			printModel(child, depth + 1, out);
-		}
-	}
+    public Model get(String nodeName) {
+        return children.get(nodeName);
+    }
 
-	private String format(Model node, int depth) {
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < depth; i++) {
-			sb.append("  ");
-		}
-		sb.append(node.children.isEmpty() ? "- " : "* ");
-		sb.append(node.name + " : " + node.type);
-		return sb.toString();
-	}
+    public String getName() {
+        return name;
+    }
 
-	public Class<?> getModelClass() {
-		return modelClass;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public void setModelClass(Class<?> modelClass) {
-		this.modelClass = modelClass;
-	}
+    public Model getParent() {
+        return parent;
+    }
+
+    public boolean isCollection() {
+        return isCollection;
+    }
+
+    public Model setIsCollection(boolean isCollection) {
+        this.isCollection = isCollection;
+        return this;
+    }
+
+    public List<String> listFields() {
+        List<String> fields = new LinkedList<String>();
+        return listFields(fields, this.children.values(), "");
+    }
+
+    public List<String> listFields(List<String> fieldList,
+            Collection<Model> fields, String prefix) {
+        for (Model field : fields) {
+            fieldList.add(prefix + field.getName());
+            listFields(fieldList, field.children.values(),
+                    prefix + field.getName() + ".");
+        }
+        return fieldList;
+    }
+
+    private void printModel(Model node, int depth, PrintStream out) {
+        out.println(format(node, depth));
+        for (Model child : node.children.values()) {
+            printModel(child, depth + 1, out);
+        }
+    }
+
+    private String format(Model node, int depth) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < depth; i++) {
+            sb.append("  ");
+        }
+        sb.append(node.children.isEmpty() ? "- " : "* ");
+        sb.append(node.name + " : " + node.type);
+        return sb.toString();
+    }
+
+    public Class<?> getModelClass() {
+        return modelClass;
+    }
+
+    public void setModelClass(Class<?> modelClass) {
+        this.modelClass = modelClass;
+    }
 }
