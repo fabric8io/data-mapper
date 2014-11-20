@@ -19,70 +19,69 @@ import java.util.List;
 import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.model.Model;
 
-
 public class MapperContext {
 
-	public static final String XML_TYPE = "XML";
-	public static final String JAVA_TYPE = "Java";
-	public static final String JSON_TYPE = "JSON";
+    public static final String XML_TYPE = "XML";
+    public static final String JAVA_TYPE = "Java";
+    public static final String JSON_TYPE = "JSON";
 
-	private Model sourceModel;
-	private Model targetModel;
-	private ConfigBuilder config;
-	private List<String> generatedTypes = new LinkedList<String>();
-	private String sourceType;
-	private String targetType;
-	private String transformId;
-	
-	public Model getSourceModel() {
-		return sourceModel;
-	}
-	
-	public void setSourceModel(Model sourceModel) {
-		this.sourceModel = sourceModel;
-	}
-	
-	public Model getTargetModel() {
-		return targetModel;
-	}
-	
-	public void setTargetModel(Model targetModel) {
-		this.targetModel = targetModel;
-	}
-	
-	public ConfigBuilder getConfig() {
-		return config;
-	}
-	
-	public void setConfig(ConfigBuilder config) {
-		this.config = config;
-	}
-	
-	public List<String> getGeneratedTypes() {
-		return generatedTypes;
-	}
+    private Model sourceModel;
+    private Model targetModel;
+    private ConfigBuilder config;
+    private List<String> generatedTypes = new LinkedList<String>();
+    private String sourceType;
+    private String targetType;
+    private String transformId;
 
-	public String getSourceType() {
-		return sourceType;
-	}
+    public Model getSourceModel() {
+        return sourceModel;
+    }
 
-	public void setSourceType(String sourceType) {
-		this.sourceType = sourceType;
-	}
+    public void setSourceModel(Model sourceModel) {
+        this.sourceModel = sourceModel;
+    }
 
-	public String getTargetType() {
-		return targetType;
-	}
+    public Model getTargetModel() {
+        return targetModel;
+    }
 
-	public void setTargetType(String targetType) {
-		this.targetType = targetType;
-	}
+    public void setTargetModel(Model targetModel) {
+        this.targetModel = targetModel;
+    }
 
-	public String getTransformId() {
-		return transformId;
-	}
+    public ConfigBuilder getConfig() {
+        return config;
+    }
 
-	public void setTransformId(String transformId) {
-		this.transformId = transformId;
-	}
+    public void setConfig(ConfigBuilder config) {
+        this.config = config;
+    }
+
+    public List<String> getGeneratedTypes() {
+        return generatedTypes;
+    }
+
+    public String getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(String sourceType) {
+        this.sourceType = sourceType;
+    }
+
+    public String getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(String targetType) {
+        this.targetType = targetType;
+    }
+
+    public String getTransformId() {
+        return transformId;
+    }
+
+    public void setTransformId(String transformId) {
+        this.transformId = transformId;
+    }
 }

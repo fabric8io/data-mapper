@@ -25,51 +25,51 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.mapper.dozer.ConfigBuilder;
 
-public class CreateMappingCommand extends AbstractMapperCommand  {
-	
-	public static final String NAME = "create-mapping";
-	public static final String DESCRIPTION = "Create a new mapping definition";
+public class CreateMappingCommand extends AbstractMapperCommand {
 
-	@Inject
-	@WithAttributes(label = "Source Model", required = true, description = "Name of the source model type")
-	UIInput<String> sourceModel;
-	
-	@Inject
-	@WithAttributes(label = "Target Model", required = true, description = "Name of the target model type")
-	UIInput<String> targetModel;
+    public static final String NAME = "create-mapping";
+    public static final String DESCRIPTION = "Create a new mapping definition";
 
-	@Override
-	public void initializeUI(UIBuilder builder) throws Exception {
-		UICompleter<String> modelTypes = getModelCompleter(
-				getSelectedProject(builder.getUIContext()));
-		sourceModel.setCompleter(modelTypes);
-		targetModel.setCompleter(modelTypes);
-		builder.add(sourceModel).add(targetModel);
-	}
+    @Inject
+    @WithAttributes(label = "Source Model", required = true, description = "Name of the source model type")
+    UIInput<String> sourceModel;
 
-	@Override
-	public Result execute(UIExecutionContext context) throws Exception {
-		Project project = getSelectedProject(context);
-		// Create configuration
-		ConfigBuilder config = loadConfig(project);
-		config.addClassMapping(sourceModel.getValue(), targetModel.getValue());
-		
-		// Load models into mapper context
-		getMapperContext(project).setSourceModel(loadModel(project, sourceModel.getValue()));
-		getMapperContext(project).setTargetModel(loadModel(project, targetModel.getValue()));
-		
-		// Save on our way out
-		saveConfig(project);
-		return Results.success("Created mapping configuration.");
-	}
+    @Inject
+    @WithAttributes(label = "Target Model", required = true, description = "Name of the target model type")
+    UIInput<String> targetModel;
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
+        UICompleter<String> modelTypes = getModelCompleter(
+                getSelectedProject(builder.getUIContext()));
+        sourceModel.setCompleter(modelTypes);
+        targetModel.setCompleter(modelTypes);
+        builder.add(sourceModel).add(targetModel);
+    }
 
-	@Override
-	public String getDescription() {
-		return DESCRIPTION;
-	}
+    @Override
+    public Result execute(UIExecutionContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        // Create configuration
+        ConfigBuilder config = loadConfig(project);
+        config.addClassMapping(sourceModel.getValue(), targetModel.getValue());
+
+        // Load models into mapper context
+        getMapperContext(project).setSourceModel(loadModel(project, sourceModel.getValue()));
+        getMapperContext(project).setTargetModel(loadModel(project, targetModel.getValue()));
+
+        // Save on our way out
+        saveConfig(project);
+        return Results.success("Created mapping configuration.");
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
 }

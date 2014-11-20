@@ -30,46 +30,45 @@ import org.jboss.mapper.model.xml.XmlModelGenerator;
 import com.sun.codemodel.JCodeModel;
 
 public class ModelFromXSDCommand extends AbstractMapperCommand {
-	
-	public static final String NAME = "model-from-xsd";
-	public static final String DESCRIPTION = "Generate a Java class model from XML Schema.";
-	
-	@Inject
-	@WithAttributes(label = "Schema Path", required = true, description = "Path to schema in project")
-	UIInput<String> schemaPath;
-	
-	@Inject
-	@WithAttributes(label = "Package Name", required = true, description = "Package name for generated model classes")
-	UIInput<String> packageName;
 
-	@Override
-	public void initializeUI(UIBuilder builder) throws Exception {
-		builder.add(schemaPath).add(packageName);
-	}
+    public static final String NAME = "model-from-xsd";
+    public static final String DESCRIPTION = "Generate a Java class model from XML Schema.";
 
-	@Override
-	public Result execute(UIExecutionContext context) throws Exception {
-		Project project = getSelectedProject(context);
-		FileResource<?> schemaFile = getFile(project, schemaPath.getValue());
-		File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
-		
-		XmlModelGenerator xmlGen = new XmlModelGenerator();
-		JCodeModel model = xmlGen.generateFromSchema(
-				schemaFile.getUnderlyingResourceObject(), packageName.getValue(), targetPath);
-		
+    @Inject
+    @WithAttributes(label = "Schema Path", required = true, description = "Path to schema in project")
+    UIInput<String> schemaPath;
+
+    @Inject
+    @WithAttributes(label = "Package Name", required = true, description = "Package name for generated model classes")
+    UIInput<String> packageName;
+
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
+        builder.add(schemaPath).add(packageName);
+    }
+
+    @Override
+    public Result execute(UIExecutionContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        FileResource<?> schemaFile = getFile(project, schemaPath.getValue());
+        File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
+
+        XmlModelGenerator xmlGen = new XmlModelGenerator();
+        JCodeModel model = xmlGen.generateFromSchema(
+                schemaFile.getUnderlyingResourceObject(), packageName.getValue(), targetPath);
+
         addGeneratedTypes(project, model);
-		return Results.success("Model classes created for " + schemaPath.getValue());
-	}
+        return Results.success("Model classes created for " + schemaPath.getValue());
+    }
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    @Override
+    public String getName() {
+        return NAME;
+    }
 
-	@Override
-	public String getDescription() {
-		return DESCRIPTION;
-	}
-	
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
 
 }

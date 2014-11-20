@@ -25,35 +25,35 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.mapper.model.Model;
 
-public class ViewModelCommand extends AbstractMapperCommand  {
-	public static final String NAME = "view-model";
-	public static final String DESCRIPTION = "View the model for a Java class.";
-	
-	@Inject
-	@WithAttributes(label = "Model Name", required = true, description = "Name of the model type")
-	private UIInput<String> modelName;
+public class ViewModelCommand extends AbstractMapperCommand {
+    public static final String NAME = "view-model";
+    public static final String DESCRIPTION = "View the model for a Java class.";
 
-	@Override
-	public void initializeUI(UIBuilder builder) throws Exception {
-		builder.add(modelName);
-	}
+    @Inject
+    @WithAttributes(label = "Model Name", required = true, description = "Name of the model type")
+    private UIInput<String> modelName;
 
-	@Override
-	public Result execute(UIExecutionContext context) throws Exception {
-		Project project = getSelectedProject(context);
-		Model model = loadModel(project, modelName.getValue());
-	    UIOutput output = context.getUIContext().getProvider().getOutput();
-	    model.print(output.out());
-		return Results.success();
-	}
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
+        builder.add(modelName);
+    }
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    @Override
+    public Result execute(UIExecutionContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        Model model = loadModel(project, modelName.getValue());
+        UIOutput output = context.getUIContext().getProvider().getOutput();
+        model.print(output.out());
+        return Results.success();
+    }
 
-	@Override
-	public String getDescription() {
-		return DESCRIPTION;
-	}
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
 }

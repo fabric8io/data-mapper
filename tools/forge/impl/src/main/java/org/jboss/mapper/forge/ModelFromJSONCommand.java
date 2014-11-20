@@ -33,53 +33,53 @@ import org.jsonschema2pojo.SourceType;
 import com.sun.codemodel.JCodeModel;
 
 public class ModelFromJSONCommand extends AbstractMapperCommand {
-	
-	public static final String NAME = "model-from-json";
-	public static final String DESCRIPTION = "Generate a Java class model from a JSON message.";
-	
-	@Inject
-	@WithAttributes(label = "Message Path", required = true, description = "Path to JSON message in project")
-	UIInput<String> messagePath;
-	
-	@Inject
-	@WithAttributes(label = "Class Name", required = true, description = "Name used for the top-level generated class")
-	UIInput<String> className;
-	
-	@Inject
-	@WithAttributes(label = "Package Name", required = true, description = "Package name for generated model classes")
-	UIInput<String> packageName;
 
-	@Override
-	public void initializeUI(UIBuilder builder) throws Exception {
-		builder.add(messagePath).add(packageName).add(className);
-	}
+    public static final String NAME = "model-from-json";
+    public static final String DESCRIPTION = "Generate a Java class model from a JSON message.";
 
-	@Override
-	public Result execute(UIExecutionContext context) throws Exception {
-		Project project = getSelectedProject(context);
-		FileResource<?> schemaFile = getFile(project, messagePath.getValue());
-		URL jsonSchemaUrl = schemaFile.getUnderlyingResourceObject().toURI().toURL();
-		File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
+    @Inject
+    @WithAttributes(label = "Message Path", required = true, description = "Path to JSON message in project")
+    UIInput<String> messagePath;
 
-		JsonGenerationConfig config = new JsonGenerationConfig();
-		config.setSourceType(SourceType.JSON);
+    @Inject
+    @WithAttributes(label = "Class Name", required = true, description = "Name used for the top-level generated class")
+    UIInput<String> className;
+
+    @Inject
+    @WithAttributes(label = "Package Name", required = true, description = "Package name for generated model classes")
+    UIInput<String> packageName;
+
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
+        builder.add(messagePath).add(packageName).add(className);
+    }
+
+    @Override
+    public Result execute(UIExecutionContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        FileResource<?> schemaFile = getFile(project, messagePath.getValue());
+        URL jsonSchemaUrl = schemaFile.getUnderlyingResourceObject().toURI().toURL();
+        File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
+
+        JsonGenerationConfig config = new JsonGenerationConfig();
+        config.setSourceType(SourceType.JSON);
         JsonModelGenerator modelGen = new JsonModelGenerator(config);
-		
-		JCodeModel model = modelGen.generateFromSchema(
-				className.getValue(), packageName.getValue(), jsonSchemaUrl, targetPath);
-        
+
+        JCodeModel model = modelGen.generateFromSchema(
+                className.getValue(), packageName.getValue(), jsonSchemaUrl, targetPath);
+
         addGeneratedTypes(project, model);
-        
-		return Results.success("Model classes created for " + messagePath.getValue());
-	}
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+        return Results.success("Model classes created for " + messagePath.getValue());
+    }
 
-	@Override
-	public String getDescription() {
-		return DESCRIPTION;
-	}
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
 }

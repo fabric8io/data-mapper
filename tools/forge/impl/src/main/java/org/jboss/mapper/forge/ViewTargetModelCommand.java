@@ -21,36 +21,36 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.mapper.model.Model;
 
-public class ViewTargetModelCommand extends AbstractMapperCommand  {
-	public static final String NAME = "view-target-model";
-	public static final String DESCRIPTION = "View the target model for the current transformation";
-	
-	@Override
-	public void initializeUI(UIBuilder builder) throws Exception {
-		
-	}
+public class ViewTargetModelCommand extends AbstractMapperCommand {
+    public static final String NAME = "view-target-model";
+    public static final String DESCRIPTION = "View the target model for the current transformation";
 
-	@Override
-	public Result execute(UIExecutionContext context) throws Exception {
-		Project project = getSelectedProject(context);
-		Model model = getMapperContext(project).getTargetModel();
-		UIOutput output = context.getUIContext().getProvider().getOutput();
-		if (model != null) {
-		    model.print(output.out());
-		} else {
-			output.out().println("No active mapping in session");
-		}
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
 
-	    return Results.success();
-	}
+    }
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    @Override
+    public Result execute(UIExecutionContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        Model model = getMapperContext(project).getTargetModel();
+        UIOutput output = context.getUIContext().getProvider().getOutput();
+        if (model != null) {
+            model.print(output.out());
+        } else {
+            output.out().println("No active mapping in session");
+        }
 
-	@Override
-	public String getDescription() {
-		return DESCRIPTION;
-	}
+        return Results.success();
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
+    }
 }
