@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.jsonschema2pojo.DefaultGenerationConfig;
+import org.jsonschema2pojo.SourceType;
 
 /**
  * Used to override default model configuration behavior of JsonSchema2Pojo.
@@ -28,6 +29,7 @@ public class JsonGenerationConfig extends DefaultGenerationConfig {
     private boolean includeHashcodeAndEquals;
     private boolean includeToString;
     private boolean usePrimitives = true;
+    private SourceType sourceType = SourceType.JSONSCHEMA;
 
     @Override
     public Iterator<File> getSource() {
@@ -61,6 +63,16 @@ public class JsonGenerationConfig extends DefaultGenerationConfig {
 
     public JsonGenerationConfig setUsePrimitives(boolean usePrimitives) {
         this.usePrimitives = usePrimitives;
+        return this;
+    }
+    
+    @Override
+    public SourceType getSourceType() {
+        return sourceType;
+    }
+    
+    public JsonGenerationConfig setSourceType(SourceType sourceType) {
+        this.sourceType = sourceType;
         return this;
     }
 }
