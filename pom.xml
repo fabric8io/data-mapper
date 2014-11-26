@@ -7,6 +7,7 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
+    <module>camel/components/transform</module>
     <module>tools/core</module>
     <module>tools/forge</module>
     <module>tools/eclipse</module>
@@ -16,7 +17,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.target>1.7</maven.compiler.target>
     <!-- Dependency Versions -->
-    <version.camel>2.12.0</version.camel>
+    <version.camel>2.14.0</version.camel>
     <version.jaxb>2.2.6</version.jaxb>
     <version.jsonschema2pojo>0.4.5</version.jsonschema2pojo>
     <version.forge>2.12.1.Final</version.forge>
@@ -46,6 +47,31 @@
       <dependency>
         <groupId>org.apache.camel</groupId>
         <artifactId>camel-core</artifactId>
+        <version>${version.camel}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-test</artifactId>
+        <version>${version.camel}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-test-spring</artifactId>
+        <version>${version.camel}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-jaxb</artifactId>
+        <version>${version.camel}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-dozer</artifactId>
+        <version>${version.camel}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-jackson</artifactId>
         <version>${version.camel}</version>
       </dependency>
       <dependency>
