@@ -3,13 +3,14 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
+    <endpoint id="xml2json" uri="transform:xml2json?marshalId=myjson&amp;unmarshalId=myjaxb&amp;targetModel=example.xyz.XYZOrder"/>
     <dataFormats>
         <json library="Jackson" id="myjson"/>
-        <jaxb id="myjaxb" contextPath="example.abc"/>
+        <jaxb contextPath="example.abc" id="myjaxb"/>
     </dataFormats>
     <route>
         <from uri="direct:start"/>
-        <to uri="transform:xml2json?marshalId=myjson&amp;unmarshalId=myjaxb&amp;targetModel=example.xyz.XYZOrder"/>
+        <to ref="xml2json"/>
         <to uri="mock:result"/>
     </route>
 </camelContext>
