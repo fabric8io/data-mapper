@@ -11,6 +11,7 @@
     <packaging>pom</packaging>
     <properties>
         <tycho.version>0.21.0</tycho.version>
+        <version.jbtis.target-platform>4.1.5.Final</version.jbtis.target-platform>
     </properties>
     <build>
         <plugins>
@@ -25,11 +26,17 @@
                 <artifactId>target-platform-configuration</artifactId>
                 <version>${tycho.version}</version>
                 <configuration>
-                <!-- 
                     <resolver>p2</resolver>
-                    <ignoreTychoRepositories>true</ignoreTychoRepositories>
                     <pomDependencies>consider</pomDependencies>
-                -->
+                    <target>
+                        <artifact>
+                            <groupId>org.jboss.tools.integration-stack</groupId>
+                            <artifactId>target-platform</artifactId>
+                            <version>${version.jbtis.target-platform}</version>
+                            <type>target</type>
+                            <classifier>base</classifier>
+                        </artifact>
+                    </target>
                     <environments>
                         <environment>
                             <os>macosx</os>
@@ -66,45 +73,17 @@
             </plugin>
         </plugins>
     </build>
-    <!-- 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jboss.mapper.forge</groupId>
-                <artifactId>data-mapper-impl</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-     -->
+
     <repositories>
         <repository>
             <id>eclipse-kepler</id>
             <layout>p2</layout>
             <url>http://download.eclipse.org/releases/kepler</url>
         </repository>
-        <repository>
-            <id>jboss-public-repository-group</id>
-            <name>JBoss Public Maven Repository Group</name>
-            <url>http://repository.jboss.org/nexus/content/groups/public</url>
-            <layout>default</layout>
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>Maven Central Repository</name>
-            <url>http://repo1.maven.org/maven2</url>
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
     </repositories>
+
     <modules>
         <module>plugins</module>
     </modules>
+
 </project>

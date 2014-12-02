@@ -36,7 +36,7 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
-import org.jboss.mapper.forge.ConfigBuilder;
+import org.jboss.mapper.dozer.ConfigBuilder;
 
 /**
  * 

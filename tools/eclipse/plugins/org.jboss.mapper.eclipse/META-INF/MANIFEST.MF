@@ -11,3 +11,9 @@ Require-Bundle: org.eclipse.ui,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: %Bundle-Vendor
+Bundle-ClassPath: .,
+ lib/data-mapper-core.jar,
+ lib/camel-core.jar,
+ lib/jaxb-impl.jar,
+ lib/jaxb-xjc.jar,
+ lib/jsonschema2pojo-core.jar

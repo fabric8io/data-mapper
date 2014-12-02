@@ -34,12 +34,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
 import org.jboss.mapper.eclipse.DataBrowser.Listener;
-import org.jboss.mapper.forge.ConfigBuilder;
-import org.jboss.mapper.forge.Model;
-import org.jboss.mapper.forge.ModelBuilder;
+import org.jboss.mapper.model.Model;
+import org.jboss.mapper.model.ModelBuilder;
 
 class DataMapper extends Composite {
     

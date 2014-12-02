@@ -30,7 +30,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
-import org.jboss.mapper.forge.Model;
+import org.jboss.mapper.model.Model;
 
 class DataBrowser extends Composite {
     
