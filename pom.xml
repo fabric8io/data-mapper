@@ -7,7 +7,7 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
-    <module>camel/components/transform</module>
+    <module>camel/components/camel-transform</module>
     <module>tools/core</module>
     <module>tools/forge</module>
     <module>tools/eclipse</module>

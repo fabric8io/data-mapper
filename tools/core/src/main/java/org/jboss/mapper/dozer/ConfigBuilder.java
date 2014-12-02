@@ -152,7 +152,7 @@ public class ConfigBuilder {
         if (jaxbCtx == null) {
             try {
                 jaxbCtx = JAXBContext
-                        .newInstance("org.jboss.mapper.model.dozer.config");
+                        .newInstance("org.jboss.mapper.dozer.config");
             } catch (JAXBException jaxbEx) {
                 throw new RuntimeException(jaxbEx);
             }
