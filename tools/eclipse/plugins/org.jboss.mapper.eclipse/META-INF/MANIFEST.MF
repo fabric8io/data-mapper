@@ -12,8 +12,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: %Bundle-Vendor
 Bundle-ClassPath: .,
- lib/data-mapper-core.jar,
- lib/camel-core.jar,
- lib/jaxb-impl.jar,
- lib/jaxb-xjc.jar,
- lib/jsonschema2pojo-core.jar
+ target/lib/data-mapper-core.jar,
+ target/lib/camel-core.jar,
+ target/lib/jaxb-impl.jar,
+ target/lib/jaxb-xjc.jar,
+ target/lib/jsonschema2pojo-core.jar
