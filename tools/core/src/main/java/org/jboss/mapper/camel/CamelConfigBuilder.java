@@ -84,6 +84,15 @@ public class CamelConfigBuilder {
     public CamelContextFactoryBean getCamelContext() {
         return camelContext;
     }
+    
+    /**
+     * Returns the root element in the Spring application context which contains
+     * bean definitions as well as the Camel Context configuration.
+     * @return the <beans> element from the application context
+     */
+    public Element getConfiguration() {
+        return camelConfig;
+    }
 
     /**
      * Add a transformation to the Camel configuration.  This method adds all 

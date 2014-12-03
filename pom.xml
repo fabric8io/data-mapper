@@ -21,6 +21,7 @@
     <version.jaxb>2.2.6</version.jaxb>
     <version.jsonschema2pojo>0.4.5</version.jsonschema2pojo>
     <version.forge>2.12.1.Final</version.forge>
+    <version.xmlunit>1.5</version.xmlunit>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -122,6 +123,16 @@
         <groupId>org.jsonschema2pojo</groupId>
         <artifactId>jsonschema2pojo-core</artifactId>
         <version>${version.jsonschema2pojo}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.2</version>
+      </dependency>
+      <dependency>
+        <groupId>xmlunit</groupId>
+        <artifactId>xmlunit</artifactId>
+        <version>${version.xmlunit}</version>
       </dependency>
 
       <!--  Internal Dependencies -->
