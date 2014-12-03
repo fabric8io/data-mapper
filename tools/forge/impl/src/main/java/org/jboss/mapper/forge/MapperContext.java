@@ -21,10 +21,6 @@ import org.jboss.mapper.model.Model;
 
 public class MapperContext {
 
-    public static final String XML_TYPE = "XML";
-    public static final String JAVA_TYPE = "Java";
-    public static final String JSON_TYPE = "JSON";
-
     private Model sourceModel;
     private Model targetModel;
     private ConfigBuilder config;

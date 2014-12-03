@@ -43,7 +43,8 @@ import com.sun.codemodel.JPackage;
 
 public abstract class AbstractMapperCommand extends AbstractProjectCommand {
 
-    private static final String DEFAULT_DOZER_PATH = "dozerBeanMapping.xml";
+    public static final String CAMEL_CTX_PATH = "META-INF/spring/camel-context.xml";
+    public static final String DEFAULT_DOZER_PATH = "dozerBeanMapping.xml";
     private static final String MAPPER_CATEGORY = "Data Mapper";
     private static final String MAP_CONTEXT_ATTR = "mapper.context";
 

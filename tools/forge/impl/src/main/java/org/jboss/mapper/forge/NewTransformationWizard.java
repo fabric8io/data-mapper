@@ -13,9 +13,9 @@
  */
 package org.jboss.mapper.forge;
 
-import static org.jboss.mapper.forge.MapperContext.JAVA_TYPE;
-import static org.jboss.mapper.forge.MapperContext.JSON_TYPE;
-import static org.jboss.mapper.forge.MapperContext.XML_TYPE;
+import static org.jboss.mapper.TransformType.JAVA;
+import static org.jboss.mapper.TransformType.XML;
+import static org.jboss.mapper.TransformType.JSON;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +41,7 @@ public class NewTransformationWizard extends AbstractMapperCommand implements UI
     public static final String DESCRIPTION = "Create a new data transformation";
 
     private static List<String> TYPES = Arrays.asList(
-            new String[] { XML_TYPE, JAVA_TYPE, JSON_TYPE });
+            new String[] { XML.toString(), JAVA.toString(), JSON.toString() });
 
     @Inject
     @WithAttributes(label = "Source Type",
