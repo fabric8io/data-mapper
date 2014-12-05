@@ -16,6 +16,11 @@ package org.jboss.mapper.model.xml;
 import java.io.File;
 import java.io.FileInputStream;
 
+import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
+import org.apache.xmlbeans.impl.inst2xsd.Inst2Xsd;
+import org.apache.xmlbeans.impl.inst2xsd.Inst2XsdOptions;
+import org.apache.xmlbeans.impl.xb.xsdschema.SchemaDocument;
 import org.xml.sax.InputSource;
 
 import com.sun.codemodel.JCodeModel;
@@ -35,6 +40,7 @@ public class XmlModelGenerator {
      * @param schemaFile file reference to the XML schema
      * @param packageName package name for generated model classes
      * @param targetPath directory where class source will be generated
+     * @return the generated code model
      * @throws Exception failure during model generation
      */
     public JCodeModel generateFromSchema(File schemaFile, String packageName,
@@ -53,5 +59,29 @@ public class XmlModelGenerator {
         jcm.build(targetPath);
 
         return jcm;
+    }
+    
+    /**
+     * Generates Java classes in targetPath directory given an XML instance 
+     * document.  This method generates a schema at the path specified by 
+     * schemaFile and then calls generateFromSchema to generate Java classes.
+     * @param instanceFile file containing xml instance document
+     * @param schemaFile a file reference where the schema should be generated
+     * @param packageName package name for generated model classes
+     * @param targetPath directory where class source will be generated
+     * @return the generated code model
+     * @throws Exception failure during model generation
+     */
+    public JCodeModel generateFromInstance(File instanceFile, File schemaFile,
+            String packageName, File targetPath) throws Exception {
+        // Step 1 - generate schema from instance doc
+        Inst2XsdOptions options = new Inst2XsdOptions();
+        options.setDesign(Inst2XsdOptions.DESIGN_RUSSIAN_DOLL);
+        XmlObject[] xml = new XmlObject[] {XmlObject.Factory.parse(instanceFile)};
+        SchemaDocument[] schemaDocs = Inst2Xsd.inst2xsd(xml, options);
+        schemaDocs[0].save(schemaFile, new XmlOptions().setSavePrettyPrint());
+        
+        // Step 2 - call generateFromSchema with generated schema
+        return generateFromSchema(schemaFile, packageName, targetPath);
     }
 }

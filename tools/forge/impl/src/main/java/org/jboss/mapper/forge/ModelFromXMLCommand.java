@@ -14,7 +14,6 @@
 package org.jboss.mapper.forge;
 
 import java.io.File;
-import java.net.URL;
 
 import javax.inject.Inject;
 
@@ -25,22 +24,20 @@ import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jboss.mapper.model.json.JsonModelGenerator;
+import org.jboss.mapper.model.xml.XmlModelGenerator;
 
 import com.sun.codemodel.JCodeModel;
 
-public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
+public class ModelFromXMLCommand extends AbstractMapperCommand {
 
-    public static final String NAME = "model-from-json-schema";
-    public static final String DESCRIPTION = "Generate a Java class model from JSON Schema.";
+    public static final String NAME = "model-from-xml";
+    public static final String DESCRIPTION = "Generate a Java class model from an XML instance document.";
 
+    private static final String XSD_EXT = ".xsd";
+    
     @Inject
-    @WithAttributes(label = "Schema Path", required = true, description = "Path to JSON schema in project")
-    UIInput<String> schemaPath;
-
-    @Inject
-    @WithAttributes(label = "Class Name", required = true, description = "Name used for the top-level generated class")
-    UIInput<String> className;
+    @WithAttributes(label = "Instance Path", required = true, description = "Path to instance document in project")
+    UIInput<String> instancePath;
 
     @Inject
     @WithAttributes(label = "Package Name", required = true, description = "Package name for generated model classes")
@@ -48,24 +45,25 @@ public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        builder.add(schemaPath).add(packageName).add(className);
+        builder.add(instancePath).add(packageName);
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        File schemaFile = getFile(project, schemaPath.getValue());
-        URL jsonSchemaUrl = schemaFile.toURI().toURL();
-        File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
+        File instanceFile = getFile(project, instancePath.getValue());
+        File schemaFile = new File(
+                instanceFile.getParentFile(), instanceFile.getName() + XSD_EXT);
+        File targetPath = new File(
+                project.getRoot().getChild("src/main/java").getFullyQualifiedName());
 
-        JsonModelGenerator modelGen = new JsonModelGenerator();
-
-        JCodeModel model = modelGen.generateFromSchema(
-                className.getValue(), packageName.getValue(), jsonSchemaUrl, targetPath);
+        XmlModelGenerator xmlGen = new XmlModelGenerator();
+        JCodeModel model = xmlGen.generateFromInstance(
+                instanceFile,
+                schemaFile, packageName.getValue(), targetPath);
 
         addGeneratedTypes(project, model);
-
-        return Results.success("Model classes created for " + schemaPath.getValue());
+        return Results.success("Model classes created for " + instancePath.getValue());
     }
 
     @Override
@@ -77,4 +75,5 @@ public class ModelFromJSONSchemaCommand extends AbstractMapperCommand {
     public String getDescription() {
         return DESCRIPTION;
     }
+
 }

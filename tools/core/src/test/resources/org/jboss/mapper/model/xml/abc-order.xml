@@ -10,9 +10,5 @@
             <price>2.25</price>
             <quantity>1000</quantity>
         </item>
-        <item id="BANANA">
-            <price>1.25</price>
-            <quantity>400</quantity>
-        </item>
     </order-items>
 </ABCOrder>

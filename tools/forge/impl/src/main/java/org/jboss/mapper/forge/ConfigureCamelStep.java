@@ -1,5 +1,7 @@
 package org.jboss.mapper.forge;
 
+import java.io.FileOutputStream;
+
 import javax.inject.Inject;
 
 import org.jboss.forge.addon.projects.Project;
@@ -34,7 +36,7 @@ public class ConfigureCamelStep extends AbstractMapperCommand implements UIWizar
         Project project = getSelectedProject(context);
         MapperContext mapCtx = getMapperContext(project);
         CamelConfigBuilder camelConfig = CamelConfigBuilder.loadConfig(
-                getFile(project, CAMEL_CTX_PATH).getUnderlyingResourceObject());
+                getFile(project, CAMEL_CTX_PATH));
         
         camelConfig.addTransformation(mapCtx.getTransformId(), 
                 TransformType.valueOf(mapCtx.getSourceType()), 
@@ -42,7 +44,9 @@ public class ConfigureCamelStep extends AbstractMapperCommand implements UIWizar
                 TransformType.valueOf(mapCtx.getTargetType()),
                 mapCtx.getTargetModel().getType());
         
-        camelConfig.saveConfig(getFile(project, CAMEL_CTX_PATH).getResourceOutputStream());
+        FileOutputStream fos = new FileOutputStream(getFile(project, CAMEL_CTX_PATH));
+        camelConfig.saveConfig(fos);
+        fos.close();
         return Results.success();
     }
 

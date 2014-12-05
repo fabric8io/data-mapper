@@ -19,7 +19,6 @@ import java.net.URL;
 import javax.inject.Inject;
 
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UIInput;
@@ -57,8 +56,8 @@ public class ModelFromJSONCommand extends AbstractMapperCommand {
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        FileResource<?> schemaFile = getFile(project, messagePath.getValue());
-        URL jsonSchemaUrl = schemaFile.getUnderlyingResourceObject().toURI().toURL();
+        File messageFile = getFile(project, messagePath.getValue());
+        URL jsonUrl = messageFile.toURI().toURL();
         File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
 
         JsonGenerationConfig config = new JsonGenerationConfig();
@@ -66,7 +65,7 @@ public class ModelFromJSONCommand extends AbstractMapperCommand {
         JsonModelGenerator modelGen = new JsonModelGenerator(config);
 
         JCodeModel model = modelGen.generateFromSchema(
-                className.getValue(), packageName.getValue(), jsonSchemaUrl, targetPath);
+                className.getValue(), packageName.getValue(), jsonUrl, targetPath);
 
         addGeneratedTypes(project, model);
 

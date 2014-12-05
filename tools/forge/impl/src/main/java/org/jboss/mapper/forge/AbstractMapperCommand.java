@@ -14,6 +14,7 @@
 package org.jboss.mapper.forge;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Iterator;
@@ -27,7 +28,6 @@ import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.DirectoryResource;
-import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
@@ -81,8 +81,7 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand {
     protected ConfigBuilder loadConfig(Project project) throws Exception {
         ConfigBuilder config;
         if (getFile(project, DEFAULT_DOZER_PATH).exists()) {
-            config = ConfigBuilder.loadConfig(
-                    getFile(project, DEFAULT_DOZER_PATH).getUnderlyingResourceObject());
+            config = ConfigBuilder.loadConfig(getFile(project, DEFAULT_DOZER_PATH));
         } else {
             config = ConfigBuilder.newConfig();
         }
@@ -91,13 +90,24 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand {
     }
 
     protected void saveConfig(Project project) throws Exception {
-        getMapperContext(project).getConfig().saveConfig(
-                getFile(project, DEFAULT_DOZER_PATH).getResourceOutputStream());
+        FileOutputStream fos = new FileOutputStream(getFile(project, DEFAULT_DOZER_PATH));
+        getMapperContext(project).getConfig().saveConfig(fos);
+        fos.close();
     }
 
-    protected FileResource<?> getFile(Project project, String path) {
+    protected File getFile(Project project, String path) {
         DirectoryResource root = project.getFacet(ResourcesFacet.class).getResourceDirectory();
-        return root.getChildOfType(FileResource.class, path);
+        File rootDir = root.getUnderlyingResourceObject();
+        // look in src/main/resources first
+        File resourceFile = new File(rootDir, path);
+        if (!resourceFile.exists()) {
+            // try src/data
+            File dataFile = new File(rootDir, "../../data/" + path);
+            if (dataFile.exists()) {
+                resourceFile = dataFile;
+            }
+        }
+        return resourceFile;
     }
 
     protected Model loadModel(Project project, String className) throws Exception {

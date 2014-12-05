@@ -18,7 +18,6 @@ import java.io.File;
 import javax.inject.Inject;
 
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UIInput;
@@ -50,12 +49,12 @@ public class ModelFromXSDCommand extends AbstractMapperCommand {
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        FileResource<?> schemaFile = getFile(project, schemaPath.getValue());
+        File schemaFile = getFile(project, schemaPath.getValue());
         File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
 
         XmlModelGenerator xmlGen = new XmlModelGenerator();
         JCodeModel model = xmlGen.generateFromSchema(
-                schemaFile.getUnderlyingResourceObject(), packageName.getValue(), targetPath);
+                schemaFile, packageName.getValue(), targetPath);
 
         addGeneratedTypes(project, model);
         return Results.success("Model classes created for " + schemaPath.getValue());
