@@ -1,7 +1,8 @@
 package org.jboss.mapper.eclipse;
 
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
@@ -20,12 +21,22 @@ public class Activator extends AbstractUIPlugin {
      */
     public static void error( final Shell shell,
                               final Throwable e ) {
-        // jpav: remove
-        System.out.println( e.getMessage() );
-        MessageDialog.openError( shell, "Error", e.getMessage() );
-        Activator.plugin().getLog().log( new Status( Status.ERROR,
-                                                     Activator.plugin().getBundle().getSymbolicName(),
-                                                     e.getMessage() == null ? e.getClass().getName() : e.getMessage() ) );
+        final Status status = new Status( Status.ERROR, plugin.getBundle().getSymbolicName(), "Unexpected error", e );
+        ErrorDialog.openError( shell, "Error", status.getMessage(), status );
+        plugin.getLog().log( status );
+    }
+    
+    /**
+     * @param name
+     * @return the image with the supplied name
+     */
+    public static ImageDescriptor imageDescriptor( final String name ) {
+        final String key = plugin.getBundle().getSymbolicName() + "." + name;
+        ImageDescriptor img = plugin.getImageRegistry().getDescriptor( key );
+        if ( img != null ) return img;
+        img = ImageDescriptor.createFromURL( plugin.getBundle().getEntry( "icons/" + name ) );
+        plugin.getImageRegistry().put( key, img );
+        return img;
     }
     
     /**

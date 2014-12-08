@@ -16,4 +16,8 @@ Bundle-ClassPath: .,
  target/lib/camel-core.jar,
  target/lib/jaxb-impl.jar,
  target/lib/jaxb-xjc.jar,
- target/lib/jsonschema2pojo-core.jar
+ target/lib/jsonschema2pojo-core.jar,
+ target/lib/jackson-annotations.jar,
+ target/lib/jackson-core.jar,
+ target/lib/jackson-databind.jar,
+ target/lib/commons-lang3.jar

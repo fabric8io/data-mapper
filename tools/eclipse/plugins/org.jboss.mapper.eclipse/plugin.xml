@@ -3,11 +3,27 @@
 <plugin>
    <extension
          point="org.eclipse.ui.newWizards">
+      <category
+            id="org.jboss.mapper.eclipse.category"
+            name="%category.name">
+      </category>
       <wizard
-            class="org.jboss.mapper.eclipse.DataMapperWizard"
-            id="org.jboss.datamapper.eclipse.DataMapperWizard"
-            name="%wizard.name">
+            category="org.jboss.mapper.eclipse.category"
+            class="org.jboss.mapper.eclipse.DataMappingFromModelsWizard"
+            icon="icons/transform16.png"
+            id="org.jboss.mapper.eclipse.fromModelsWizard"
+            name="%fromModelsWizard.name">
       </wizard>
+      <wizard
+            category="org.jboss.mapper.eclipse.category"
+            class="org.jboss.mapper.eclipse.DataMappingFromSchemasWizard"
+            icon="icons/transform16.png"
+            id="org.jboss.mapper.eclipse.fromSchemasWizard"
+            name="%fromSchemasWizard.name">
+      </wizard>
+      <primaryWizard
+            id="org.jboss.mapper.eclipse.fromSchemasWizard">
+      </primaryWizard>
    </extension>
    <extension
          point="org.eclipse.core.contenttype.contentTypes">
@@ -27,6 +43,7 @@
             contributorClass="org.jboss.mapper.eclipse.DataMapperEditorContributor"
             default="false"
             extensions="xml"
+            icon="icons/transform16.png"
             id="org.jboss.mapper.eclipse.datamappereditor"
             name="%editor.name">
          <contentTypeBinding

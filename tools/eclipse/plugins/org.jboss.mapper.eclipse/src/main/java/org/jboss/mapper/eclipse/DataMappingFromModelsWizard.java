@@ -41,23 +41,24 @@ import org.jboss.mapper.dozer.ConfigBuilder;
 /**
  * 
  */
-public class DataMapperWizard extends Wizard implements INewWizard {
+public class DataMappingFromModelsWizard extends Wizard implements INewWizard {
     
     static final String DEFAULT_DOZER_CONFIG_FILE_NAME = "dozerBeanMapping.xml";
     
     IProject project;
-    IFile configFile;
-    Text sourceModelText, targetModelText;
+    IFile dozerConfigFile;
+    Text sourceFileText, targetFileText;
+    Button sourceFileButton, targetFileButton;
     
     /**
      * 
      */
-    public DataMapperWizard() {
+    public DataMappingFromModelsWizard() {
         addPage( constructMainPage() );
     }
     
     private IWizardPage constructMainPage() {
-        return new WizardPage( "New Data Mapping", "New Data Mapping", null ) {
+        return new WizardPage( "New Data Mapping", "New Data Mapping", Activator.imageDescriptor( "transform.png" ) ) {
             
             Text nameText;
             
@@ -115,33 +116,33 @@ public class DataMapperWizard extends Wizard implements INewWizard {
                 label = new Label( page, SWT.NONE );
                 label.setText( "Source Model:" );
                 label.setToolTipText( "The Java class representing the source model." );
-                sourceModelText = new Text( page, SWT.BORDER );
-                sourceModelText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER )
-                                                              .create() );
-                Button button = new Button( page, SWT.NONE );
-                button.setText( "..." );
-                button.addSelectionListener( new SelectionAdapter() {
+                sourceFileText = new Text( page, SWT.BORDER );
+                sourceFileText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER )
+                                                             .create() );
+                sourceFileButton = new Button( page, SWT.NONE );
+                sourceFileButton.setText( "..." );
+                sourceFileButton.addSelectionListener( new SelectionAdapter() {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         final String name = DataBrowser.selectModel( getShell(), project, null, "Source" );
-                        if ( name != null ) sourceModelText.setText( name );
+                        if ( name != null ) sourceFileText.setText( name );
                     }
                 } );
                 label = new Label( page, SWT.NONE );
                 label.setText( "Target Model:" );
                 label.setToolTipText( "The Java class representing the target model." );
-                targetModelText = new Text( page, SWT.BORDER );
-                targetModelText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER )
-                                                              .create() );
-                button = new Button( page, SWT.NONE );
-                button.setText( "..." );
-                button.addSelectionListener( new SelectionAdapter() {
+                targetFileText = new Text( page, SWT.BORDER );
+                targetFileText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER )
+                                                             .create() );
+                targetFileButton = new Button( page, SWT.NONE );
+                targetFileButton.setText( "..." );
+                targetFileButton.addSelectionListener( new SelectionAdapter() {
                     
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         final String name = DataBrowser.selectModel( getShell(), project, null, "Target" );
-                        if ( name != null ) targetModelText.setText( name );
+                        if ( name != null ) targetFileText.setText( name );
                     }
                 } );
                 page.addPaintListener( new PaintListener() {
@@ -157,14 +158,27 @@ public class DataMapperWizard extends Wizard implements INewWizard {
             }
             
             void validatePage() {
-                String path = nameText.getText();
-                if ( project == null || path.isEmpty() ) {
-                    configFile = null;
+                if ( project != null ) {
+                    sourceFileButton.setEnabled( true );
+                    targetFileButton.setEnabled( true );
+                    String path = nameText.getText();
+                    if ( path.isEmpty() ) dozerConfigFile = null;
+                    else {
+                        if ( !path.toLowerCase().endsWith( ".xml" ) ) path = path + ".xml";
+                        dozerConfigFile = project.getFile( "src/main/resources/" + path );
+                        final String sourceFileName = sourceFileText.getText().trim();
+                        final String targetFileName = targetFileText.getText().trim();
+                        if ( ( sourceFileName.isEmpty() && targetFileName.isEmpty() ) ||
+                             ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) ) {
+                            setPageComplete( true );
+                            return;
+                        }
+                    }
                 } else {
-                    if ( !path.endsWith( ".xml" ) ) path = path + ".xml";
-                    configFile = project.getFile( "src/main/resources/" + path );
+                    sourceFileButton.setEnabled( false );
+                    targetFileButton.setEnabled( false );
                 }
-                setPageComplete( project != null && configFile != null );
+                setPageComplete( false );
             }
         };
     }
@@ -183,7 +197,7 @@ public class DataMapperWizard extends Wizard implements INewWizard {
             return;
         }
         project = ( ( IResource ) ( ( IAdaptable ) selection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
-        if ( project != null ) configFile = project.getFile( "src/main/resources/" + DEFAULT_DOZER_CONFIG_FILE_NAME );
+        if ( project != null ) dozerConfigFile = project.getFile( "src/main/resources/" + DEFAULT_DOZER_CONFIG_FILE_NAME );
     }
     
     /**
@@ -193,17 +207,17 @@ public class DataMapperWizard extends Wizard implements INewWizard {
      */
     @Override
     public boolean performFinish() {
-        if ( configFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) ) return false;
+        if ( dozerConfigFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) ) return false;
         final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
-        if ( !sourceModelText.getText().trim().isEmpty() && !targetModelText.getText().trim().isEmpty() )
-            configBuilder.addClassMapping( sourceModelText.getText().trim(), targetModelText.getText().trim() );
-        try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
+        if ( !sourceFileText.getText().trim().isEmpty() && !targetFileText.getText().trim().isEmpty() )
+            configBuilder.addClassMapping( sourceFileText.getText().trim(), targetFileText.getText().trim() );
+        try ( FileOutputStream stream = new FileOutputStream( new File( dozerConfigFile.getLocationURI() ) ) ) {
             configBuilder.saveConfig( stream );
             project.refreshLocal( IProject.DEPTH_INFINITE, null );
             final IEditorDescriptor desc =
-                PlatformUI.getWorkbench().getEditorRegistry().getEditors( configFile.getName(),
+                PlatformUI.getWorkbench().getEditorRegistry().getEditors( dozerConfigFile.getName(),
                                                                           Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID ) )[ 0 ];
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( configFile ),
+            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( dozerConfigFile ),
                                                                                              desc.getId() );
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );

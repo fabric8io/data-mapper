@@ -18,11 +18,13 @@
     <maven.compiler.target>1.7</maven.compiler.target>
     <!-- Dependency Versions -->
     <version.camel>2.14.0</version.camel>
+    <version.fasterxml>2.2.0</version.fasterxml>
     <version.jaxb>2.2.6</version.jaxb>
     <version.jsonschema2pojo>0.4.5</version.jsonschema2pojo>
     <version.forge>2.12.1.Final</version.forge>
     <version.xmlbeans>2.6.0</version.xmlbeans>
     <version.xmlunit>1.5</version.xmlunit>
+    <version.commons>3.2.1</version.commons>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -140,6 +142,26 @@
         <artifactId>xmlunit</artifactId>
         <version>${version.xmlunit}</version>
       </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${version.fasterxml}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${version.fasterxml}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${version.fasterxml}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${version.commons}</version>
+      </dependency>
 
       <!--  Internal Dependencies -->
       <dependency>
@@ -179,17 +201,6 @@
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>Maven Central Repository</name>
-            <url>http://repo1.maven.org/maven2</url>
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
