@@ -25,9 +25,7 @@ import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jboss.mapper.model.json.JsonGenerationConfig;
 import org.jboss.mapper.model.json.JsonModelGenerator;
-import org.jsonschema2pojo.SourceType;
 
 import com.sun.codemodel.JCodeModel;
 
@@ -60,11 +58,8 @@ public class ModelFromJSONCommand extends AbstractMapperCommand {
         URL jsonUrl = messageFile.toURI().toURL();
         File targetPath = new File(project.getRoot().getChild("src/main/java").getFullyQualifiedName());
 
-        JsonGenerationConfig config = new JsonGenerationConfig();
-        config.setSourceType(SourceType.JSON);
-        JsonModelGenerator modelGen = new JsonModelGenerator(config);
-
-        JCodeModel model = modelGen.generateFromSchema(
+        JsonModelGenerator modelGen = new JsonModelGenerator();
+        JCodeModel model = modelGen.generateFromInstance(
                 className.getValue(), packageName.getValue(), jsonUrl, targetPath);
 
         addGeneratedTypes(project, model);

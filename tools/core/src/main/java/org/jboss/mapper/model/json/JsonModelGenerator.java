@@ -19,6 +19,7 @@ import java.net.URL;
 import org.jsonschema2pojo.Jackson2Annotator;
 import org.jsonschema2pojo.SchemaGenerator;
 import org.jsonschema2pojo.SchemaMapper;
+import org.jsonschema2pojo.SourceType;
 import org.jsonschema2pojo.rules.RuleFactory;
 
 import com.sun.codemodel.JCodeModel;
@@ -59,9 +60,31 @@ public class JsonModelGenerator {
     public JCodeModel generateFromSchema(String className, String packageName,
             URL schemaUrl, File targetPath) throws Exception {
         
+        return generate(className, packageName, schemaUrl, targetPath);
+    }
+    
+    /**
+     * Generates Java classes in targetPath directory given a JSON instance document.
+     * 
+     * @param className name of the top-level class used for the generated model
+     * @param packageName package name for generated model classes
+     * @param instanceUrl url for the JSON message containing instance data
+     * @param targetPath directory where class source will be generated
+     * @throws Exception failure during model generation
+     */
+    public JCodeModel generateFromInstance(String className, String packageName,
+            URL instanceUrl, File targetPath) throws Exception {
+        
+        config.setSourceType(SourceType.JSON);
+        return generate(className, packageName, instanceUrl, targetPath);
+    }
+    
+    private JCodeModel generate(String className, String packageName,
+            URL inputUrl, File targetPath) throws Exception {
+        
         SchemaMapper mapper = createSchemaMapper();
         JCodeModel codeModel = new JCodeModel();
-        mapper.generate(codeModel, className, packageName, schemaUrl);
+        mapper.generate(codeModel, className, packageName, inputUrl);
         codeModel.build(targetPath);
 
         return codeModel;
