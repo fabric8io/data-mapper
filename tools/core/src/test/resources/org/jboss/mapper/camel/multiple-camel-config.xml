@@ -3,9 +3,12 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:java2xml?sourceModel=source.Input&amp;targetModel=target.Output&amp;marshalId=target" id="java2xml"/>
+    <endpoint uri="transform:xml2json?sourceModel=xml.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=xml" id="xml2json"/>
+    <endpoint uri="transform:xml2json2?sourceModel=org.foo.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=orgfoo" id="xml2json2"/>
     <dataFormats>
-        <jaxb contextPath="target" id="target"/>
+        <jaxb contextPath="xml" id="xml"/>
+        <jaxb contextPath="org.foo" id="orgfoo"/>
+        <json library="Jackson" id="transform-json"/>
     </dataFormats>
     <route>
         <from uri="direct:begin"/>

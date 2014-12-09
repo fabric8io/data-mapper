@@ -14,6 +14,7 @@ import org.xml.sax.InputSource;
 public class CamelConfigBuilderTest {
 
     private static final String NEW_CONFIG = "new-camel-config.xml";
+    private static final String MULTI_CONFIG = "multiple-camel-config.xml";
     private static final String XML_JSON = "xml-to-json.xml";
     private static final String JAVA_XML = "java-to-xml.xml";
     private static final String JAVA_JAVA = "java-to-java.xml";
@@ -66,6 +67,17 @@ public class CamelConfigBuilderTest {
         Assert.assertEquals(1, config.getCamelContext().getEndpoint().size());
         Assert.assertEquals(2, config.getCamelContext().getDataFormats()
                 .getAvroOrBarcodeOrBase64().size());
+    }
+    
+    @Test
+    public void existingConfig() throws Exception {
+        // Add another transform endpoint to a config that already has one
+        Document multiDoc = loadDocument(MULTI_CONFIG);
+        CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(XML_JSON));
+        config.addTransformation("xml2json2", TransformType.XML, "org.foo.ABCOrder", 
+                TransformType.JSON, "json.XYZOrder");
+        XMLUnit.setIgnoreWhitespace(true);
+        XMLAssert.assertXMLEqual(multiDoc, config.getConfiguration().getOwnerDocument());
     }
     
     private Document loadDocument(String path) throws Exception {

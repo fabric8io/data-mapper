@@ -15,6 +15,7 @@ package org.jboss.mapper.camel;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -38,6 +39,7 @@ import org.jboss.mapper.camel.config.ObjectFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * CamelConfigBuilder provides read/write access to Camel configuration used 
@@ -110,20 +112,11 @@ public class CamelConfigBuilder {
             TransformType target, String targetClass) throws Exception {
         
         // All transformations, regardless of type, will use Dozer
-        addDozerBean(camelConfig);
+        configureDozer(camelConfig);
         
         // Add data formats
-        DataFormatsDefinition df = new DataFormatsDefinition();
         DataFormat unmarshaller = createDataFormat(source, sourceClass);
         DataFormat marshaller = createDataFormat(target, targetClass);
-        
-        if (unmarshaller != null) {
-            df.getAvroOrBarcodeOrBase64().add(unmarshaller);
-        }
-        if (marshaller != null) {
-            df.getAvroOrBarcodeOrBase64().add(marshaller);
-        }
-        camelContext.setDataFormats(df);
         
         // Create a transformation endpoint
         camelContext.getEndpoint().add(createTransformEndpoint(
@@ -150,7 +143,7 @@ public class CamelConfigBuilder {
     }
 
     private DataFormat createDataFormat(TransformType type, String className) throws Exception {
-        DataFormat dataFormat = null;
+        DataFormat dataFormat;
         
         switch (type) {
         case JSON :
@@ -159,6 +152,11 @@ public class CamelConfigBuilder {
         case XML :
             dataFormat = createJaxbDataFormat(getPackage(className));
             break;
+        case JAVA :
+            dataFormat = null;
+            break;
+        default :
+            throw new Exception("Unsupported data format type: " + type);
         }
         
         return dataFormat;
@@ -185,19 +183,52 @@ public class CamelConfigBuilder {
     }
 
     private DataFormat createJsonDataFormat() throws Exception {
-        final String id = "json";
-        JsonDataFormat jdf = new JsonDataFormat();
-        jdf.setLibrary(JsonLibrary.JACKSON);
-        jdf.setId(id);
-        return jdf;
+        final String id = "transform-json";
+        
+        DataFormat dataFormat = getDataFormat(id);
+        if (dataFormat == null) {
+            // Looks like we need to create a new one
+            JsonDataFormat jdf = new JsonDataFormat();
+            jdf.setLibrary(JsonLibrary.JACKSON);
+            jdf.setId(id);
+            getDataFormats().add(jdf);
+            dataFormat = jdf;
+        }
+        return dataFormat;
+    }
+    
+    private List<DataFormat> getDataFormats() {
+        DataFormatsDefinition dfd = camelContext.getDataFormats();
+        if (dfd == null) {
+            dfd = new DataFormatsDefinition();
+            camelContext.setDataFormats(dfd);
+        }
+        return dfd.getAvroOrBarcodeOrBase64();
+    }
+    
+    private DataFormat getDataFormat(String id) {
+        DataFormat dataFormat = null;
+        for (DataFormat df : getDataFormats()) {
+            if (id.equals(df.getId())) {
+                dataFormat = df;
+                break;
+            }
+        }
+        return dataFormat;
     }
     
     private DataFormat createJaxbDataFormat(String contextPath) throws Exception {
-        final String id = "jaxb";
-        JaxbDataFormat df = new JaxbDataFormat();
-        df.setContextPath(contextPath);
-        df.setId(id);
-        return df;
+        final String id = contextPath.replaceAll("\\.", "");
+        DataFormat dataFormat = getDataFormat(id);
+        
+        if (dataFormat == null) {
+            JaxbDataFormat df = new JaxbDataFormat();
+            df.setContextPath(contextPath);
+            df.setId(id);
+            getDataFormats().add(df);
+            dataFormat = df;
+        }
+        return dataFormat;
     }
 
     private String getPackage(String type) {
@@ -224,14 +255,27 @@ public class CamelConfigBuilder {
         return jaxbCtx;
     }
 
-    private void addDozerBean(Element parent) {
+    private void configureDozer(Element parent) {
+        final String DOZER_LOADER_ID = "dozerConverterLoader";
+        final String DOZER_LOADER_CLASS = "org.apache.camel.converter.dozer.DozerTypeConverterLoader";
+        final String DOZER_MAPPER_ID = "mapper";
+        final String DOZER_MAPPER_CLASS = "org.dozer.DozerBeanMapper";
+        
+        // Check to see if the dozerConverterLoader is already defined
+        NodeList beanList = parent.getElementsByTagNameNS(SPRING_NS, "bean");
+        for (int i = 0; i < beanList.getLength(); i++) {
+            Element beanEl = (Element)beanList.item(i);
+            if (DOZER_LOADER_ID.equals(beanEl.getAttribute("id"))) {
+                return;
+            }
+        }
         Element dozerLoader = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
-        dozerLoader.setAttribute("id", "dozerConverterLoader");
-        dozerLoader.setAttribute("class", "org.apache.camel.converter.dozer.DozerTypeConverterLoader");
+        dozerLoader.setAttribute("id", DOZER_LOADER_ID);
+        dozerLoader.setAttribute("class", DOZER_LOADER_CLASS);
 
         Element dozerMapper = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
-        dozerMapper.setAttribute("id", "mapper");
-        dozerMapper.setAttribute("class", "org.dozer.DozerBeanMapper");
+        dozerMapper.setAttribute("id", DOZER_MAPPER_ID);
+        dozerMapper.setAttribute("class", DOZER_MAPPER_CLASS);
         Element property = parent.getOwnerDocument().createElementNS(SPRING_NS, "property");
         property.setAttribute("name", "mappingFiles");
         dozerMapper.appendChild(property);
