@@ -1,3 +1,14 @@
+/******************************************************************************* 
+ * Copyright (c) 2014 Red Hat, Inc. 
+ *  All rights reserved. 
+ * This program is made available under the terms of the 
+ * Eclipse Public License v1.0 which accompanies this distribution, 
+ * and is available at http://www.eclipse.org/legal/epl-v10.html 
+ * 
+ * Contributors: 
+ * Red Hat, Inc. - initial API and implementation 
+ ******************************************************************************/
+
 package org.jboss.mapper.eclipse;
 
 import java.io.File;
@@ -41,7 +52,7 @@ import org.jboss.mapper.eclipse.DataBrowser.Listener;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
 
-class DataMapper extends Composite {
+public class DataMapper extends Composite {
     
     final IFile configFile;
     ConfigBuilder configBuilder;
@@ -115,6 +126,7 @@ class DataMapper extends Composite {
                     for ( final Mapping mapping : mappings ) {
                         for ( final Object field : mapping.getFieldOrFieldExclude() ) {
                             fields.add( field );
+                            viewer.setData(field.toString(), mapping);
                         }
                     }
                     return fields.toArray();
@@ -256,5 +268,25 @@ class DataMapper extends Composite {
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
         }
+    }
+
+    public boolean deleteFieldMapping(Field field) {
+        Mapping mapping = (Mapping) viewer.getData(field.toString());
+        boolean removed = mapping.getFieldOrFieldExclude().remove(field);
+        if (removed) {
+            try {
+                configBuilder.saveConfig( 
+                        new FileOutputStream( 
+                                new File( configFile.getLocationURI())));
+                configFile.getProject()
+                    .refreshLocal( IResource.DEPTH_INFINITE, null );
+                viewer.refresh();
+                System.out.println("Deleted field: " + field.toString());
+                return true;
+            } catch ( final Exception e ) {
+                Activator.error( getShell(), e );
+            }
+        }
+        return false;
     }
 }

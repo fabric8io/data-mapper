@@ -7,10 +7,15 @@ package org.jboss.mapper.eclipse;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.menus.IMenuService;
 import org.eclipse.ui.part.EditorPart;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.dozer.ConfigBuilder;
@@ -20,17 +25,30 @@ import org.jboss.mapper.dozer.ConfigBuilder;
  */
 public class DataMapperEditorMappingPage extends EditorPart {
     
-    ConfigBuilder configBuilder;
+    private ConfigBuilder configBuilder;
+    private DataMapper mapper;
     
     /**
      * {@inheritDoc}
      * 
      * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
      */
-    @SuppressWarnings( "unused" )
     @Override
     public void createPartControl( final Composite parent ) {
-        new DataMapper( parent, ( ( FileEditorInput ) getEditorInput() ).getFile() );
+        mapper = new DataMapper( parent, ( ( FileEditorInput ) getEditorInput() ).getFile() );
+
+        // Create a menu manager and create context menu
+        IWorkbench wb = PlatformUI.getWorkbench();
+        IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
+        IMenuService mSvc = (IMenuService) win.getService(IMenuService.class);
+        MenuManager mgr = new MenuManager();
+        mSvc.populateContributionManager(mgr, "popup:" + IDataMapperConstants.DM_VIEWER_POPUPMENU);
+        mapper.viewer.getTable().setMenu(mgr.createContextMenu(mapper.viewer.getTable()));
+        getSite().setSelectionProvider(mapper.viewer);
+    }
+    
+    public DataMapper getMapper() {
+        return mapper;
     }
     
     /**

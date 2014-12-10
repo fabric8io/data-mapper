@@ -45,4 +45,69 @@
          </contentTypeBinding>
       </editor>
    </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.jboss.mapper.eclipse.handlers.DeleteMappingHandler"
+            commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+6">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="org.jboss.mapper.eclipse.menus.top"
+               label="Data Mapper"
+               mnemonic="D">
+            <command
+                  commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
+                  id="org.jboss.mapper.eclipse.menus.sampleCommand"
+                  mnemonic="S">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="org.jboss.mapper.eclipse.toolbars.editorToolbar">
+            <command
+                  commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
+                  icon="icons/sample.gif"
+                  id="org.jboss.mapper.eclipse.toolbars.deleteFieldMapping"
+                  tooltip="Delete Field Mapping">
+            </command>
+         </toolbar>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:dm_viewer_popupmenu">
+         <command
+               commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
+               label="Delete Field Mapping"
+               style="push">
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="org.jboss.mapper.eclipse.commands.category"
+            name="Data Mapper Commands Category">
+      </category>
+      <command
+            categoryId="org.jboss.mapper.eclipse.commands.category"
+            id="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
+            name="Delete Field Mapping">
+      </command>
+   </extension>
 </plugin>
