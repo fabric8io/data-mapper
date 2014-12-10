@@ -46,6 +46,7 @@ import org.eclipse.ui.dialogs.ResourceSelectionDialog;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.TransformType;
 import org.jboss.mapper.camel.CamelConfigBuilder;
+import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
 import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.model.json.JsonModelGenerator;
 import org.jboss.mapper.model.xml.XmlModelGenerator;
@@ -81,10 +82,13 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     }
     
     IProject project;
+    Text idText;
     IFile dozerConfigFile;
     Text sourceFileText, targetFileText;
     Button sourceFileButton, targetFileButton;
     ComboViewer sourceTypeComboViewer, targetTypeComboViewer;
+    File camelConfigFile;
+    CamelConfigBuilder camelConfigBuilder;
     
     /**
      * 
@@ -96,7 +100,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     private IWizardPage constructMainPage() {
         return new WizardPage( "New Data Mapping", "New Data Mapping", Activator.imageDescriptor( "transform.png" ) ) {
             
-            Text nameText;
+            Text dozerConfigFileText;
             
             /**
              * {@inheritDoc}
@@ -105,8 +109,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
              */
             @Override
             public void createControl( final Composite parent ) {
-                setDescription( "Select the project and name for the the new mapping file.\n" +
-                                "Optionally, select the source and target schemas to be mapped." );
+                setDescription( "Supply the ID, project, and name for the the new mapping.\n" +
+                                "Optionally, supply the source and target files to be mapped." );
                 final Composite page = new Composite( parent, SWT.NONE );
                 setControl( page );
                 page.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
@@ -137,14 +141,28 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                         validatePage();
                     }
                 } );
+                // Create ID controls
+                label = new Label( page, SWT.NONE );
+                label.setText( "ID:" );
+                label.setToolTipText( "The transform ID that will be shown in the Fuse editor" );
+                idText = new Text( page, SWT.BORDER );
+                idText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
+                                                     .align( SWT.FILL, SWT.CENTER ).create() );
+                idText.addKeyListener( new KeyAdapter() {
+                    
+                    @Override
+                    public void keyReleased( final KeyEvent event ) {
+                        validatePage();
+                    }
+                } );
                 // Create Dozer config controls
                 label = new Label( page, SWT.NONE );
-                label.setText( "Name:" );
-                nameText = new Text( page, SWT.BORDER );
-                nameText.setText( DEFAULT_DOZER_CONFIG_FILE_NAME );
-                nameText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
-                                                       .align( SWT.FILL, SWT.CENTER ).create() );
-                nameText.addKeyListener( new KeyAdapter() {
+                label.setText( "File name:" );
+                dozerConfigFileText = new Text( page, SWT.BORDER );
+                dozerConfigFileText.setText( DEFAULT_DOZER_CONFIG_FILE_NAME );
+                dozerConfigFileText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
+                                                                  .align( SWT.FILL, SWT.CENTER ).create() );
+                dozerConfigFileText.addKeyListener( new KeyAdapter() {
                     
                     @Override
                     public void keyReleased( final KeyEvent event ) {
@@ -158,7 +176,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 sourceFileButton = new Button( group, SWT.NONE );
                 Label typeLabel = new Label( group, SWT.NONE );
                 sourceTypeComboViewer = new ComboViewer( new Combo( group, SWT.READ_ONLY ) );
-                createSchemaControls( group, fileLabel, "Source", sourceFileText, sourceFileButton, typeLabel, sourceTypeComboViewer );
+                createFileControls( group, fileLabel, "Source", sourceFileText, sourceFileButton, typeLabel, sourceTypeComboViewer );
                 // Create target controls
                 group = new Group( page, SWT.SHADOW_ETCHED_IN );
                 fileLabel = new Label( group, SWT.NONE );
@@ -166,36 +184,46 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 targetFileButton = new Button( group, SWT.NONE );
                 typeLabel = new Label( group, SWT.NONE );
                 targetTypeComboViewer = new ComboViewer( new Combo( group, SWT.READ_ONLY ) );
-                createSchemaControls( group, fileLabel, "Target", targetFileText, targetFileButton, typeLabel, targetTypeComboViewer );
-                
+                createFileControls( group, fileLabel, "Target", targetFileText, targetFileButton, typeLabel, targetTypeComboViewer );
+                // Set focus to appropriate control
                 page.addPaintListener( new PaintListener() {
                     
                     @Override
                     public void paintControl( final PaintEvent event ) {
                         if ( project == null ) projectViewer.getCombo().setFocus();
-                        else nameText.setFocus();
+                        else idText.setFocus();
                         page.removePaintListener( this );
                     }
                 } );
-                validatePage();
+                
+                sourceFileButton.setEnabled( false );
+                targetFileButton.setEnabled( false );
+                setPageComplete( false );
             }
             
-            void createSchemaControls( final Group group,
-                                       final Label fileLabel,
-                                       final String schemaType,
-                                       final Text fileText,
-                                       final Button fileButton,
-                                       final Label typeLabel,
-                                       final ComboViewer typeComboViewer ) {
+            void createFileControls( final Group group,
+                                     final Label fileLabel,
+                                     final String schemaType,
+                                     final Text fileText,
+                                     final Button fileButton,
+                                     final Label typeLabel,
+                                     final ComboViewer typeComboViewer ) {
                 group.setLayoutData( GridDataFactory.swtDefaults()
                                                     .grab( true, false )
                                                     .span( 3, 1 )
                                                     .align( SWT.FILL, SWT.CENTER )
                                                     .create() );
                 group.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-                group.setText( schemaType + " Schema" );
-                fileLabel.setText( "File:" );
+                group.setText( schemaType + " File" );
+                fileLabel.setText( "Name:" );
                 fileText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER ).create() );
+                fileText.addKeyListener( new KeyAdapter() {
+                    
+                    @Override
+                    public void keyReleased( final KeyEvent event ) {
+                        validatePage();
+                    }
+                } );
                 fileButton.setText( "..." );
                 typeLabel.setText( "Type:" );
                 typeComboViewer.getCombo().setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false ).create() );
@@ -214,22 +242,24 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                         final String name = selectSchema( getShell(), project, schemaType );
                         if ( name != null ) {
                             fileText.setText( name );
-                            final String ext = name.substring( name.lastIndexOf( '.' ) + 1 ).toLowerCase();
-                            switch ( ext ) {
-                                case "java":
-                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.JAVA ) );
-                                    break;
-                                case "json":
-                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.JSON ) );
-                                    break;
-                                case "xml":
-                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.XML ) );
-                                    break;
-                                case "xsd":
-                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.XSD ) );
-                                    break;
-                                default:
-                                    break;
+                            if ( typeComboViewer.getSelection().isEmpty() ) {
+                                final String ext = name.substring( name.lastIndexOf( '.' ) + 1 ).toLowerCase();
+                                switch ( ext ) {
+                                    case "java":
+                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.JAVA ) );
+                                        break;
+                                    case "json":
+                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.JSON ) );
+                                        break;
+                                    case "xml":
+                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.XML ) );
+                                        break;
+                                    case "xsd":
+                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.XSD ) );
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
                         validatePage();
@@ -238,31 +268,64 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             }
             
             void validatePage() {
-                if ( project != null ) {
-                    sourceFileButton.setEnabled( true );
-                    targetFileButton.setEnabled( true );
-                    String path = nameText.getText();
-                    if ( path.isEmpty() ) dozerConfigFile = null;
-                    else {
-                        if ( !path.toLowerCase().endsWith( ".xml" ) ) path = path + ".xml";
-                        dozerConfigFile = project.getFile( RESOURCES_PATH + path );
-                        final String sourceFileName = sourceFileText.getText().trim();
-                        final String targetFileName = targetFileText.getText().trim();
-                        if ( sourceFileName.isEmpty() && targetFileName.isEmpty() ) {
-                            setPageComplete( true );
-                            return;
-                        }
-                        if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
-                            setPageComplete( !sourceTypeComboViewer.getSelection().isEmpty()
-                                             && !targetTypeComboViewer.getSelection().isEmpty() );
+                setErrorMessage( null );
+                setPageComplete( false );
+                if ( project == null ) {
+                    sourceFileButton.setEnabled( false );
+                    targetFileButton.setEnabled( false );
+                    setErrorMessage( "A project must be selected" );
+                    return;
+                }
+                sourceFileButton.setEnabled( true );
+                targetFileButton.setEnabled( true );
+                final String id = idText.getText().trim();
+                if ( id.isEmpty() ) {
+                    setErrorMessage( "A mapping ID must be supplied" );
+                    return;
+                }
+                final StringCharacterIterator iter = new StringCharacterIterator( id );
+                for ( char chr = iter.first(); chr != StringCharacterIterator.DONE; chr = iter.next() ) {
+                    if ( !Character.isUnicodeIdentifierPart( chr ) ) {
+                        setErrorMessage( "The mapping ID contains an illegal character" );
+                        return;
+                    }
+                }
+                camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
+                try {
+                    camelConfigBuilder = CamelConfigBuilder.loadConfig( camelConfigFile );
+                    for ( final CamelEndpointFactoryBean bean : camelConfigBuilder.getCamelContext().getEndpoint() ) {
+                        if ( id.equalsIgnoreCase( bean.getId() ) ) {
+                            setErrorMessage( "A mapping with the supplied ID already exists" );
                             return;
                         }
                     }
-                } else {
-                    sourceFileButton.setEnabled( false );
-                    targetFileButton.setEnabled( false );
+                } catch ( final Exception e ) {
+                    Activator.error( getShell(), e );
                 }
-                setPageComplete( false );
+                String path = dozerConfigFileText.getText();
+                if ( path.isEmpty() ) {
+                    dozerConfigFile = null;
+                    setErrorMessage( "The name of the mapping file must be supplied" );
+                    return;
+                }
+                if ( !path.toLowerCase().endsWith( ".xml" ) ) path = path + ".xml";
+                dozerConfigFile = project.getFile( RESOURCES_PATH + path );
+                final String sourceFileName = sourceFileText.getText().trim();
+                final String targetFileName = targetFileText.getText().trim();
+                if ( sourceFileName.isEmpty() && targetFileName.isEmpty() ) {
+                    setPageComplete( true );
+                    return;
+                }
+                if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
+                    if ( sourceTypeComboViewer.getSelection().isEmpty()
+                         || targetTypeComboViewer.getSelection().isEmpty() ) {
+                        setErrorMessage( "The types for both source and target files must be selected" );
+                        return;
+                    }
+                    setPageComplete( true );
+                    return;
+                }
+                setErrorMessage( "Source and target files must be selected in conjunction with each other" );
             }
         };
     }
@@ -309,13 +372,14 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             pkgName = className.toString() + sequencer++;
         }
         // Generate model
+        final File targetClassesFolder = new File( project.getFolder( JAVA_PATH ).getLocationURI() );
         switch ( type ) {
             case JSON: {
                 final JsonModelGenerator generator = new JsonModelGenerator();
                 generator.generateFromInstance( className.toString(),
                                                 pkgName,
                                                 project.findMember( fileName ).getLocationURI().toURL(),
-                                                new File( project.getFolder( JAVA_PATH ).getLocationURI() ) );
+                                                targetClassesFolder );
                 return pkgName + "." + className;
             }
             case JSON_SCHEMA: {
@@ -323,14 +387,14 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 generator.generateFromSchema( className.toString(),
                                               pkgName,
                                               project.findMember( fileName ).getLocationURI().toURL(),
-                                              new File( project.getFolder( JAVA_PATH ).getLocationURI() ) );
+                                              targetClassesFolder );
                 return pkgName + "." + className;
             }
             case XSD: {
                 final XmlModelGenerator generator = new XmlModelGenerator();
                 final JCodeModel model = generator.generateFromSchema( new File( project.findMember( fileName ).getLocationURI() ),
                                                                        pkgName,
-                                                                       new File( project.getFolder( JAVA_PATH ).getLocationURI() ) );
+                                                                       targetClassesFolder );
                 for ( final Iterator< JPackage > pkgIter = model.packages(); pkgIter.hasNext(); ) {
                     final JPackage pkg = pkgIter.next();
                     for ( final Iterator< JDefinedClass > classIter = pkg.classes(); classIter.hasNext(); ) {
@@ -370,9 +434,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
-                final File camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
-                final CamelConfigBuilder camelConfigBuilder = CamelConfigBuilder.loadConfig( camelConfigFile );
-                camelConfigBuilder.addTransformation( null,
+                camelConfigBuilder.addTransformation( idText.getText(),
                                                       sourceType.transformType, sourceClassName,
                                                       targetType.transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream = new FileOutputStream( camelConfigFile ) ) {
