@@ -13,6 +13,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -447,6 +448,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             }
             dozerConfigBuilder.saveConfig( dozerConfigStream );
             project.refreshLocal( IProject.DEPTH_INFINITE, null );
+            // Ensure build of Java classes has completed
+            Job.getJobManager().join( ResourcesPlugin.FAMILY_AUTO_BUILD, null );
             // Open mapping editor
             final IEditorDescriptor desc =
                 PlatformUI.getWorkbench().getEditorRegistry().getEditors( dozerConfigFile.getName(),
