@@ -15,6 +15,7 @@ package org.jboss.mapper.camel;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -52,7 +53,7 @@ public class CamelConfigBuilder {
 
     private static String SPRING_NS = "http://www.springframework.org/schema/beans";
     private static String CAMEL_NS = "http://camel.apache.org/schema/spring";
-    private static String CAMEL_JAXB_PATH = "org.jboss.mapper.camel.config";
+    private static String TRANSFORM_SCHEME = "transform";
     
     // JAXB classes for Camel config model
     private JAXBContext jaxbCtx;
@@ -141,6 +142,16 @@ public class CamelConfigBuilder {
         t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         t.transform(new DOMSource(camelConfig.getOwnerDocument()), new StreamResult(output));
     }
+    
+    public List<String> getTransformEndpointIds() {
+        List<String> endpointIds = new LinkedList<String>();
+        for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
+            if (ep.getUri().startsWith(TRANSFORM_SCHEME)) {
+                endpointIds.add(ep.getId());
+            }
+        }
+        return endpointIds;
+    }
 
     private DataFormat createDataFormat(TransformType type, String className) throws Exception {
         DataFormat dataFormat;
@@ -168,7 +179,7 @@ public class CamelConfigBuilder {
         
         CamelEndpointFactoryBean endpoint = new CamelEndpointFactoryBean();
         endpoint.setId(transformId);
-        StringBuffer uriBuf = new StringBuffer("transform:" + transformId + "?");
+        StringBuffer uriBuf = new StringBuffer(TRANSFORM_SCHEME + ":" + transformId + "?");
         uriBuf.append("sourceModel=" + sourceClass);
         uriBuf.append("&targetModel=" + targetClass);
         if (marshaller != null) {
