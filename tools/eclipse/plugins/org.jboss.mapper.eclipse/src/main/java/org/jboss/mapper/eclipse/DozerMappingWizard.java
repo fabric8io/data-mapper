@@ -41,7 +41,7 @@ import org.jboss.mapper.dozer.ConfigBuilder;
 /**
  * 
  */
-public class DataMappingFromModelsWizard extends Wizard implements INewWizard {
+public class DozerMappingWizard extends Wizard implements INewWizard {
     
     static final String DEFAULT_DOZER_CONFIG_FILE_NAME = "dozerBeanMapping.xml";
     
@@ -53,7 +53,7 @@ public class DataMappingFromModelsWizard extends Wizard implements INewWizard {
     /**
      * 
      */
-    public DataMappingFromModelsWizard() {
+    public DozerMappingWizard() {
         addPage( constructMainPage() );
     }
     

@@ -3,26 +3,20 @@
 <plugin>
    <extension
          point="org.eclipse.ui.newWizards">
-      <category
-            id="org.jboss.mapper.eclipse.category"
-            name="%category.name">
-      </category>
       <wizard
-            category="org.jboss.mapper.eclipse.category"
-            class="org.jboss.mapper.eclipse.DataMappingFromModelsWizard"
+            class="org.jboss.mapper.eclipse.DozerMappingWizard"
             icon="icons/transform16.png"
-            id="org.jboss.mapper.eclipse.fromModelsWizard"
-            name="%fromModelsWizard.name">
+            id="org.jboss.mapper.eclipse.dozer-mapping-wizard"
+            name="%dozer-mapping-wizard.name">
       </wizard>
       <wizard
-            category="org.jboss.mapper.eclipse.category"
-            class="org.jboss.mapper.eclipse.DataMappingFromSchemasWizard"
+            class="org.jboss.mapper.eclipse.DataMappingWizard"
             icon="icons/transform16.png"
-            id="org.jboss.mapper.eclipse.fromSchemasWizard"
-            name="%fromSchemasWizard.name">
+            id="org.jboss.mapper.eclipse.data-mapping-wizard"
+            name="%data-mapping-wizard.name">
       </wizard>
       <primaryWizard
-            id="org.jboss.mapper.eclipse.fromSchemasWizard">
+            id="org.jboss.mapper.eclipse.data-mapping-wizard">
       </primaryWizard>
    </extension>
    <extension
@@ -31,7 +25,7 @@
             base-type="org.eclipse.core.runtime.xml"
             describer="org.jboss.mapper.eclipse.DozerConfigContentTypeDescriber"
             file-extensions="xml"
-            id="org.jboss.mapper.eclipse.dozerconfigcontenttype"
+            id="org.jboss.mapper.eclipse.dozer-config-content-type"
             name="%content-type.name"
             priority="normal">
       </content-type>
@@ -44,12 +38,11 @@
             default="false"
             extensions="xml"
             icon="icons/transform16.png"
-            id="org.jboss.mapper.eclipse.datamappereditor"
+            id="org.jboss.mapper.eclipse.data-mapper-editor"
             name="%editor.name">
          <contentTypeBinding
-               contentTypeId="org.jboss.mapper.eclipse.dozerconfigcontenttype">
+               contentTypeId="org.jboss.mapper.eclipse.dozer-config-content-type">
          </contentTypeBinding>
       </editor>
    </extension>
-
 </plugin>

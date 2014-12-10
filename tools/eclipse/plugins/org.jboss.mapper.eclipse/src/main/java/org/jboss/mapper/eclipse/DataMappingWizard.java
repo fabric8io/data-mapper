@@ -57,7 +57,7 @@ import com.sun.codemodel.JPackage;
 /**
  * 
  */
-public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
+public class DataMappingWizard extends Wizard implements INewWizard {
     
     static final String MAIN_PATH = "src/main/";
     static final String JAVA_PATH = MAIN_PATH + "java/";
@@ -89,7 +89,7 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
     /**
      * 
      */
-    public DataMappingFromSchemasWizard() {
+    public DataMappingWizard() {
         addPage( constructMainPage() );
     }
     
@@ -199,7 +199,7 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
                 fileButton.setText( "..." );
                 typeLabel.setText( "Type:" );
                 typeComboViewer.getCombo().setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false ).create() );
-                typeComboViewer.add( TransformType.values() );
+                typeComboViewer.add( ModelType.values() );
                 typeComboViewer.getCombo().addSelectionListener( new SelectionAdapter() {
                     
                     @Override
@@ -217,14 +217,16 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
                             final String ext = name.substring( name.lastIndexOf( '.' ) + 1 ).toLowerCase();
                             switch ( ext ) {
                                 case "java":
-                                    typeComboViewer.setSelection( new StructuredSelection( TransformType.JAVA ) );
+                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.JAVA ) );
                                     break;
                                 case "json":
-                                    typeComboViewer.setSelection( new StructuredSelection( TransformType.JSON ) );
+                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.JSON ) );
                                     break;
                                 case "xml":
+                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.XML ) );
+                                    break;
                                 case "xsd":
-                                    typeComboViewer.setSelection( new StructuredSelection( TransformType.XML ) );
+                                    typeComboViewer.setSelection( new StructuredSelection( ModelType.XSD ) );
                                     break;
                                 default:
                                     break;
@@ -283,7 +285,7 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
     }
     
     private String generateModel( final String fileName,
-                                  final TransformType type ) throws Exception {
+                                  final ModelType type ) throws Exception {
         // Build class name from file name
         final StringBuilder className = new StringBuilder();
         final StringCharacterIterator iter =
@@ -310,13 +312,21 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
         switch ( type ) {
             case JSON: {
                 final JsonModelGenerator generator = new JsonModelGenerator();
+                generator.generateFromInstance( className.toString(),
+                                                pkgName,
+                                                project.findMember( fileName ).getLocationURI().toURL(),
+                                                new File( project.getFolder( JAVA_PATH ).getLocationURI() ) );
+                return pkgName + "." + className;
+            }
+            case JSON_SCHEMA: {
+                final JsonModelGenerator generator = new JsonModelGenerator();
                 generator.generateFromSchema( className.toString(),
                                               pkgName,
                                               project.findMember( fileName ).getLocationURI().toURL(),
                                               new File( project.getFolder( JAVA_PATH ).getLocationURI() ) );
-                break;
+                return pkgName + "." + className;
             }
-            case XML: {
+            case XSD: {
                 final XmlModelGenerator generator = new XmlModelGenerator();
                 final JCodeModel model = generator.generateFromSchema( new File( project.findMember( fileName ).getLocationURI() ),
                                                                        pkgName,
@@ -334,7 +344,7 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
             default:
                 break;
         }
-        return pkgName + "." + className;
+        return null;
     }
     
     /**
@@ -353,16 +363,18 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
             final String targetFileName = targetFileText.getText().trim();
             if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
                 // Generate models
-                final TransformType sourceType =
-                    ( TransformType ) ( ( IStructuredSelection ) sourceTypeComboViewer.getSelection() ).getFirstElement();
+                final ModelType sourceType =
+                    ( ModelType ) ( ( IStructuredSelection ) sourceTypeComboViewer.getSelection() ).getFirstElement();
                 final String sourceClassName = generateModel( sourceFileName, sourceType );
-                final TransformType targetType =
-                    ( TransformType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
+                final ModelType targetType =
+                    ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
                 final File camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
                 final CamelConfigBuilder camelConfigBuilder = CamelConfigBuilder.loadConfig( camelConfigFile );
-                camelConfigBuilder.addTransformation( null, sourceType, sourceClassName, targetType, targetClassName );
+                camelConfigBuilder.addTransformation( null,
+                                                      sourceType.transformType, sourceClassName,
+                                                      targetType.transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream = new FileOutputStream( camelConfigFile ) ) {
                     camelConfigBuilder.saveConfig( camelConfigStream );
                 } catch ( final Exception e ) {
@@ -384,5 +396,28 @@ public class DataMappingFromSchemasWizard extends Wizard implements INewWizard {
             return false;
         }
         return true;
+    }
+    
+    enum ModelType {
+        
+        JAVA( "Java", TransformType.JAVA ),
+        JSON( "JSON", TransformType.JSON ),
+        JSON_SCHEMA( "JSON Schema", TransformType.JSON ),
+        XML( "XML", TransformType.XML ),
+        XSD( "XSD", TransformType.XML );
+        
+        final String text;
+        final TransformType transformType;
+        
+        private ModelType( final String text,
+                           final TransformType transformType ) {
+            this.text = text;
+            this.transformType = transformType;
+        }
+        
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 }
