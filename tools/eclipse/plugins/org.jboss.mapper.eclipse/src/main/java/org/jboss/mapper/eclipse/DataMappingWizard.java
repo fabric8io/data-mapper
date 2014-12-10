@@ -339,12 +339,16 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     @Override
     public void init( final IWorkbench workbench,
                       final IStructuredSelection selection ) {
-        if ( selection.size() != 1 ) {
+        final IStructuredSelection resourceSelection =
+            ( IStructuredSelection ) workbench.getActiveWorkbenchWindow().getSelectionService().getSelection( "org.eclipse.ui.navigator.ProjectExplorer" );
+        if ( resourceSelection == null ) return;
+        if ( resourceSelection.size() != 1 ) {
             final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
             if ( projects.length == 1 ) project = projects[ 0 ];
             return;
         }
-        project = ( ( IResource ) ( ( IAdaptable ) selection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
+        project =
+            ( ( IResource ) ( ( IAdaptable ) resourceSelection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
         if ( project != null ) dozerConfigFile = project.getFile( RESOURCES_PATH + DEFAULT_DOZER_CONFIG_FILE_NAME );
     }
     
