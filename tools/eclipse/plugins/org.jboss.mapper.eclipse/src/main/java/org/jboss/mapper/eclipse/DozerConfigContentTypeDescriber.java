@@ -18,7 +18,7 @@ import org.eclipse.core.runtime.content.ITextContentDescriber;
  */
 public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
     
-    static final String ID = "org.jboss.mapper.eclipse.dozerconfigcontenttype";
+    static final String ID = "org.jboss.mapper.eclipse.dozer-config-content-type";
     
     private static final QualifiedName[] SUPPORTED_OPTIONS = new QualifiedName[] { IContentDescription.CHARSET };
     private static final String ROOT_ELEMENT = "<mappingsxmlns=";
