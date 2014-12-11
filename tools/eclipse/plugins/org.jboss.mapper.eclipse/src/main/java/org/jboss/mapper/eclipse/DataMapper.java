@@ -14,7 +14,6 @@ package org.jboss.mapper.eclipse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,8 @@ import java.util.List;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -49,6 +50,7 @@ import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
 import org.jboss.mapper.eclipse.DataBrowser.Listener;
+import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
 
@@ -66,12 +68,12 @@ public class DataMapper extends Composite {
         super( parent, SWT.NONE );
         this.configFile = configFile;
         final File file = new File( configFile.getLocationURI() );
-        
+
         try {
             configBuilder = ConfigBuilder.loadConfig( file );
-            loader = new URLClassLoader( new URL[] {
-                new File( file.getParentFile().getParentFile().getParentFile().getParentFile(), "target/classes" ).toURI().toURL()
-            } );
+            IJavaProject javaProject = JavaCore.create(configFile.getProject());
+            loader = (URLClassLoader) JavaUtil.getProjectClassLoader(javaProject, getClass().getClassLoader());
+
             final List< Mapping > mappings = configBuilder.getMappings().getMapping();
             if ( !mappings.isEmpty() ) {
                 final Mapping mainMapping = mappings.get( 0 );
