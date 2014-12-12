@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description name="Data Mapper Tools Update Site">
+      This is the update site for Data Mapper Eclipse tooling.
+   </description>
+   <feature url="features/org.jboss.mapper.eclipse.feature_0.0.0.jar" id="org.jboss.mapper.eclipse.feature" version="0.0.0">
+      <category name="data.mapper.category"/>
+   </feature>
+   <category-def name="data.mapper.category" label="Data Mapper">
+      <description>
+         Data Mapper Tools
+      </description>
+   </category-def>
+</site>
