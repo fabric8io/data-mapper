@@ -37,6 +37,13 @@ public class CreateMappingCommand extends AbstractMapperCommand {
     @Inject
     @WithAttributes(label = "Target Model", required = true, description = "Name of the target model type")
     UIInput<String> targetModel;
+    
+    @Inject
+    @WithAttributes(label = "Dozer Config",
+        defaultValue = ConfigBuilder.DEFAULT_DOZER_CONFIG,
+        required = true, 
+        description = "Path to the Dozer configuration file")
+    UIInput<String> dozerConfig;
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
@@ -51,6 +58,7 @@ public class CreateMappingCommand extends AbstractMapperCommand {
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
         // Create configuration
+        getMapperContext(project).setDozerPath(dozerConfig.getValue());
         ConfigBuilder config = loadConfig(project);
         config.addClassMapping(sourceModel.getValue(), targetModel.getValue());
 

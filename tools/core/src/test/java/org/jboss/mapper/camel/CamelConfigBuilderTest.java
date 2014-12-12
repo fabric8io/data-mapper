@@ -7,6 +7,7 @@ import junit.framework.Assert;
 import org.custommonkey.xmlunit.XMLAssert;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.jboss.mapper.TransformType;
+import org.jboss.mapper.dozer.ConfigBuilder;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -15,6 +16,7 @@ public class CamelConfigBuilderTest {
 
     private static final String NEW_CONFIG = "new-camel-config.xml";
     private static final String MULTI_CONFIG = "multiple-camel-config.xml";
+    private static final String MULTI_DOZER = "multiple-dozer-config.xml";
     private static final String XML_JSON = "xml-to-json.xml";
     private static final String JAVA_XML = "java-to-xml.xml";
     private static final String JAVA_JAVA = "java-to-java.xml";
@@ -24,7 +26,8 @@ public class CamelConfigBuilderTest {
     public void createXmlToJson() throws Exception {
         Document xmlJsonDoc = loadDocument(XML_JSON);
         CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(NEW_CONFIG));
-        config.addTransformation("xml2json", TransformType.XML, "xml.ABCOrder", 
+        config.addTransformation("xml2json", ConfigBuilder.DEFAULT_DOZER_CONFIG,
+                TransformType.XML, "xml.ABCOrder", 
                 TransformType.JSON, "json.XYZOrder");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(xmlJsonDoc, config.getConfiguration().getOwnerDocument());
@@ -34,7 +37,8 @@ public class CamelConfigBuilderTest {
     public void createJavaToXml() throws Exception {
         Document javaXmlDoc = loadDocument(JAVA_XML);
         CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(NEW_CONFIG));
-        config.addTransformation("java2xml", TransformType.JAVA, "source.Input", 
+        config.addTransformation("java2xml", ConfigBuilder.DEFAULT_DOZER_CONFIG,
+                TransformType.JAVA, "source.Input", 
                 TransformType.XML, "target.Output");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(javaXmlDoc, config.getConfiguration().getOwnerDocument());
@@ -44,7 +48,8 @@ public class CamelConfigBuilderTest {
     public void createXmlToJava() throws Exception {
         Document xmlJavaDoc = loadDocument(XML_JAVA);
         CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(NEW_CONFIG));
-        config.addTransformation("xml2java", TransformType.XML, "source.Input", 
+        config.addTransformation("xml2java", ConfigBuilder.DEFAULT_DOZER_CONFIG,
+                TransformType.XML, "source.Input", 
                 TransformType.JAVA, "target.Output");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(xmlJavaDoc, config.getConfiguration().getOwnerDocument());
@@ -54,7 +59,8 @@ public class CamelConfigBuilderTest {
     public void createJavaToJava() throws Exception {
         Document javaJavaDoc = loadDocument(JAVA_JAVA);
         CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(NEW_CONFIG));
-        config.addTransformation("java2java", TransformType.JAVA, "source.Input", 
+        config.addTransformation("java2java", ConfigBuilder.DEFAULT_DOZER_CONFIG,
+                TransformType.JAVA, "source.Input", 
                 TransformType.JAVA, "target.Output");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(javaJavaDoc, config.getConfiguration().getOwnerDocument());
@@ -74,10 +80,23 @@ public class CamelConfigBuilderTest {
         // Add another transform endpoint to a config that already has one
         Document multiDoc = loadDocument(MULTI_CONFIG);
         CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(XML_JSON));
-        config.addTransformation("xml2json2", TransformType.XML, "org.foo.ABCOrder", 
+        config.addTransformation("xml2json2", ConfigBuilder.DEFAULT_DOZER_CONFIG,
+                TransformType.XML, "org.foo.ABCOrder", 
                 TransformType.JSON, "json.XYZOrder");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(multiDoc, config.getConfiguration().getOwnerDocument());
+    }
+    
+    @Test
+    public void multipleDozerConfigs() throws Exception {
+        // Add another transform endpoint with a new dozer configuration
+        Document multiDozer = loadDocument(MULTI_DOZER);
+        CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(JAVA_JAVA));
+        config.addTransformation("abc123", "dozerBeanMapping2.xml",
+                TransformType.JAVA, "source.Input", 
+                TransformType.JAVA, "target.Output");
+        XMLUnit.setIgnoreWhitespace(true);
+        XMLAssert.assertXMLEqual(multiDozer, config.getConfiguration().getOwnerDocument());
     }
     
     private Document loadDocument(String path) throws Exception {

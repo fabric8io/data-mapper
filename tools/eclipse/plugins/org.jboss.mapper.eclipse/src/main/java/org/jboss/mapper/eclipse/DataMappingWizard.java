@@ -439,7 +439,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
-                camelConfigBuilder.addTransformation( idText.getText(),
+                camelConfigBuilder.addTransformation( idText.getText(), dozerConfigFile.getName(),
                                                       sourceType.transformType, sourceClassName,
                                                       targetType.transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream = new FileOutputStream( camelConfigFile ) ) {

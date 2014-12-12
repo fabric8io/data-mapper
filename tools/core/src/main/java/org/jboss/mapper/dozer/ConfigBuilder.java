@@ -30,6 +30,8 @@ import org.jboss.mapper.model.ModelBuilder;
 
 public class ConfigBuilder {
 
+    public static final String DEFAULT_DOZER_CONFIG = "dozerBeanMapping.xml";
+    
     private static final String DOZER_SCHEMA_LOC = 
             "http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd";
 

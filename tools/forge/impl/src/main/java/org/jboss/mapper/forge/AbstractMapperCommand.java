@@ -44,7 +44,6 @@ import com.sun.codemodel.JPackage;
 public abstract class AbstractMapperCommand extends AbstractProjectCommand {
 
     public static final String CAMEL_CTX_PATH = "META-INF/spring/camel-context.xml";
-    public static final String DEFAULT_DOZER_PATH = "dozerBeanMapping.xml";
     private static final String MAPPER_CATEGORY = "Data Mapper";
     private static final String MAP_CONTEXT_ATTR = "mapper.context";
 
@@ -79,9 +78,10 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand {
     }
 
     protected ConfigBuilder loadConfig(Project project) throws Exception {
+        String configPath = getMapperContext(project).getDozerPath();
         ConfigBuilder config;
-        if (getFile(project, DEFAULT_DOZER_PATH).exists()) {
-            config = ConfigBuilder.loadConfig(getFile(project, DEFAULT_DOZER_PATH));
+        if (getFile(project, configPath).exists()) {
+            config = ConfigBuilder.loadConfig(getFile(project, configPath));
         } else {
             config = ConfigBuilder.newConfig();
         }
@@ -90,7 +90,8 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand {
     }
 
     protected void saveConfig(Project project) throws Exception {
-        FileOutputStream fos = new FileOutputStream(getFile(project, DEFAULT_DOZER_PATH));
+        FileOutputStream fos = new FileOutputStream(
+                getFile(project, getMapperContext(project).getDozerPath()));
         getMapperContext(project).getConfig().saveConfig(fos);
         fos.close();
     }

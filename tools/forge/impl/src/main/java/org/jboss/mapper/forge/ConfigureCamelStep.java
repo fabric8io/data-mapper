@@ -38,7 +38,8 @@ public class ConfigureCamelStep extends AbstractMapperCommand implements UIWizar
         CamelConfigBuilder camelConfig = CamelConfigBuilder.loadConfig(
                 getFile(project, CAMEL_CTX_PATH));
         
-        camelConfig.addTransformation(mapCtx.getTransformId(), 
+        camelConfig.addTransformation(mapCtx.getTransformId(),
+                mapCtx.getDozerPath(),
                 TransformType.valueOf(mapCtx.getSourceType()), 
                 mapCtx.getSourceModel().getType(),
                 TransformType.valueOf(mapCtx.getTargetType()),

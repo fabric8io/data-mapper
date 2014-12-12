@@ -102,18 +102,19 @@ public class CamelConfigBuilder {
      * required data formats, Dozer configuration, and the camel-transform
      * endpoint definition to the Camel config.
      * @param transformId id for the transformation
+     * @param dozerConfigPath path to Dozer config for transformation
      * @param source type of the source data
      * @param sourceClass name of the source model class
      * @param target type of the target data
      * @param targetClass name of the target model class
      * @throws Exception failed to create transformation
      */
-    public void addTransformation(String transformId,
+    public void addTransformation(String transformId, String dozerConfigPath,
             TransformType source, String sourceClass, 
             TransformType target, String targetClass) throws Exception {
         
         // All transformations, regardless of type, will use Dozer
-        configureDozer(camelConfig);
+        configureDozer(camelConfig, dozerConfigPath);
         
         // Add data formats
         DataFormat unmarshaller = createDataFormat(source, sourceClass);
@@ -266,42 +267,88 @@ public class CamelConfigBuilder {
         return jaxbCtx;
     }
 
-    private void configureDozer(Element parent) {
+    private void configureDozer(Element parent, String dozerConfigName) {
         final String DOZER_LOADER_ID = "dozerConverterLoader";
         final String DOZER_LOADER_CLASS = "org.apache.camel.converter.dozer.DozerTypeConverterLoader";
         final String DOZER_MAPPER_ID = "mapper";
         final String DOZER_MAPPER_CLASS = "org.dozer.DozerBeanMapper";
         
-        // Check to see if the dozerConverterLoader is already defined
+        Element converterLoaderEl = null;
+        Element dozerMapperEl = null;
+        
+        // Check for existing dozer bean definitions
         NodeList beanList = parent.getElementsByTagNameNS(SPRING_NS, "bean");
         for (int i = 0; i < beanList.getLength(); i++) {
             Element beanEl = (Element)beanList.item(i);
-            if (DOZER_LOADER_ID.equals(beanEl.getAttribute("id"))) {
-                return;
+            if (DOZER_LOADER_CLASS.equals(beanEl.getAttribute("class"))) {
+                converterLoaderEl = beanEl;
+            } else if (DOZER_MAPPER_CLASS.equals(beanEl.getAttribute("class"))) {
+                dozerMapperEl = beanEl;
             }
         }
-        Element dozerLoader = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
-        dozerLoader.setAttribute("id", DOZER_LOADER_ID);
-        dozerLoader.setAttribute("class", DOZER_LOADER_CLASS);
-
-        Element dozerMapper = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
-        dozerMapper.setAttribute("id", DOZER_MAPPER_ID);
-        dozerMapper.setAttribute("class", DOZER_MAPPER_CLASS);
-        Element property = parent.getOwnerDocument().createElementNS(SPRING_NS, "property");
+        
+        // Create the loader if required
+        if (converterLoaderEl == null) {
+            converterLoaderEl = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
+            converterLoaderEl.setAttribute("id", DOZER_LOADER_ID);
+            converterLoaderEl.setAttribute("class", DOZER_LOADER_CLASS);
+            parent.appendChild(converterLoaderEl);
+        }
+        
+        // Create the mapper bean if required and add our mapper config
+        if (dozerMapperEl == null) {
+            dozerMapperEl = parent.getOwnerDocument().createElementNS(SPRING_NS, "bean");
+            dozerMapperEl.setAttribute("id", DOZER_MAPPER_ID);
+            dozerMapperEl.setAttribute("class", DOZER_MAPPER_CLASS);
+            parent.appendChild(dozerMapperEl);
+        }
+        addMapperConfig(dozerMapperEl, dozerConfigName);
+    }
+    
+    private void addMapperConfig(Element dozerMapperEl, String dozerConfigName) {
+        Element property = getChildElement(dozerMapperEl, SPRING_NS, "property");
+        if (property == null) {
+            property = dozerMapperEl.getOwnerDocument().createElementNS(SPRING_NS, "property");
+            dozerMapperEl.appendChild(property);
+        }
         property.setAttribute("name", "mappingFiles");
-        dozerMapper.appendChild(property);
-        Element list = parent.getOwnerDocument().createElementNS(SPRING_NS, "list");
-        property.appendChild(list);
-        Element value = parent.getOwnerDocument().createElementNS(SPRING_NS, "value");
-        value.appendChild(parent.getOwnerDocument().createTextNode("dozerBeanMapping.xml"));
-        list.appendChild(value);
-
-        parent.appendChild(dozerLoader);
-        parent.appendChild(dozerMapper);
+        
+        Element list = getChildElement(property, SPRING_NS, "list");
+        if (list == null) {
+            list = dozerMapperEl.getOwnerDocument().createElementNS(SPRING_NS, "list");
+            property.appendChild(list);
+        }
+        
+        // check for the case where specified Dozer config is already present
+        boolean configPresent = false;
+        NodeList valueList = list.getElementsByTagNameNS(SPRING_NS, "value");
+        for (int i = 0; i < valueList.getLength(); i++) {
+            Element valueEl = (Element)valueList.item(i);
+            String value = valueEl.getTextContent();
+            if (value != null && value.trim().equals(dozerConfigName)) {
+                configPresent = true;
+                break;
+            }
+        }
+        if (!configPresent) {
+            Element value = list.getOwnerDocument().createElementNS(SPRING_NS, "value");
+            value.appendChild(list.getOwnerDocument().createTextNode(dozerConfigName));
+            list.appendChild(value);
+        }
+    }
+    
+    // Returns the first instance of a child element that matches the specified name
+    private Element getChildElement(Element parent, String childNS, String childName) {
+        Element child = null;
+        NodeList children = parent.getElementsByTagNameNS(childNS, childName);
+        if (children.getLength() > 0) {
+            child = (Element)children.item(0);
+        }
+        return child;
     }
     
     private Element getCamelContextElement() {
-        return (Element)camelConfig.getElementsByTagNameNS(CAMEL_NS, "camelContext").item(0);
+        return getChildElement(camelConfig, CAMEL_NS, "camelContext");
     }
 
 }

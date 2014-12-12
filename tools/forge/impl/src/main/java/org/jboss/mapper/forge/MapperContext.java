@@ -28,6 +28,7 @@ public class MapperContext {
     private String sourceType;
     private String targetType;
     private String transformId;
+    private String dozerPath;
 
     public Model getSourceModel() {
         return sourceModel;
@@ -79,5 +80,13 @@ public class MapperContext {
 
     public void setTransformId(String transformId) {
         this.transformId = transformId;
+    }
+
+    public String getDozerPath() {
+        return dozerPath;
+    }
+
+    public void setDozerPath(String dozerPath) {
+        this.dozerPath = dozerPath;
     }
 }
