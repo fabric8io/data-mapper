@@ -61,6 +61,7 @@ import com.sun.codemodel.JPackage;
  */
 public class DataMappingWizard extends Wizard implements INewWizard {
     
+    static final String OBJECT_FACTORY_NAME = "ObjectFactory";
     static final String MAIN_PATH = "src/main/";
     static final String JAVA_PATH = MAIN_PATH + "java/";
     static final String RESOURCES_PATH = MAIN_PATH + "resources/";
@@ -372,7 +373,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         // Build package name from class name
         int sequencer = 1;
-        String pkgName = className.toString();
+        String pkgName = className.toString().toLowerCase();
         while ( project.exists( new Path( JAVA_PATH + pkgName ) ) ) {
             pkgName = className.toString() + sequencer++;
         }
@@ -483,6 +484,9 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             for ( final Iterator< JDefinedClass > classIter = pkg.classes(); classIter.hasNext(); ) {
                 // TODO this only works when a single top-level class exists
                 final JDefinedClass definedClass = classIter.next();
+                if ( OBJECT_FACTORY_NAME.equals( definedClass.name()) ) {
+                    continue;
+                }
                 className = definedClass.fullName();
             }
         }
