@@ -17,11 +17,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaConventions;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 
 /**
  *
@@ -68,4 +75,139 @@ public final class JavaUtil {
     private JavaUtil() {
     }
 
+    /**
+     * Returns the first non-empty package in the project's first source folder.
+     * 
+     * @param project the Java project
+     * 
+     * @return the first non-empty package; may be null.
+     */
+    public static IJavaElement getInitialPackageForProject(IJavaProject project) {
+        if (project == null) {
+            return null;
+        }
+        try {
+            IPackageFragmentRoot sourceRoot = getFirstJavaSourceRoot(project);
+            if (sourceRoot == null) {
+                return project;
+            }
+            IJavaElement[] packages = sourceRoot.getChildren();
+            IJavaElement element = sourceRoot;
+            for (int i = 0; i < packages.length; i++) {
+                IPackageFragment frag = (IPackageFragment) packages[i];
+                element = frag;
+                if (!frag.isDefaultPackage() && (!frag.hasSubpackages() || frag.containsJavaResources())) {
+                    element = frag;
+                    break;
+                }
+            }
+            return element;
+        } catch (JavaModelException e) {
+            return project;
+        }
+    }
+
+    /**
+     * Returns the first resource folder in the project. If the project is a
+     * maven project, the first resource folder configured will be used.
+     * 
+     * @param project the Java project
+     * 
+     * @return the resource root; may be null.
+     */
+    public static IResource getFirstResourceRoot(IJavaProject project) {
+        if (project == null) {
+            return null;
+        }
+        try {
+            IResource sourceRoot = null;
+            for (IPackageFragmentRoot frag : project.getPackageFragmentRoots()) {
+                if (frag.getKind() == IPackageFragmentRoot.K_SOURCE) {
+                    sourceRoot = frag.getUnderlyingResource();
+                    break;
+                }
+            }
+            return sourceRoot;
+        } catch (JavaModelException e) {
+            return null;
+        }
+    }
+
+    public static IPackageFragmentRoot getFirstJavaSourceRoot(IJavaProject project) {
+        if (project == null) {
+            return null;
+        }
+        try {
+            IPackageFragmentRoot sourceRoot = null;
+            for (IPackageFragmentRoot frag : project.getPackageFragmentRoots()) {
+                if (frag.getKind() == IPackageFragmentRoot.K_SOURCE) {
+                    sourceRoot = frag;
+                    break;
+                }
+            }
+            return sourceRoot;
+        } catch (JavaModelException e) {
+            return null;
+        }
+    }
+    
+    public static boolean addFolderToProjectClasspath(IJavaProject javaProject, IResource folder) {
+        IClasspathEntry[] entries;
+        try {
+            entries = javaProject.getRawClasspath();
+            IClasspathEntry[] newEntries = new IClasspathEntry[entries.length + 1];
+            System.arraycopy(entries, 0, newEntries, 0, entries.length);
+
+            IPath srcPath= javaProject.getPath().append(folder.getProjectRelativePath());
+            IClasspathEntry srcEntry= JavaCore.newSourceEntry(srcPath, null);
+
+            newEntries[entries.length] = JavaCore.newSourceEntry(srcEntry.getPath());
+            javaProject.setRawClasspath(newEntries, null);
+            return true;
+        } catch (JavaModelException e) {
+            return false;
+        }
+    }
+    
+    public static boolean findFolderOnProjectClasspath(IJavaProject javaProject, IResource folder) {
+        IClasspathEntry[] entries;
+        try {
+            IPath srcPath= javaProject.getPath().append(folder.getProjectRelativePath());
+            entries = javaProject.getRawClasspath();
+            for (IClasspathEntry entry : entries) {
+                if (entry.getPath().equals(srcPath)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (JavaModelException e) {
+            return false;
+        }
+    }
+
+    public static String[] getSourceComplianceLevels(IJavaElement context) {
+        if (context != null) {
+            IJavaProject javaProject= context.getJavaProject();
+            if (javaProject != null) {
+                return new String[] {
+                        javaProject.getOption(JavaCore.COMPILER_SOURCE, true),
+                        javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true)
+                };
+            }
+        }
+        return new String[] {
+                JavaCore.getOption(JavaCore.COMPILER_SOURCE),
+                JavaCore.getOption(JavaCore.COMPILER_COMPLIANCE)
+        };
+    }
+    
+    public static IStatus validatePackageName(String name, IJavaElement context) {
+        String[] sourceComplianceLevels= getSourceComplianceLevels(context);
+        return JavaConventions.validatePackageName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
+    }
+    
+    public static IStatus validateClassFileName(String name, IJavaElement context) {
+        String[] sourceComplianceLevels= getSourceComplianceLevels(context);
+        return JavaConventions.validateJavaTypeName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
+    }
 }
