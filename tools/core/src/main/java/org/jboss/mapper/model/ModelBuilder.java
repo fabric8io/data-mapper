@@ -17,12 +17,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ModelBuilder {
 
     public static Model fromJavaClass(Class<?> javaClass) {
         Model model = new Model(javaClass.getSimpleName(), javaClass.getName());
-        addFieldsToModel(javaClass.getDeclaredFields(), model);
+        addFieldsToModel(getFields(javaClass), model);
         model.setModelClass(javaClass);
         return model;
     }
@@ -35,7 +37,7 @@ public class ModelBuilder {
         } else if (Collection.class.isAssignableFrom(field.getType())) {
             Type t = field.getGenericType();
             if (t instanceof ParameterizedType) {
-                type = (Class)((ParameterizedType)t).getActualTypeArguments()[0];
+                type = (Class<?>)((ParameterizedType)t).getActualTypeArguments()[0];
             } else {
                 type = Object.class;
             }
@@ -54,23 +56,23 @@ public class ModelBuilder {
         return listName.split("\\[")[1].split("\\]")[0];
     }
 
-    private static void addFieldsToModel(Field[] fields, Model model) {
+    private static void addFieldsToModel(List<Field> fields, Model model) {
         for (Field field : fields) {
             String fieldType;
-            Field[] childFields = null;
+            List<Field> childFields = null;
             boolean isCollection = false;
 
             if (field.getType().isArray()) {
                 isCollection = true;
                 fieldType = getListName(field.getType().getComponentType());
-                childFields = field.getType().getComponentType().getDeclaredFields();
+                childFields = getFields(field.getType().getComponentType());
             } else if (Collection.class.isAssignableFrom(field.getType())) {
                 isCollection = true;
                 Type t = field.getGenericType();
                 if (t instanceof ParameterizedType) {
-                    Class<?> tClass = (Class)((ParameterizedType)t).getActualTypeArguments()[0];
+                    Class<?> tClass = (Class<?>)((ParameterizedType)t).getActualTypeArguments()[0];
                     fieldType = getListName(tClass);
-                    childFields = tClass.getDeclaredFields();
+                    childFields = getFields(tClass);
                 } else {
                     fieldType = getListName(Object.class);
                 }
@@ -78,9 +80,10 @@ public class ModelBuilder {
                 fieldType = field.getType().getName();
                 if (!field.getType().isPrimitive()
                         && !field.getType().getName().equals(String.class.getName())
-                        && !field.getType().getName().startsWith("java.lang")) {
+                        && !field.getType().getName().startsWith("java.lang")
+                        && !Number.class.isAssignableFrom(field.getType())) {
 
-                    childFields = field.getType().getDeclaredFields();
+                    childFields = getFields(field.getType());
                 }
             }
 
@@ -90,5 +93,23 @@ public class ModelBuilder {
                 addFieldsToModel(childFields, child);
             }
         }
+    }
+    
+    private static List<Field> getFields(Class<?> clazz) {
+        LinkedList<Field> fields = new LinkedList<Field>();
+        getFields(clazz, fields);
+        return fields;
+    }
+    
+    private static void getFields(Class<?> clazz, List<Field> fields) {
+        // check if we've hit rock bottom
+        if (clazz == null || Object.class.equals(clazz)) {
+            return;
+        }
+        
+        for (Field field : clazz.getDeclaredFields()) {
+            fields.add(field);
+        }
+        getFields(clazz.getSuperclass(), fields);
     }
 }
