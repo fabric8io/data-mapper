@@ -400,13 +400,22 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 final JCodeModel model = generator.generateFromSchema( new File( project.findMember( fileName ).getLocationURI() ),
                                                                        pkgName,
                                                                        targetClassesFolder );
-                for ( final Iterator< JPackage > pkgIter = model.packages(); pkgIter.hasNext(); ) {
-                    final JPackage pkg = pkgIter.next();
-                    for ( final Iterator< JDefinedClass > classIter = pkg.classes(); classIter.hasNext(); ) {
-                        // TODO this only works when a single top-level class exists
-                        final JDefinedClass definedClass = classIter.next();
-                        return definedClass.fullName();
-                    }
+                String modelClass = selectModelClass( model );
+                if ( modelClass != null ) {
+                    return modelClass;
+                }
+                break;
+            }
+            case XML: {
+                final XmlModelGenerator generator = new XmlModelGenerator();
+                final File schemaPath = new File( project.getFile( fileName + ".xsd" ).getLocationURI() );
+                final JCodeModel model = generator.generateFromInstance(new File( project.findMember( fileName ).getLocationURI() ),
+                                                                        schemaPath, 
+                                                                        pkgName, 
+                                                                        targetClassesFolder );
+                String modelClass = selectModelClass (model );
+                if ( modelClass != null ) {
+                    return modelClass;
                 }
                 break;
             }
@@ -465,6 +474,19 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             return false;
         }
         return true;
+    }
+    
+    private String selectModelClass(JCodeModel model) {
+        String className = null;
+        for ( final Iterator< JPackage > pkgIter = model.packages(); pkgIter.hasNext(); ) {
+            final JPackage pkg = pkgIter.next();
+            for ( final Iterator< JDefinedClass > classIter = pkg.classes(); classIter.hasNext(); ) {
+                // TODO this only works when a single top-level class exists
+                final JDefinedClass definedClass = classIter.next();
+                className = definedClass.fullName();
+            }
+        }
+        return className;
     }
     
     enum ModelType {
