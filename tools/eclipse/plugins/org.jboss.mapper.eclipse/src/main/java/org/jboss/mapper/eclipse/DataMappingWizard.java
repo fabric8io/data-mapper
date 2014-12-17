@@ -25,8 +25,6 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -97,6 +95,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     File camelConfigFile;
     CamelConfigBuilder camelConfigBuilder;
     Color labelForeground;
+    Color textForeground;
+    Color comboForeground;
 
     /**
      *
@@ -133,6 +133,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                                        .span( 2, 1 )
                                                                        .align( SWT.FILL, SWT.CENTER )
                                                                        .create() );
+                comboForeground = projectViewer.getCombo().getForeground();
                 projectViewer.getCombo().setData( LABEL_PROPERTY, label );
                 projectViewer.getCombo().setToolTipText( label.getToolTipText() );
                 projectViewer.setLabelProvider( new LabelProvider() {
@@ -164,12 +165,13 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 idText = new Text( page, SWT.BORDER );
                 idText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                      .align( SWT.FILL, SWT.CENTER ).create() );
+                textForeground = idText.getForeground();
                 idText.setData( LABEL_PROPERTY, label );
                 idText.setToolTipText( label.getToolTipText() );
-                idText.addKeyListener( new KeyAdapter() {
+                idText.addModifyListener( new ModifyListener() {
 
                     @Override
-                    public void keyReleased( final KeyEvent event ) {
+                    public void modifyText( final ModifyEvent event ) {
                         validatePage();
                     }
                 } );
@@ -182,10 +184,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                                   .align( SWT.FILL, SWT.CENTER ).create() );
                 dozerConfigFileText.setData( LABEL_PROPERTY, label );
                 dozerConfigFileText.setToolTipText( label.getToolTipText() );
-                dozerConfigFileText.addKeyListener( new KeyAdapter() {
+                dozerConfigFileText.addModifyListener( new ModifyListener() {
 
                     @Override
-                    public void keyReleased( final KeyEvent event ) {
+                    public void modifyText( final ModifyEvent event ) {
                         validatePage();
                     }
                 } );
@@ -292,15 +294,18 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                               String toolTip ) {
                 control.setData( TOOL_TIP_PROPERTY, control.getToolTipText() );
                 control.setToolTipText( toolTip );
+                Color color = getShell().getDisplay().getSystemColor( SWT.COLOR_RED );
+                control.setForeground( color );
                 final Label label = ( Label ) control.getData( LABEL_PROPERTY );
                 label.setToolTipText( toolTip );
-                label.setForeground( getShell().getDisplay().getSystemColor( SWT.COLOR_RED ) );
+                label.setForeground( color );
             }
 
             void markValid( Control control ) {
                 final Object data = control.getData( TOOL_TIP_PROPERTY );
                 String toolTip = data == null ? null : data.toString();
                 control.setToolTipText( toolTip );
+                control.setForeground( control instanceof Combo ? comboForeground : textForeground );
                 final Label label = ( Label ) control.getData( LABEL_PROPERTY );
                 label.setToolTipText( toolTip );
                 label.setForeground( labelForeground );
@@ -354,6 +359,16 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     return;
                 }
                 if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
+                    if ( project.findMember( sourceFileName ) == null ) {
+                        markInvalid( sourceFileText, "The supplied source file does not exist" );
+                        return;
+                    }
+                    markValid( sourceFileText );
+                    if ( project.findMember( targetFileName ) == null ) {
+                        markInvalid( targetFileText, "The supplied target file does not exist" );
+                        return;
+                    }
+                    markValid( targetFileText );
                     if ( sourceTypeComboViewer.getSelection().isEmpty() ) {
                         markInvalid( sourceTypeComboViewer.getCombo(), "A source type must be selected" );
                         return;
@@ -364,8 +379,6 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                         return;
                     }
                     markValid( targetTypeComboViewer.getCombo() );
-                    markValid( sourceFileText );
-                    markValid( targetFileText );
                     setPageComplete( true );
                     return;
                 }
