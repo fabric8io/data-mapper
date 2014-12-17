@@ -6,7 +6,6 @@ import java.text.StringCharacterIterator;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -47,7 +46,7 @@ import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ResourceSelectionDialog;
+import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.TransformType;
 import org.jboss.mapper.camel.CamelConfigBuilder;
@@ -77,9 +76,9 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     static String selectSchema( final Shell shell,
                                 final IProject project,
                                 final String schemaType ) {
-        final IFolder resourcesFolder = project.getFolder( MAIN_PATH );
         try {
-            final ResourceSelectionDialog dlg = new ResourceSelectionDialog( shell, resourcesFolder, "Select " + schemaType );
+            final ResourceListSelectionDialog dlg = new ResourceListSelectionDialog( shell, project, IResource.FILE );
+            dlg.setTitle( "Select " + schemaType );
             if ( dlg.open() == Window.OK )
                 return ( ( IFile ) dlg.getResult()[ 0 ] ).getFullPath().makeRelativeTo( project.getFullPath() ).toString();
         } catch ( final Exception e ) {
@@ -144,11 +143,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     }
                 } );
                 projectViewer.add( ResourcesPlugin.getWorkspace().getRoot().getProjects() );
-                if ( project != null ) projectViewer.setSelection( new StructuredSelection( project ) );
-                projectViewer.getCombo().addSelectionListener( new SelectionAdapter() {
+                projectViewer.getCombo().addModifyListener( new ModifyListener() {
 
                     @Override
-                    public void widgetSelected( final SelectionEvent event ) {
+                    public void modifyText( final ModifyEvent event ) {
                         project = ( IProject ) ( ( IStructuredSelection ) projectViewer.getSelection() ).getFirstElement();
                         camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
                         try {
@@ -218,9 +216,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     }
                 } );
 
-                sourceFileButton.setEnabled( false );
-                targetFileButton.setEnabled( false );
-                setPageComplete( false );
+                if ( project == null ) validatePage();
+                else projectViewer.setSelection( new StructuredSelection( project ) );
             }
 
             void createFileControls( final Group group,
