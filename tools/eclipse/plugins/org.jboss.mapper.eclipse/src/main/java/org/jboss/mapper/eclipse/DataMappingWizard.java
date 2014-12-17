@@ -10,6 +10,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
@@ -67,15 +68,30 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     static final String JAVA_PATH = MAIN_PATH + "java/";
     static final String RESOURCES_PATH = MAIN_PATH + "resources/";
     static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
-    static final String DEFAULT_DOZER_CONFIG_PATH = RESOURCES_PATH + "dozerBeanMapping.xml";
+    static final String DEFAULT_DOZER_CONFIG_PATH = "dozerBeanMapping.xml";
     static final String LABEL_PROPERTY = "label";
     static final String TOOL_TIP_PROPERTY = "toolTip";
 
     static String selectSchema( final Shell shell,
                                 final IProject project,
-                                final String schemaType ) {
+                                final String schemaType,
+                                final Text fileText ) {
         try {
-            final ResourceListSelectionDialog dlg = new ResourceListSelectionDialog( shell, project, IResource.FILE );
+            final ResourceListSelectionDialog dlg = new ResourceListSelectionDialog( shell, project, IResource.FILE ) {
+
+                @Override
+                protected Control createDialogArea( final Composite parent ) {
+                    final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
+                    for ( final Control child : dlgArea.getChildren() ) {
+                        if ( child instanceof Text ) {
+                            String text = fileText.getText().trim();
+                            ( ( Text ) child ).setText( text.isEmpty() ? "*" : text );
+                            break;
+                        }
+                    }
+                    return dlgArea;
+                }
+            };
             dlg.setTitle( "Select " + schemaType );
             if ( dlg.open() == Window.OK )
                 return ( ( IFile ) dlg.getResult()[ 0 ] ).getFullPath().makeRelativeTo( project.getFullPath() ).toString();
@@ -262,7 +278,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
 
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        final String name = selectSchema( getShell(), project, schemaType );
+                        final String name = selectSchema( getShell(), project, schemaType, fileText );
                         if ( name != null ) {
                             fileText.setText( name );
                             if ( typeComboViewer.getSelection().isEmpty() ) {
@@ -349,7 +365,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 }
                 markValid( dozerConfigFileText );
                 if ( !path.toLowerCase().endsWith( ".xml" ) ) path = path + ".xml";
-                dozerConfigFile = project.getFile( path );
+                dozerConfigFile = project.getFile( RESOURCES_PATH + path );
                 final String sourceFileName = sourceFileText.getText().trim();
                 final String targetFileName = targetFileText.getText().trim();
                 if ( sourceFileName.isEmpty() && targetFileName.isEmpty() ) {
@@ -481,7 +497,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         project =
             ( ( IResource ) ( ( IAdaptable ) resourceSelection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
-        if ( project != null ) dozerConfigFile = project.getFile( DEFAULT_DOZER_CONFIG_PATH );
+        if ( project != null ) dozerConfigFile = project.getFile( RESOURCES_PATH + DEFAULT_DOZER_CONFIG_PATH );
     }
 
     /**
@@ -507,8 +523,9 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
+                IPath resourcesPath = project.getFolder( RESOURCES_PATH ).getFullPath();
                 camelConfigBuilder.addTransformation( idText.getText(),
-                                                      dozerConfigFile.getFullPath().makeRelativeTo( project.getFullPath() ).toString(),
+                                                      dozerConfigFile.getFullPath().makeRelativeTo( resourcesPath ).toString(),
                                                       sourceType.transformType, sourceClassName,
                                                       targetType.transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream = new FileOutputStream( camelConfigFile ) ) {
