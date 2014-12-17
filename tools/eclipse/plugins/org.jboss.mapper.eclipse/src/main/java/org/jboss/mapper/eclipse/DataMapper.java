@@ -1,12 +1,12 @@
-/******************************************************************************* 
- * Copyright (c) 2014 Red Hat, Inc. 
- *  All rights reserved. 
- * This program is made available under the terms of the 
- * Eclipse Public License v1.0 which accompanies this distribution, 
- * and is available at http://www.eclipse.org/legal/epl-v10.html 
- * 
- * Contributors: 
- * Red Hat, Inc. - initial API and implementation 
+/*******************************************************************************
+ * Copyright (c) 2014 Red Hat, Inc.
+ *  All rights reserved.
+ * This program is made available under the terms of the
+ * Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Red Hat, Inc. - initial API and implementation
  ******************************************************************************/
 
 package org.jboss.mapper.eclipse;
@@ -54,15 +54,18 @@ import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
 
+/**
+ *
+ */
 public class DataMapper extends Composite {
-    
+
     final IFile configFile;
     ConfigBuilder configBuilder;
     URLClassLoader loader;
     Model sourceModel = null;
     Model targetModel = null;
     TableViewer viewer;
-    
+
     DataMapper( final Composite parent,
                 final IFile configFile ) {
         super( parent, SWT.NONE );
@@ -80,9 +83,9 @@ public class DataMapper extends Composite {
                 sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassA().getContent() ) );
                 targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
             }
-            
+
             setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-            
+
             viewer = new TableViewer( this );
             final Table table = viewer.getTable();
             table.setLayoutData( GridDataFactory.fillDefaults().span( 3, 1 ).grab( true, true ).create() );
@@ -91,7 +94,7 @@ public class DataMapper extends Composite {
             sourceColumn.getColumn().setText( "Source Item" );
             sourceColumn.getColumn().setAlignment( SWT.RIGHT );
             sourceColumn.setLabelProvider( new ColumnLabelProvider() {
-                
+
                 @Override
                 public String getText( final Object element ) {
                     return super.getText( ( ( Field ) element ).getA().getContent() );
@@ -101,7 +104,7 @@ public class DataMapper extends Composite {
             operationColumn.getColumn().setText( "Operation" );
             operationColumn.getColumn().setAlignment( SWT.CENTER );
             operationColumn.setLabelProvider( new ColumnLabelProvider() {
-                
+
                 @Override
                 public String getText( final Object element ) {
                     return "=>";
@@ -111,17 +114,17 @@ public class DataMapper extends Composite {
             targetColumn.getColumn().setText( "Target Item" );
             targetColumn.getColumn().setAlignment( SWT.LEFT );
             targetColumn.setLabelProvider( new ColumnLabelProvider() {
-                
+
                 @Override
                 public String getText( final Object element ) {
                     return super.getText( ( ( Field ) element ).getB().getContent() );
                 }
             } );
             viewer.setContentProvider( new IStructuredContentProvider() {
-                
+
                 @Override
                 public void dispose() {}
-                
+
                 @Override
                 public Object[] getElements( final Object inputElement ) {
                     final List< Object > fields = new ArrayList<>();
@@ -133,18 +136,18 @@ public class DataMapper extends Composite {
                     }
                     return fields.toArray();
                 }
-                
+
                 @Override
                 public void inputChanged( final Viewer viewer,
                                           final Object oldInput,
                                           final Object newInput ) {}
             } );
             viewer.setInput( mappings );
-            
+
             operationColumn.getColumn().pack();
-            
+
             table.addControlListener( new ControlAdapter() {
-                
+
                 @Override
                 public void controlResized( final ControlEvent event ) {
                     final int width = ( table.getSize().x - operationColumn.getColumn().getWidth() ) / 2 - 1;
@@ -152,15 +155,15 @@ public class DataMapper extends Composite {
                     targetColumn.getColumn().setWidth( width );
                 }
             } );
-            
+
             final Text text = new Text( this, SWT.MULTI | SWT.WRAP );
             text.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
             text.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
             updateBrowserText( text );
             text.setBackground( getBackground() );
-            
+
             final DataBrowser sourceBrowser = new DataBrowser( this, "Source", sourceModel, new Listener() {
-                
+
                 @Override
                 public Model modelSelected( final String className ) {
                     try {
@@ -176,7 +179,7 @@ public class DataMapper extends Composite {
             sourceBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
             final Transfer[] xfers = new Transfer[] { LocalSelectionTransfer.getTransfer() };
             sourceBrowser.viewer.addDragSupport( DND.DROP_MOVE, xfers, new DragSourceAdapter() {
-                
+
                 @Override
                 public void dragSetData( final DragSourceEvent event ) {
                     if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) ) {
@@ -184,12 +187,12 @@ public class DataMapper extends Composite {
                     }
                 }
             } );
-            
+
             final Label label = new Label( this, SWT.NONE );
             label.setText( "=>" );
-            
+
             final DataBrowser targetBrowser = new DataBrowser( this, "Target", targetModel, new Listener() {
-                
+
                 @Override
                 public Model modelSelected( final String className ) {
                     try {
@@ -204,7 +207,7 @@ public class DataMapper extends Composite {
             } );
             targetBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
             targetBrowser.viewer.addDropSupport( DND.DROP_MOVE, xfers, new ViewerDropAdapter( targetBrowser.viewer ) {
-                
+
                 @Override
                 public boolean performDrop( final Object data ) {
                     final Model sourceModel = ( Model ) ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
@@ -219,7 +222,7 @@ public class DataMapper extends Composite {
                     }
                     return true;
                 }
-                
+
                 @Override
                 public boolean validateDrop( final Object target,
                                              final int operation,
@@ -231,10 +234,10 @@ public class DataMapper extends Composite {
             Activator.error( getShell(), e );
         }
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.swt.widgets.Widget#dispose()
      */
     @Override
@@ -249,7 +252,7 @@ public class DataMapper extends Composite {
                                                          e.getMessage() ) );
         }
     }
-    
+
     void updateBrowserText( final Text text ) {
         if ( sourceModel == null && targetModel == null ) text.setText( "Select the source and target models below." );
         else if ( sourceModel == null ) text.setText( "Select the source model below." );
@@ -257,7 +260,7 @@ public class DataMapper extends Composite {
         else text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
                            sourceModel.getName() + " to target " + targetModel.getName() );
     }
-    
+
     void updateMappings() {
         if ( sourceModel == null || targetModel == null ) return;
         final List< Mapping > mappings = configBuilder.getMappings().getMapping();
@@ -272,18 +275,21 @@ public class DataMapper extends Composite {
         }
     }
 
+    /**
+     * @param field
+     * @return <code>true</code> if the supplied field was successfully removed
+     */
     public boolean deleteFieldMapping(Field field) {
         Mapping mapping = (Mapping) viewer.getData(field.toString());
         boolean removed = mapping.getFieldOrFieldExclude().remove(field);
         if (removed) {
             try {
-                configBuilder.saveConfig( 
-                        new FileOutputStream( 
+                configBuilder.saveConfig(
+                        new FileOutputStream(
                                 new File( configFile.getLocationURI())));
                 configFile.getProject()
                     .refreshLocal( IResource.DEPTH_INFINITE, null );
                 viewer.refresh();
-                System.out.println("Deleted field: " + field.toString());
                 return true;
             } catch ( final Exception e ) {
                 Activator.error( getShell(), e );

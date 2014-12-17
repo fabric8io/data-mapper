@@ -23,23 +23,26 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
+/**
+ *
+ */
 public final class JavaUtil {
-    
+
     /**
      * Creates a ClassLoader using the project's build path.
-     * 
+     *
      * @param javaProject the Java project.
      * @param parentClassLoader the parent class loader, may be null.
-     * 
+     *
      * @return a new ClassLoader based on the project's build path.
-     * 
+     *
      * @throws Exception if something goes wrong.
      */
     public static ClassLoader getProjectClassLoader(IJavaProject javaProject, ClassLoader parentClassLoader)
             throws Exception {
         IProject project = javaProject.getProject();
         IWorkspaceRoot root = project.getWorkspace().getRoot();
-        List<URL> urls = new ArrayList<URL>();
+        List<URL> urls = new ArrayList<>();
         urls.add(new File(project.getLocation() + "/" + javaProject.getOutputLocation().removeFirstSegments(1) + "/") //$NON-NLS-1$ //$NON-NLS-2$
                 .toURI().toURL());
         for (IClasspathEntry classpathEntry : javaProject.getResolvedClasspath(true)) {
@@ -55,9 +58,8 @@ public final class JavaUtil {
         }
         if (parentClassLoader == null) {
             return new URLClassLoader(urls.toArray(new URL[urls.size()]));
-        } else {
-            return new URLClassLoader(urls.toArray(new URL[urls.size()]), parentClassLoader);
         }
+        return new URLClassLoader(urls.toArray(new URL[urls.size()]), parentClassLoader);
     }
 
     /**

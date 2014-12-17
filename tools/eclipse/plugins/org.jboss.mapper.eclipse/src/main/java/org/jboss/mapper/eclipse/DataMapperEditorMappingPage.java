@@ -18,19 +18,19 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.menus.IMenuService;
 import org.eclipse.ui.part.EditorPart;
 import org.eclipse.ui.part.FileEditorInput;
-import org.jboss.mapper.dozer.ConfigBuilder;
 
 /**
- * 
+ *
  */
 public class DataMapperEditorMappingPage extends EditorPart {
-    
-    private ConfigBuilder configBuilder;
+
+    static final String DM_VIEWER_POPUPMENU = "dm_viewer_popupmenu"; //$NON-NLS-1$
+
     private DataMapper mapper;
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
      */
     @Override
@@ -42,34 +42,30 @@ public class DataMapperEditorMappingPage extends EditorPart {
         IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
         IMenuService mSvc = (IMenuService) win.getService(IMenuService.class);
         MenuManager mgr = new MenuManager();
-        mSvc.populateContributionManager(mgr, "popup:" + IDataMapperConstants.DM_VIEWER_POPUPMENU);
+        mSvc.populateContributionManager(mgr, "popup:" + DM_VIEWER_POPUPMENU);
         mapper.viewer.getTable().setMenu(mgr.createContextMenu(mapper.viewer.getTable()));
         getSite().setSelectionProvider(mapper.viewer);
     }
-    
-    public DataMapper getMapper() {
-        return mapper;
-    }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.EditorPart#doSave(org.eclipse.core.runtime.IProgressMonitor)
      */
     @Override
     public void doSave( final IProgressMonitor monitor ) {}
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.EditorPart#doSaveAs()
      */
     @Override
     public void doSaveAs() {}
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.EditorPart#init(org.eclipse.ui.IEditorSite, org.eclipse.ui.IEditorInput)
      */
     @Override
@@ -81,30 +77,37 @@ public class DataMapperEditorMappingPage extends EditorPart {
         setSite( site );
         setInput( input );
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.EditorPart#isDirty()
      */
     @Override
     public boolean isDirty() {
         return false;
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.EditorPart#isSaveAsAllowed()
      */
     @Override
     public boolean isSaveAsAllowed() {
         return false;
     }
-    
+
+    /**
+     * @return The DataMapper widget used by this editor page
+     */
+    public DataMapper mapper() {
+        return mapper;
+    }
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
      */
     @Override

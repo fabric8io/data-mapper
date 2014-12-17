@@ -67,12 +67,12 @@
             locationURI="menu:org.eclipse.ui.main.menu?after=additions">
          <menu
                id="org.jboss.mapper.eclipse.menus.top"
-               label="Data Mapper"
-               mnemonic="D">
+               label="%menu.label"
+               mnemonic="%menu.mnemonic">
             <command
                   commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
                   id="org.jboss.mapper.eclipse.menus.sampleCommand"
-                  mnemonic="S">
+                  mnemonic="%command.mnemonic">
             </command>
          </menu>
       </menuContribution>
@@ -84,7 +84,7 @@
                   commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
                   icon="icons/sample.gif"
                   id="org.jboss.mapper.eclipse.toolbars.deleteFieldMapping"
-                  tooltip="Delete Field Mapping">
+                  tooltip="%command.tooltip">
             </command>
          </toolbar>
       </menuContribution>
@@ -93,7 +93,7 @@
             locationURI="popup:dm_viewer_popupmenu">
          <command
                commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
-               label="Delete Field Mapping"
+               label="%command.label"
                style="push">
          </command>
       </menuContribution>
@@ -102,12 +102,12 @@
          point="org.eclipse.ui.commands">
       <category
             id="org.jboss.mapper.eclipse.commands.category"
-            name="Data Mapper Commands Category">
+            name="%command.category.name">
       </category>
       <command
             categoryId="org.jboss.mapper.eclipse.commands.category"
             id="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
-            name="Delete Field Mapping">
+            name="%command.name">
       </command>
    </extension>
 </plugin>

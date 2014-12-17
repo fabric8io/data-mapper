@@ -28,13 +28,17 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
@@ -57,18 +61,19 @@ import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JPackage;
 
 /**
- * 
+ *
  */
 public class DataMappingWizard extends Wizard implements INewWizard {
-    
+
     static final String OBJECT_FACTORY_NAME = "ObjectFactory";
     static final String MAIN_PATH = "src/main/";
     static final String JAVA_PATH = MAIN_PATH + "java/";
     static final String RESOURCES_PATH = MAIN_PATH + "resources/";
     static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
-    
-    static final String DEFAULT_DOZER_CONFIG_FILE_NAME = "dozerBeanMapping.xml";
-    
+    static final String DEFAULT_DOZER_CONFIG_PATH = RESOURCES_PATH + "dozerBeanMapping.xml";
+    static final String LABEL_PROPERTY = "label";
+    static final String TOOL_TIP_PROPERTY = "toolTip";
+
     static String selectSchema( final Shell shell,
                                 final IProject project,
                                 final String schemaType ) {
@@ -82,8 +87,9 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         return null;
     }
-    
+
     IProject project;
+    ComboViewer projectViewer;
     Text idText;
     IFile dozerConfigFile;
     Text sourceFileText, targetFileText;
@@ -91,22 +97,23 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     ComboViewer sourceTypeComboViewer, targetTypeComboViewer;
     File camelConfigFile;
     CamelConfigBuilder camelConfigBuilder;
-    
+    Color labelForeground;
+
     /**
-     * 
+     *
      */
     public DataMappingWizard() {
         addPage( constructMainPage() );
     }
-    
+
     private IWizardPage constructMainPage() {
         return new WizardPage( "New Data Mapping", "New Data Mapping", Activator.imageDescriptor( "transform.png" ) ) {
-            
+
             Text dozerConfigFileText;
-            
+
             /**
              * {@inheritDoc}
-             * 
+             *
              * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
              */
             @Override
@@ -118,16 +125,19 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 page.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
                 // Create project controls
                 Label label = new Label( page, SWT.NONE );
+                labelForeground = label.getForeground();
                 label.setText( "Project:" );
                 label.setToolTipText( "The project that will contain the mapping file." );
-                final ComboViewer projectViewer = new ComboViewer( new Combo( page, SWT.READ_ONLY ) );
+                projectViewer = new ComboViewer( new Combo( page, SWT.READ_ONLY ) );
                 projectViewer.getCombo().setLayoutData( GridDataFactory.swtDefaults()
                                                                        .grab( true, false )
                                                                        .span( 2, 1 )
                                                                        .align( SWT.FILL, SWT.CENTER )
                                                                        .create() );
+                projectViewer.getCombo().setData( LABEL_PROPERTY, label );
+                projectViewer.getCombo().setToolTipText( label.getToolTipText() );
                 projectViewer.setLabelProvider( new LabelProvider() {
-                    
+
                     @Override
                     public String getText( final Object element ) {
                         return ( ( IProject ) element ).getName();
@@ -136,10 +146,16 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 projectViewer.add( ResourcesPlugin.getWorkspace().getRoot().getProjects() );
                 if ( project != null ) projectViewer.setSelection( new StructuredSelection( project ) );
                 projectViewer.getCombo().addSelectionListener( new SelectionAdapter() {
-                    
+
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         project = ( IProject ) ( ( IStructuredSelection ) projectViewer.getSelection() ).getFirstElement();
+                        camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
+                        try {
+                            camelConfigBuilder = CamelConfigBuilder.loadConfig( camelConfigFile );
+                        } catch ( final Exception e ) {
+                            Activator.error( getShell(), e );
+                        }
                         validatePage();
                     }
                 } );
@@ -150,8 +166,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 idText = new Text( page, SWT.BORDER );
                 idText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                      .align( SWT.FILL, SWT.CENTER ).create() );
+                idText.setData( LABEL_PROPERTY, label );
+                idText.setToolTipText( label.getToolTipText() );
                 idText.addKeyListener( new KeyAdapter() {
-                    
+
                     @Override
                     public void keyReleased( final KeyEvent event ) {
                         validatePage();
@@ -161,11 +179,13 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 label = new Label( page, SWT.NONE );
                 label.setText( "File name:" );
                 dozerConfigFileText = new Text( page, SWT.BORDER );
-                dozerConfigFileText.setText( DEFAULT_DOZER_CONFIG_FILE_NAME );
+                dozerConfigFileText.setText( DEFAULT_DOZER_CONFIG_PATH );
                 dozerConfigFileText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                                   .align( SWT.FILL, SWT.CENTER ).create() );
+                dozerConfigFileText.setData( LABEL_PROPERTY, label );
+                dozerConfigFileText.setToolTipText( label.getToolTipText() );
                 dozerConfigFileText.addKeyListener( new KeyAdapter() {
-                    
+
                     @Override
                     public void keyReleased( final KeyEvent event ) {
                         validatePage();
@@ -189,7 +209,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 createFileControls( group, fileLabel, "Target", targetFileText, targetFileButton, typeLabel, targetTypeComboViewer );
                 // Set focus to appropriate control
                 page.addPaintListener( new PaintListener() {
-                    
+
                     @Override
                     public void paintControl( final PaintEvent event ) {
                         if ( project == null ) projectViewer.getCombo().setFocus();
@@ -197,12 +217,12 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                         page.removePaintListener( this );
                     }
                 } );
-                
+
                 sourceFileButton.setEnabled( false );
                 targetFileButton.setEnabled( false );
                 setPageComplete( false );
             }
-            
+
             void createFileControls( final Group group,
                                      final Label fileLabel,
                                      final String schemaType,
@@ -219,26 +239,28 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 group.setText( schemaType + " File" );
                 fileLabel.setText( "Name:" );
                 fileText.setLayoutData( GridDataFactory.swtDefaults().grab( true, false ).align( SWT.FILL, SWT.CENTER ).create() );
-                fileText.addKeyListener( new KeyAdapter() {
-                    
+                fileText.setData( LABEL_PROPERTY, fileLabel );
+                fileText.addModifyListener( new ModifyListener() {
+
                     @Override
-                    public void keyReleased( final KeyEvent event ) {
+                    public void modifyText( ModifyEvent event ) {
                         validatePage();
                     }
                 } );
                 fileButton.setText( "..." );
                 typeLabel.setText( "Type:" );
                 typeComboViewer.getCombo().setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false ).create() );
+                typeComboViewer.getCombo().setData( LABEL_PROPERTY, typeLabel );
                 typeComboViewer.add( ModelType.values() );
-                typeComboViewer.getCombo().addSelectionListener( new SelectionAdapter() {
-                    
+                typeComboViewer.getCombo().addModifyListener( new ModifyListener() {
+
                     @Override
-                    public void widgetSelected( final SelectionEvent event ) {
+                    public void modifyText( final ModifyEvent event ) {
                         validatePage();
                     }
                 } );
                 fileButton.addSelectionListener( new SelectionAdapter() {
-                    
+
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         final String name = selectSchema( getShell(), project, schemaType );
@@ -268,91 +290,100 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     }
                 } );
             }
-            
+
+            void markInvalid( Control control,
+                              String toolTip ) {
+                control.setData( TOOL_TIP_PROPERTY, control.getToolTipText() );
+                control.setToolTipText( toolTip );
+                final Label label = ( Label ) control.getData( LABEL_PROPERTY );
+                label.setToolTipText( toolTip );
+                label.setForeground( getShell().getDisplay().getSystemColor( SWT.COLOR_RED ) );
+            }
+
+            void markValid( Control control ) {
+                final Object data = control.getData( TOOL_TIP_PROPERTY );
+                String toolTip = data == null ? null : data.toString();
+                control.setToolTipText( toolTip );
+                final Label label = ( Label ) control.getData( LABEL_PROPERTY );
+                label.setToolTipText( toolTip );
+                label.setForeground( labelForeground );
+            }
+
             void validatePage() {
-                setErrorMessage( null );
                 setPageComplete( false );
                 if ( project == null ) {
                     sourceFileButton.setEnabled( false );
                     targetFileButton.setEnabled( false );
-                    setErrorMessage( "A project must be selected" );
+                    markInvalid( projectViewer.getCombo(), "A project must be selected" );
                     return;
                 }
+                markValid( projectViewer.getCombo() );
                 sourceFileButton.setEnabled( true );
                 targetFileButton.setEnabled( true );
                 final String id = idText.getText().trim();
                 if ( id.isEmpty() ) {
-                    setErrorMessage( "A mapping ID must be supplied" );
+                    markInvalid( idText, "A mapping ID must be supplied" );
                     return;
                 }
                 final StringCharacterIterator iter = new StringCharacterIterator( id );
                 for ( char chr = iter.first(); chr != StringCharacterIterator.DONE; chr = iter.next() ) {
                     if ( !Character.isUnicodeIdentifierPart( chr ) ) {
-                        setErrorMessage( "The mapping ID contains an illegal character" );
+                        markInvalid( idText, "The mapping ID contains an illegal character" );
                         return;
                     }
                 }
-                camelConfigFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
-                try {
-                    camelConfigBuilder = CamelConfigBuilder.loadConfig( camelConfigFile );
-                    for ( final CamelEndpointFactoryBean bean : camelConfigBuilder.getCamelContext().getEndpoint() ) {
-                        if ( id.equalsIgnoreCase( bean.getId() ) ) {
-                            setErrorMessage( "A mapping with the supplied ID already exists" );
-                            return;
-                        }
+                for ( final CamelEndpointFactoryBean bean : camelConfigBuilder.getCamelContext().getEndpoint() ) {
+                    if ( id.equalsIgnoreCase( bean.getId() ) ) {
+                        markInvalid( idText, "A mapping with the supplied ID already exists" );
+                        return;
                     }
-                } catch ( final Exception e ) {
-                    Activator.error( getShell(), e );
                 }
+                markValid( idText );
                 String path = dozerConfigFileText.getText();
                 if ( path.isEmpty() ) {
                     dozerConfigFile = null;
-                    setErrorMessage( "The name of the mapping file must be supplied" );
+                    markInvalid( dozerConfigFileText, "The name of the mapping file must be supplied" );
                     return;
                 }
+                markValid( dozerConfigFileText );
                 if ( !path.toLowerCase().endsWith( ".xml" ) ) path = path + ".xml";
-                dozerConfigFile = project.getFile( RESOURCES_PATH + path );
+                dozerConfigFile = project.getFile( path );
                 final String sourceFileName = sourceFileText.getText().trim();
                 final String targetFileName = targetFileText.getText().trim();
                 if ( sourceFileName.isEmpty() && targetFileName.isEmpty() ) {
+                    markValid( sourceFileText );
+                    markValid( targetFileText );
                     setPageComplete( true );
                     return;
                 }
                 if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
-                    if ( sourceTypeComboViewer.getSelection().isEmpty()
-                         || targetTypeComboViewer.getSelection().isEmpty() ) {
-                        setErrorMessage( "The types for both source and target files must be selected" );
+                    if ( sourceTypeComboViewer.getSelection().isEmpty() ) {
+                        markInvalid( sourceTypeComboViewer.getCombo(), "A source type must be selected" );
                         return;
                     }
+                    markValid( sourceTypeComboViewer.getCombo() );
+                    if ( targetTypeComboViewer.getSelection().isEmpty() ) {
+                        markInvalid( targetTypeComboViewer.getCombo(), "The target type must be selected" );
+                        return;
+                    }
+                    markValid( targetTypeComboViewer.getCombo() );
+                    markValid( sourceFileText );
+                    markValid( targetFileText );
                     setPageComplete( true );
                     return;
                 }
-                setErrorMessage( "Source and target files must be selected in conjunction with each other" );
+                if ( sourceFileName.isEmpty() ) {
+                    markInvalid( sourceFileText, "A source file must be selected since a target file has been selected" );
+                    markValid( targetFileText );
+                }
+                else {
+                    markValid( sourceFileText );
+                    markInvalid( targetFileText, "A target file must be selected since a source file has been selected" );
+                }
             }
         };
     }
-    
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
-     */
-    @Override
-    public void init( final IWorkbench workbench,
-                      final IStructuredSelection selection ) {
-        final IStructuredSelection resourceSelection =
-            ( IStructuredSelection ) workbench.getActiveWorkbenchWindow().getSelectionService().getSelection( "org.eclipse.ui.navigator.ProjectExplorer" );
-        if ( resourceSelection == null ) return;
-        if ( resourceSelection.size() != 1 ) {
-            final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-            if ( projects.length == 1 ) project = projects[ 0 ];
-            return;
-        }
-        project =
-            ( ( IResource ) ( ( IAdaptable ) resourceSelection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
-        if ( project != null ) dozerConfigFile = project.getFile( RESOURCES_PATH + DEFAULT_DOZER_CONFIG_FILE_NAME );
-    }
-    
+
     private String generateModel( final String fileName,
                                   final ModelType type ) throws Exception {
         // Build class name from file name
@@ -401,23 +432,19 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 final JCodeModel model = generator.generateFromSchema( new File( project.findMember( fileName ).getLocationURI() ),
                                                                        pkgName,
                                                                        targetClassesFolder );
-                String modelClass = selectModelClass( model );
-                if ( modelClass != null ) {
-                    return modelClass;
-                }
+                final String modelClass = selectModelClass( model );
+                if ( modelClass != null ) { return modelClass; }
                 break;
             }
             case XML: {
                 final XmlModelGenerator generator = new XmlModelGenerator();
                 final File schemaPath = new File( project.getFile( fileName + ".xsd" ).getLocationURI() );
-                final JCodeModel model = generator.generateFromInstance(new File( project.findMember( fileName ).getLocationURI() ),
-                                                                        schemaPath, 
-                                                                        pkgName, 
-                                                                        targetClassesFolder );
-                String modelClass = selectModelClass (model );
-                if ( modelClass != null ) {
-                    return modelClass;
-                }
+                final JCodeModel model = generator.generateFromInstance( new File( project.findMember( fileName ).getLocationURI() ),
+                                                                         schemaPath,
+                                                                         pkgName,
+                                                                         targetClassesFolder );
+                final String modelClass = selectModelClass( model );
+                if ( modelClass != null ) { return modelClass; }
                 break;
             }
             default:
@@ -425,10 +452,31 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         return null;
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
+     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
+     */
+    @Override
+    public void init( final IWorkbench workbench,
+                      final IStructuredSelection selection ) {
+        final IStructuredSelection resourceSelection =
+            ( IStructuredSelection ) workbench.getActiveWorkbenchWindow().getSelectionService().getSelection( "org.eclipse.ui.navigator.ProjectExplorer" );
+        if ( resourceSelection == null ) return;
+        if ( resourceSelection.size() != 1 ) {
+            final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+            if ( projects.length == 1 ) project = projects[ 0 ];
+            return;
+        }
+        project =
+            ( ( IResource ) ( ( IAdaptable ) resourceSelection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
+        if ( project != null ) dozerConfigFile = project.getFile( DEFAULT_DOZER_CONFIG_PATH );
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
@@ -449,7 +497,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
-                camelConfigBuilder.addTransformation( idText.getText(), dozerConfigFile.getName(),
+                camelConfigBuilder.addTransformation( idText.getText(),
+                                                      dozerConfigFile.getFullPath().makeRelativeTo( project.getFullPath() ).toString(),
                                                       sourceType.transformType, sourceClassName,
                                                       targetType.transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream = new FileOutputStream( camelConfigFile ) ) {
@@ -476,40 +525,37 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         return true;
     }
-    
-    private String selectModelClass(JCodeModel model) {
-        String className = null;
+
+    private String selectModelClass( final JCodeModel model ) {
         for ( final Iterator< JPackage > pkgIter = model.packages(); pkgIter.hasNext(); ) {
             final JPackage pkg = pkgIter.next();
             for ( final Iterator< JDefinedClass > classIter = pkg.classes(); classIter.hasNext(); ) {
-                // TODO this only works when a single top-level class exists
+                // TODO this only works when a single top-level class exists; fix after issue #33 is fixed
                 final JDefinedClass definedClass = classIter.next();
-                if ( OBJECT_FACTORY_NAME.equals( definedClass.name()) ) {
-                    continue;
-                }
-                className = definedClass.fullName();
+                if ( OBJECT_FACTORY_NAME.equals( definedClass.name() ) ) continue;
+                return definedClass.fullName();
             }
         }
-        return className;
+        return null;
     }
-    
+
     enum ModelType {
-        
+
         JAVA( "Java", TransformType.JAVA ),
         JSON( "JSON", TransformType.JSON ),
         JSON_SCHEMA( "JSON Schema", TransformType.JSON ),
         XML( "XML", TransformType.XML ),
         XSD( "XSD", TransformType.XML );
-        
+
         final String text;
         final TransformType transformType;
-        
+
         private ModelType( final String text,
                            final TransformType transformType ) {
             this.text = text;
             this.transformType = transformType;
         }
-        
+
         @Override
         public String toString() {
             return text;
