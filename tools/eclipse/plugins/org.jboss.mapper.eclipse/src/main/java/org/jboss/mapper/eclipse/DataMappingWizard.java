@@ -3,8 +3,11 @@ package org.jboss.mapper.eclipse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.StringCharacterIterator;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -14,6 +17,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ui.JavaElementLabelProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -45,7 +53,7 @@ import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
+import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.TransformType;
 import org.jboss.mapper.camel.CamelConfigBuilder;
@@ -72,32 +80,42 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     static final String LABEL_PROPERTY = "label";
     static final String TOOL_TIP_PROPERTY = "toolTip";
 
+    private static void populateResources( Shell shell,
+                                           IContainer container,
+                                           List< IResource > resources ) {
+        try {
+            for ( final IResource resource : container.members() ) {
+                if ( resource instanceof IContainer ) populateResources( shell, ( IContainer ) resource, resources );
+                else resources.add( resource );
+            }
+        } catch ( final Exception e ) {
+            Activator.error( shell, e );
+        }
+    }
+
     static String selectSchema( final Shell shell,
                                 final IProject project,
                                 final String schemaType,
                                 final Text fileText ) {
-        try {
-            final ResourceListSelectionDialog dlg = new ResourceListSelectionDialog( shell, project, IResource.FILE ) {
+        final int flags = JavaElementLabelProvider.SHOW_DEFAULT |
+                          JavaElementLabelProvider.SHOW_POST_QUALIFIED |
+                          JavaElementLabelProvider.SHOW_ROOT;
+        final ElementListSelectionDialog dlg =
+            new ElementListSelectionDialog( shell, new JavaElementLabelProvider( flags ) {
 
                 @Override
-                protected Control createDialogArea( final Composite parent ) {
-                    final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
-                    for ( final Control child : dlgArea.getChildren() ) {
-                        if ( child instanceof Text ) {
-                            String text = fileText.getText().trim();
-                            ( ( Text ) child ).setText( text.isEmpty() ? "*" : text );
-                            break;
-                        }
-                    }
-                    return dlgArea;
+                public String getText( Object element ) {
+                    return super.getText( element ) + " - " + ( ( IResource ) element ).getParent().getFullPath().makeRelative();
                 }
-            };
-            dlg.setTitle( "Select " + schemaType );
-            if ( dlg.open() == Window.OK )
-                return ( ( IFile ) dlg.getResult()[ 0 ] ).getFullPath().makeRelativeTo( project.getFullPath() ).toString();
-        } catch ( final Exception e ) {
-            Activator.error( shell, e );
-        }
+            } );
+        dlg.setTitle( "Select " + schemaType );
+        dlg.setMessage( "Select the " + schemaType + " file for the transformation" );
+        dlg.setMatchEmptyString( true );
+        dlg.setHelpAvailable( false );
+        final List< IResource > resources = new ArrayList<>();
+        populateResources( shell, project, resources );
+        dlg.setElements( resources.toArray() );
+        if ( dlg.open() == Window.OK ) return ( ( IFile ) dlg.getFirstResult() ).getProjectRelativePath().toString();
         return null;
     }
 
@@ -284,6 +302,9 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                             if ( typeComboViewer.getSelection().isEmpty() ) {
                                 final String ext = name.substring( name.lastIndexOf( '.' ) + 1 ).toLowerCase();
                                 switch ( ext ) {
+                                    case "class":
+                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.CLASS ) );
+                                        break;
                                     case "java":
                                         typeComboViewer.setSelection( new StructuredSelection( ModelType.JAVA ) );
                                         break;
@@ -310,7 +331,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                               String toolTip ) {
                 control.setData( TOOL_TIP_PROPERTY, control.getToolTipText() );
                 control.setToolTipText( toolTip );
-                Color color = getShell().getDisplay().getSystemColor( SWT.COLOR_RED );
+                final Color color = getShell().getDisplay().getSystemColor( SWT.COLOR_RED );
                 control.setForeground( color );
                 final Label label = ( Label ) control.getData( LABEL_PROPERTY );
                 label.setToolTipText( toolTip );
@@ -319,7 +340,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
 
             void markValid( Control control ) {
                 final Object data = control.getData( TOOL_TIP_PROPERTY );
-                String toolTip = data == null ? null : data.toString();
+                final String toolTip = data == null ? null : data.toString();
                 control.setToolTipText( toolTip );
                 control.setForeground( control instanceof Combo ? comboForeground : textForeground );
                 final Label label = ( Label ) control.getData( LABEL_PROPERTY );
@@ -437,6 +458,25 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         // Generate model
         final File targetClassesFolder = new File( project.getFolder( JAVA_PATH ).getLocationURI() );
         switch ( type ) {
+            case CLASS: {
+                final IResource resource = project.findMember( fileName );
+                if ( resource != null ) {
+                    final IClassFile file = ( IClassFile ) JavaCore.create( project.findMember( fileName ) );
+                    if ( file != null ) return file.getType().getFullyQualifiedName();
+                }
+                return null;
+            }
+            case JAVA: {
+                final IResource resource = project.findMember( fileName );
+                if ( resource != null ) {
+                    final ICompilationUnit file = ( ICompilationUnit ) JavaCore.create( project.findMember( fileName ) );
+                    if ( file != null ) {
+                        final IType[] types = file.getTypes();
+                        if ( types.length > 0 ) return types[ 0 ].getFullyQualifiedName();
+                    }
+                }
+                return null;
+            }
             case JSON: {
                 final JsonModelGenerator generator = new JsonModelGenerator();
                 generator.generateFromInstance( className.toString(),
@@ -460,7 +500,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                                        targetClassesFolder );
                 final String modelClass = selectModelClass( model );
                 if ( modelClass != null ) { return modelClass; }
-                break;
+                return null;
             }
             case XML: {
                 final XmlModelGenerator generator = new XmlModelGenerator();
@@ -471,12 +511,11 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                                          targetClassesFolder );
                 final String modelClass = selectModelClass( model );
                 if ( modelClass != null ) { return modelClass; }
-                break;
+                return null;
             }
             default:
-                break;
+                return null;
         }
-        return null;
     }
 
     /**
@@ -523,7 +562,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                     ( ModelType ) ( ( IStructuredSelection ) targetTypeComboViewer.getSelection() ).getFirstElement();
                 final String targetClassName = generateModel( targetFileName, targetType );
                 // Update Camel config
-                IPath resourcesPath = project.getFolder( RESOURCES_PATH ).getFullPath();
+                final IPath resourcesPath = project.getFolder( RESOURCES_PATH ).getFullPath();
                 camelConfigBuilder.addTransformation( idText.getText(),
                                                       dozerConfigFile.getFullPath().makeRelativeTo( resourcesPath ).toString(),
                                                       sourceType.transformType, sourceClassName,
@@ -568,7 +607,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
 
     enum ModelType {
 
-        JAVA( "Java", TransformType.JAVA ),
+        CLASS( "Java Class", TransformType.JAVA ),
+        JAVA( "Java Source", TransformType.JAVA ),
         JSON( "JSON", TransformType.JSON ),
         JSON_SCHEMA( "JSON Schema", TransformType.JSON ),
         XML( "XML", TransformType.XML ),

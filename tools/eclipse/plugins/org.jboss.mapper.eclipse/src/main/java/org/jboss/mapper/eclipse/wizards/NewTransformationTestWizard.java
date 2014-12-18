@@ -43,6 +43,9 @@ import org.jboss.mapper.eclipse.Activator;
 import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.test.TestGenerator;
 
+/**
+ *
+ */
 public class NewTransformationTestWizard extends Wizard implements INewWizard {
 
     static final String DEFAULT_DOZER_CONFIG_FILE_NAME = "dozerBeanMapping.xml";
@@ -56,7 +59,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
     String className = null;
 
     /**
-     * 
+     *
      */
     public NewTransformationTestWizard() {
         addPage( constructMainPage() );
@@ -71,7 +74,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
 
             /**
              * {@inheritDoc}
-             * 
+             *
              * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
              */
             @Override
@@ -123,7 +126,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                     public void widgetSelected(SelectionEvent e) {
                         if (javaProject != null) {
                             try {
-                                SelectionDialog dialog = 
+                                SelectionDialog dialog =
                                         JavaUI.createPackageDialog(getShell(), javaProject, 0);
                                 if (dialog.open() == SelectionDialog.OK) {
                                     IPackageFragment result = (IPackageFragment) dialog.getResult()[0];
@@ -207,6 +210,11 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
         };
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
+     */
     @Override
     public void init(IWorkbench workbench, IStructuredSelection selection) {
         // what are we passing in? assume we're right-clicking on the dozer file
@@ -245,6 +253,11 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.eclipse.jface.wizard.Wizard#performFinish()
+     */
     @Override
     public boolean performFinish() {
         // here we're creating the transformation test
@@ -266,7 +279,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
             } catch (Exception e) {
                 Activator.error( getShell(), e );
             }
-        }        
+        }
 
         return false;
     }

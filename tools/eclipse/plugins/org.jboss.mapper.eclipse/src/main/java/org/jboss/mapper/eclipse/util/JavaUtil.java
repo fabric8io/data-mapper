@@ -77,9 +77,9 @@ public final class JavaUtil {
 
     /**
      * Returns the first non-empty package in the project's first source folder.
-     * 
+     *
      * @param project the Java project
-     * 
+     *
      * @return the first non-empty package; may be null.
      */
     public static IJavaElement getInitialPackageForProject(IJavaProject project) {
@@ -110,9 +110,9 @@ public final class JavaUtil {
     /**
      * Returns the first resource folder in the project. If the project is a
      * maven project, the first resource folder configured will be used.
-     * 
+     *
      * @param project the Java project
-     * 
+     *
      * @return the resource root; may be null.
      */
     public static IResource getFirstResourceRoot(IJavaProject project) {
@@ -133,6 +133,10 @@ public final class JavaUtil {
         }
     }
 
+    /**
+     * @param project
+     * @return the root package for the supplied project
+     */
     public static IPackageFragmentRoot getFirstJavaSourceRoot(IJavaProject project) {
         if (project == null) {
             return null;
@@ -150,7 +154,12 @@ public final class JavaUtil {
             return null;
         }
     }
-    
+
+    /**
+     * @param javaProject
+     * @param folder
+     * @return <code>true</code> if the supplied folder was successfully added to the supplied Java project
+     */
     public static boolean addFolderToProjectClasspath(IJavaProject javaProject, IResource folder) {
         IClasspathEntry[] entries;
         try {
@@ -168,7 +177,12 @@ public final class JavaUtil {
             return false;
         }
     }
-    
+
+    /**
+     * @param javaProject
+     * @param folder
+     * @return <code>true</code> if the supplied folder is part of the supplied Java project's classpath
+     */
     public static boolean findFolderOnProjectClasspath(IJavaProject javaProject, IResource folder) {
         IClasspathEntry[] entries;
         try {
@@ -185,6 +199,10 @@ public final class JavaUtil {
         }
     }
 
+    /**
+     * @param context
+     * @return the Java source and runtime compliance levels for the project containing the supplied Java element
+     */
     public static String[] getSourceComplianceLevels(IJavaElement context) {
         if (context != null) {
             IJavaProject javaProject= context.getJavaProject();
@@ -200,12 +218,22 @@ public final class JavaUtil {
                 JavaCore.getOption(JavaCore.COMPILER_COMPLIANCE)
         };
     }
-    
+
+    /**
+     * @param name
+     * @param context
+     * @return a status indicating whether the supplied package name is valid for the supplied Java element
+     */
     public static IStatus validatePackageName(String name, IJavaElement context) {
         String[] sourceComplianceLevels= getSourceComplianceLevels(context);
         return JavaConventions.validatePackageName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
     }
-    
+
+    /**
+     * @param name
+     * @param context
+     * @return a status indicating whether the supplied class name is valid for the supplied Java element
+     */
     public static IStatus validateClassFileName(String name, IJavaElement context) {
         String[] sourceComplianceLevels= getSourceComplianceLevels(context);
         return JavaConventions.validateJavaTypeName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);

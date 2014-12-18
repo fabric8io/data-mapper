@@ -22,9 +22,9 @@
             class="org.jboss.mapper.eclipse.wizards.NewTransformationTestWizard"
             icon="icons/transform16.png"
             id="org.jboss.mapper.eclipse.transformationtest.new"
-            name="Transformation Test">
+            name="%transformation-test-wizard.name">
          <description>
-            Creates a new Transformation Test class based on the selected Transform Endpoint in a Camel Route file.
+            %transformation-test-wizard.description
          </description>
       </wizard>
    </extension>
