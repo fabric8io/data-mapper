@@ -2,7 +2,7 @@
 <feature
       id="org.jboss.mapper.eclipse.feature"
       label="%featureName"
-      version="1.0.0.qualifier"
+      version="1.0.0.m2"
       provider-name="%featureProvider"
       plugin="org.jboss.mapper.eclipse">
 
