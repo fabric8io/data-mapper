@@ -100,7 +100,6 @@ public class TranformProducer extends DefaultProducer {
                 ((CamelContextAware)unmarshaller).setCamelContext(exchange.getContext());
             }
             unmarshaller.start();
-            unmarshaller.process(exchange);
         }
         return unmarshaller;
     }

@@ -20,6 +20,7 @@ import org.apache.camel.EndpointInject;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.mock.MockEndpoint;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,11 @@ public class XmlToJsonTest {
     @Autowired
     private CamelContext camelContext;
     
+    @After
+    public void tearDown() {
+        resultEndpoint.reset();
+    }
+    
     @Test
     public void testXmlToJson() throws Exception {
         resultEndpoint.expectedMessageCount(1);
@@ -48,6 +54,19 @@ public class XmlToJsonTest {
         resultEndpoint.assertIsSatisfied();
         String result = resultEndpoint.getExchanges().get(0).getIn().getBody(String.class);
         Assert.assertEquals(getResourceAsString("xyz-order.json"), result);
+    }
+    
+    @Test
+    public void testMultipleSends() throws Exception {
+        resultEndpoint.expectedMessageCount(2);
+        startEndpoint.sendBody(getResourceAsString("abc-order.xml"));
+        startEndpoint.sendBody(getResourceAsString("abc-order.xml"));
+        // check results
+        resultEndpoint.assertIsSatisfied();
+        String result1 = resultEndpoint.getExchanges().get(0).getIn().getBody(String.class);
+        String result2 = resultEndpoint.getExchanges().get(1).getIn().getBody(String.class);
+        Assert.assertEquals(getResourceAsString("xyz-order.json"), result1);
+        Assert.assertEquals(getResourceAsString("xyz-order.json"), result2);
     }
     
     private String getResourceAsString(String resourcePath) {
