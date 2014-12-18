@@ -23,7 +23,7 @@ The application picks up input XML from the src/data directory and drops output 
 
 [Generated Java Output](https://github.com/kcbabo/sandbox/tree/master/mapper/examples/map-1/src/main/java/org/example/order/xyz)
 
-[Camel Config](https://github.com/kcbabo/sandbox/blob/master/mapper/examples/map-0/src/main/resources/META-INF/spring/camel-context.xml)
+[Camel Config](https://github.com/kcbabo/sandbox/blob/master/mapper/examples/map-1/src/main/resources/META-INF/spring/camel-context.xml)
 
 [Dozer Config](https://github.com/kcbabo/sandbox/blob/master/mapper/examples/map-1/src/main/resources/dozerBeanMapping.xml)
 

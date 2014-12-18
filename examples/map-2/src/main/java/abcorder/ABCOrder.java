@@ -1,5 +1,5 @@
 
-package xml;
+package abcorder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,22 +44,8 @@ import javax.xml.bind.annotation.XmlType;
  *                       &lt;complexContent>
  *                         &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *                           &lt;sequence>
- *                             &lt;element name="price">
- *                               &lt;simpleType>
- *                                 &lt;restriction base="{http://www.w3.org/2001/XMLSchema}float">
- *                                   &lt;enumeration value="2.25"/>
- *                                   &lt;enumeration value="1.25"/>
- *                                 &lt;/restriction>
- *                               &lt;/simpleType>
- *                             &lt;/element>
- *                             &lt;element name="quantity">
- *                               &lt;simpleType>
- *                                 &lt;restriction base="{http://www.w3.org/2001/XMLSchema}short">
- *                                   &lt;enumeration value="1000"/>
- *                                   &lt;enumeration value="400"/>
- *                                 &lt;/restriction>
- *                               &lt;/simpleType>
- *                             &lt;/element>
+ *                             &lt;element name="price" type="{http://www.w3.org/2001/XMLSchema}float"/>
+ *                             &lt;element name="quantity" type="{http://www.w3.org/2001/XMLSchema}short"/>
  *                           &lt;/sequence>
  *                           &lt;attribute name="id" type="{http://www.w3.org/2001/XMLSchema}string" />
  *                         &lt;/restriction>
@@ -267,22 +253,8 @@ public class ABCOrder {
      *             &lt;complexContent>
      *               &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
      *                 &lt;sequence>
-     *                   &lt;element name="price">
-     *                     &lt;simpleType>
-     *                       &lt;restriction base="{http://www.w3.org/2001/XMLSchema}float">
-     *                         &lt;enumeration value="2.25"/>
-     *                         &lt;enumeration value="1.25"/>
-     *                       &lt;/restriction>
-     *                     &lt;/simpleType>
-     *                   &lt;/element>
-     *                   &lt;element name="quantity">
-     *                     &lt;simpleType>
-     *                       &lt;restriction base="{http://www.w3.org/2001/XMLSchema}short">
-     *                         &lt;enumeration value="1000"/>
-     *                         &lt;enumeration value="400"/>
-     *                       &lt;/restriction>
-     *                     &lt;/simpleType>
-     *                   &lt;/element>
+     *                   &lt;element name="price" type="{http://www.w3.org/2001/XMLSchema}float"/>
+     *                   &lt;element name="quantity" type="{http://www.w3.org/2001/XMLSchema}short"/>
      *                 &lt;/sequence>
      *                 &lt;attribute name="id" type="{http://www.w3.org/2001/XMLSchema}string" />
      *               &lt;/restriction>
@@ -345,22 +317,8 @@ public class ABCOrder {
          *   &lt;complexContent>
          *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
          *       &lt;sequence>
-         *         &lt;element name="price">
-         *           &lt;simpleType>
-         *             &lt;restriction base="{http://www.w3.org/2001/XMLSchema}float">
-         *               &lt;enumeration value="2.25"/>
-         *               &lt;enumeration value="1.25"/>
-         *             &lt;/restriction>
-         *           &lt;/simpleType>
-         *         &lt;/element>
-         *         &lt;element name="quantity">
-         *           &lt;simpleType>
-         *             &lt;restriction base="{http://www.w3.org/2001/XMLSchema}short">
-         *               &lt;enumeration value="1000"/>
-         *               &lt;enumeration value="400"/>
-         *             &lt;/restriction>
-         *           &lt;/simpleType>
-         *         &lt;/element>
+         *         &lt;element name="price" type="{http://www.w3.org/2001/XMLSchema}float"/>
+         *         &lt;element name="quantity" type="{http://www.w3.org/2001/XMLSchema}short"/>
          *       &lt;/sequence>
          *       &lt;attribute name="id" type="{http://www.w3.org/2001/XMLSchema}string" />
          *     &lt;/restriction>

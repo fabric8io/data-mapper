@@ -1,5 +1,5 @@
 
-package json;
+package xyzorderschema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+
+/**
+ * XYZOrder
+ * <p>
+ * 
+ * 
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Generated("org.jsonschema2pojo")
 @JsonPropertyOrder({
@@ -16,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "orderId",
     "lineItems"
 })
-public class XYZOrder {
+public class XyzOrderSchema {
 
     @JsonProperty("custId")
     private String custId;

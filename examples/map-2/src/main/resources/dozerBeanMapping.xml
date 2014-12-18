@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <mappings xmlns="http://dozer.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
     <mapping>
-        <class-a>xml.ABCOrder</class-a>
-        <class-b>json.XYZOrder</class-b>
+        <class-a>abcorder.ABCOrder</class-a>
+        <class-b>xyzorderschema.XyzOrderSchema</class-b>
         <field>
             <a>header.customerNum</a>
             <b>custId</b>
@@ -21,8 +21,8 @@
         </field>
     </mapping>
     <mapping>
-        <class-a>xml.ABCOrder$OrderItems$Item</class-a>
-        <class-b>json.LineItem</class-b>
+        <class-a>abcorder.ABCOrder$OrderItems$Item</class-a>
+        <class-b>xyzorderschema.LineItem</class-b>
         <field>
             <a>id</a>
             <b>itemId</b>
