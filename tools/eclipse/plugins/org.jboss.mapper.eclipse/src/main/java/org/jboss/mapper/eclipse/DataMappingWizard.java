@@ -21,6 +21,8 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.ToolFactory;
+import org.eclipse.jdt.core.util.IClassFileReader;
 import org.eclipse.jdt.ui.JavaElementLabelProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -451,10 +453,11 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         // Build package name from class name
         int sequencer = 1;
-        String pkgName = className.toString().toLowerCase();
+        String pkgName = className.toString();
         while ( project.exists( new Path( JAVA_PATH + pkgName ) ) ) {
             pkgName = className.toString() + sequencer++;
         }
+        pkgName = pkgName.toLowerCase();
         // Generate model
         final File targetClassesFolder = new File( project.getFolder( JAVA_PATH ).getLocationURI() );
         switch ( type ) {
@@ -462,7 +465,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 final IResource resource = project.findMember( fileName );
                 if ( resource != null ) {
                     final IClassFile file = ( IClassFile ) JavaCore.create( project.findMember( fileName ) );
-                    if ( file != null ) return file.getType().getFullyQualifiedName();
+                    if ( file != null ) return pkgName + "." + file.getType().getFullyQualifiedName();
                 }
                 return null;
             }
