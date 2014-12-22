@@ -1,6 +1,7 @@
 package org.example;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.apache.camel.EndpointInject;
 import org.apache.camel.Produce;
@@ -12,19 +13,34 @@ import org.junit.Test;
 import org.springframework.context.support.AbstractXmlApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class TransformationTest extends CamelSpringTestSupport {
-    
+
     @EndpointInject(uri = "mock:xml2json-test-output")
     private MockEndpoint resultEndpoint;
-    
+
     @Produce(uri = "direct:xml2json-test-input")
     private ProducerTemplate startEndpoint;
-    
+
     @Test
     public void transform() throws Exception {
+        // setup expectations
+        resultEndpoint.expectedMessageCount(1);
+        // set expected body as the unpretty print version of the json
+        // (flattened)
+        resultEndpoint.expectedBodiesReceived(jsonUnprettyPrint(readFile("src/data/xyz-order.json")));
+
+        // run test
         startEndpoint.sendBody(readFile("src/data/abc-order.xml"));
+
+        // verify results
+        resultEndpoint.assertIsSatisfied();
     }
-    
+
     @Override
     protected RouteBuilder createRouteBuilder() throws Exception {
         return new RouteBuilder() {
@@ -37,20 +53,27 @@ public class TransformationTest extends CamelSpringTestSupport {
             }
         };
     }
-    
+
     @Override
     protected AbstractXmlApplicationContext createApplicationContext() {
         return new ClassPathXmlApplicationContext("META-INF/spring/camel-context.xml");
     }
-    
+
     private String readFile(String filePath) throws Exception {
         String content;
         FileInputStream fis = new FileInputStream(filePath);
         try {
-             content = createCamelContext().getTypeConverter().convertTo(String.class, fis);
+            content = createCamelContext().getTypeConverter().convertTo(String.class, fis);
         } finally {
             fis.close();
         }
         return content;
+    }
+
+    private String jsonUnprettyPrint(String jsonString) throws JsonProcessingException, IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
+        JsonNode node = mapper.readTree(jsonString);
+        return node.toString();
     }
 }
