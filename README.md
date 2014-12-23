@@ -3,7 +3,7 @@ The Data Mapper project provides graphical tooling to assist in the creation, co
 
 - A visual editor for mapping between source and target types.
 - A specialized [Camel component](https://github.com/fabric8io/data-mapper/wiki/Transformation-Endpoints) that coordinates all steps required for data tranformation (marshalling, mapping, unmarshalling) as a single unit of work.
-- OOTB support for mapping any combination of XML, Java, and JSON.  Users can further customize runtime configuration to support mapping from any type to any other type via Camel data formats.
+- OOTB support for mapping any combination of XML, Java, and JSON.  Users can further customize runtime configuration to support any-to-any transformation via Camel data formats.
 - Source and target models can be generated from schema definitions or instance documents.
 - Test support specific to data transformation.
 
