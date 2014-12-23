@@ -12,6 +12,10 @@ The Data Mapper project contains both tooling and runtime components.  In order 
 * [Installing the Tooling](https://github.com/fabric8io/data-mapper/wiki/Tooling-Installation)
 * [Building the Camel Component](https://github.com/fabric8io/data-mapper/wiki/Building-The-Project)
 
+Once that's done, you can choose your own adventure:
+* [Learn the tooling with our example application](https://github.com/fabric8io/data-mapper/wiki/Example-Application-Walkthrough)
+* [Add data transformation to an existing application](https://github.com/fabric8io/data-mapper/wiki/Adding-Transformation-to-an-Existing-Application)
+
 ## Providing Feedback
 The [data-mapper forum](https://groups.google.com/forum/#!forum/data-mapper) is the best place to ask questions, provide feedback, and engage with the Data Mapper community.
 
