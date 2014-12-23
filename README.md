@@ -1,10 +1,18 @@
 ## Data Mapper
-The Data Mapper project provides graphical tooling to assist in the creation, configuration, and testing of data transformation within Apache Camel.  Tooling support includes:
+The Data Mapper project provides graphical tooling to assist in the creation, configuration, and testing of data transformation within Apache Camel including:
 
 - A visual editor for mapping between source and target types.
-- Configuration of source and target encoding to support any-to-any mapping.
-- Treating multiple, discrete transformation steps as a single unit of work.  
-- Developing data transformations using instance data.
+- A specialized [Camel component](https://github.com/fabric8io/data-mapper/wiki/Transformation-Endpoints) that coordinates all steps required for data tranformation (marshalling, mapping, unmarshalling) as a single unit of work.
+- OOTB support for mapping any combination of XML, Java, and JSON.  Users can further customize runtime configuration to support mapping from any type to any other type via Camel data formats.
+- Source and target models can be generated from schema definitions or instance documents.
 - Test support specific to data transformation.
 
+## Getting Started
+The Data Mapper project contains both tooling and runtime components.  In order to get started, you'll want to install both pieces into your enivornment:
+* [Installing the Tooling](https://github.com/fabric8io/data-mapper/wiki/Tooling-Installation)
+* [Building the Camel Component](https://github.com/fabric8io/data-mapper/wiki/Building-The-Project)
 
+## Providing Feedback
+The [data-mapper forum](https://groups.google.com/forum/#!forum/data-mapper) is the best place to ask questions, provide feedback, and engage with the Data Mapper community.
+
+If you discover an issue or have a feature you'd like to see, feel free to [file an issue](https://github.com/fabric8io/data-mapper/issues).
