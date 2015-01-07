@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jboss.mapper</groupId>
     <artifactId>data-mapper-parent</artifactId>
-    <version>1.0.0.m2</version>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../../..</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
