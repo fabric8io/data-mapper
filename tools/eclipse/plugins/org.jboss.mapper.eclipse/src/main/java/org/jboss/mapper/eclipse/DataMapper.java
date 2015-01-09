@@ -30,11 +30,14 @@ import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerDropAdapter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSourceAdapter;
 import org.eclipse.swt.dnd.DragSourceEvent;
@@ -42,6 +45,7 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
@@ -84,12 +88,29 @@ public class DataMapper extends Composite {
                 targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
             }
 
-            setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-
-            viewer = new TableViewer( this );
+            this.setLayout(new FillLayout());
+            SashForm form = new SashForm(this, SWT.VERTICAL);
+            
+            // Change the color used to paint the sashes
+            form.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+            form.SASH_WIDTH = 5;
+            
+            final ScrolledComposite sc = new ScrolledComposite(form, SWT.V_SCROLL);
+            sc.setExpandHorizontal(true);
+            sc.setExpandVertical(true);
+            
+            final Composite child1 = new Composite(sc, SWT.NONE);
+            sc.setContent(child1);
+            child1.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
+            
+            viewer = new TableViewer( child1 );
             final Table table = viewer.getTable();
             table.setLayoutData( GridDataFactory.fillDefaults().span( 3, 1 ).grab( true, true ).create() );
             table.setHeaderVisible( true );
+            
+            TableLayout layout=new TableLayout();
+            table.setLayout(layout);
+            
             final TableViewerColumn sourceColumn = new TableViewerColumn( viewer, SWT.NONE );
             sourceColumn.getColumn().setText( "Source Item" );
             sourceColumn.getColumn().setAlignment( SWT.RIGHT );
@@ -156,13 +177,22 @@ public class DataMapper extends Composite {
                 }
             } );
 
-            final Text text = new Text( this, SWT.MULTI | SWT.WRAP );
+            final ScrolledComposite sc2 = new ScrolledComposite(form, SWT.V_SCROLL | SWT.H_SCROLL);
+            sc2.setExpandHorizontal(true);
+            sc2.setExpandVertical(true);
+
+            final Composite child2 = new Composite(sc2, SWT.NONE);
+            child2.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
+            sc2.setContent(child2);
+
+            final Text text = new Text( child2, SWT.MULTI | SWT.WRAP );
             text.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
             text.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
             updateBrowserText( text );
             text.setBackground( getBackground() );
+            text.pack();
 
-            final DataBrowser sourceBrowser = new DataBrowser( this, "Source", sourceModel, new Listener() {
+            final DataBrowser sourceBrowser = new DataBrowser( child2, this, "Source", sourceModel, new Listener() {
 
                 @Override
                 public Model modelSelected( final String className ) {
@@ -188,10 +218,10 @@ public class DataMapper extends Composite {
                 }
             } );
 
-            final Label label = new Label( this, SWT.NONE );
+            final Label label = new Label( child2, SWT.NONE );
             label.setText( "=>" );
 
-            final DataBrowser targetBrowser = new DataBrowser( this, "Target", targetModel, new Listener() {
+            final DataBrowser targetBrowser = new DataBrowser( child2, this, "Target", targetModel, new Listener() {
 
                 @Override
                 public Model modelSelected( final String className ) {
@@ -230,6 +260,11 @@ public class DataMapper extends Composite {
                     return true;
                 }
             } );
+
+            form.setWeights(new int[] {25,75});
+            
+            sc.setMinSize(child1.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+            sc2.setMinSize(child2.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
         }

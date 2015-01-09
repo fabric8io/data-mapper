@@ -85,11 +85,12 @@ class DataBrowser extends Composite {
     final Button modelButton;
     final TreeViewer viewer;
     
-    DataBrowser( final DataMapper mapper,
+    DataBrowser( final Composite parent,
+                 final DataMapper mapper,
                  final String modelType,
                  final Model model,
                  final Listener listener ) {
-        super( mapper, SWT.NONE );
+        super( parent, SWT.NONE );
         this.model = model;
         this.listener = listener;
         setLayout( GridLayoutFactory.fillDefaults().numColumns( 2 ).create() );
