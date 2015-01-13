@@ -2,6 +2,7 @@ package org.jboss.mapper.eclipse;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -211,7 +212,11 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
         final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
         if ( !sourceFileText.getText().trim().isEmpty() && !targetFileText.getText().trim().isEmpty() )
             configBuilder.addClassMapping( sourceFileText.getText().trim(), targetFileText.getText().trim() );
-        try ( FileOutputStream stream = new FileOutputStream( new File( dozerConfigFile.getLocationURI() ) ) ) {
+        File newFile = new File(dozerConfigFile.getLocationURI());
+        if (!newFile.getParentFile().exists()) {
+            newFile.getParentFile().mkdirs();
+        }
+        try ( FileOutputStream stream = new FileOutputStream( newFile) ) {
             configBuilder.saveConfig( stream );
             project.refreshLocal( IProject.DEPTH_INFINITE, null );
             final IEditorDescriptor desc =

@@ -553,7 +553,11 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         if ( dozerConfigFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) )
             return false;
         final ConfigBuilder dozerConfigBuilder = ConfigBuilder.newConfig();
-        try ( FileOutputStream dozerConfigStream = new FileOutputStream( new File( dozerConfigFile.getLocationURI() ) ) ) {
+        File newFile = new File(dozerConfigFile.getLocationURI());
+        if (!newFile.getParentFile().exists()) {
+            newFile.getParentFile().mkdirs();
+        }
+        try ( FileOutputStream dozerConfigStream = new FileOutputStream( newFile ) ) {
             final String sourceFileName = sourceFileText.getText().trim();
             final String targetFileName = targetFileText.getText().trim();
             if ( !sourceFileName.isEmpty() && !targetFileName.isEmpty() ) {
