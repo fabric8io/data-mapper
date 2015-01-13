@@ -74,29 +74,33 @@ public class ConfigBuilder {
         mapConfig.getMapping().add(map);
     }
     
-    static FieldDefinition createField(final Model model, final boolean includeParentPrefix) {
+    static FieldDefinition createField(final Model model, final String rootType) {
         final FieldDefinition fd = new FieldDefinition();
-        final String name = model.getName();
-        if (includeParentPrefix) {
-            fd.setContent(model.getParent().getName() + "." + name);
-        } else {
-            fd.setContent(name);
+        StringBuilder name = new StringBuilder(model.getName());
+        for (Model parent = model.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent.getType().equals(rootType)) {
+                break;
+            }
+            name.insert(0, parent.getName() + ".");
         }
+        fd.setContent(name.toString());
         return fd;
     }
 
     
     // Add a field mapping to the dozer config.
     void addFieldMapping(final Model source, final Model target) {
-        final boolean sourceClassMapping = getClassMapping(source.getParent()) != null;
-        final boolean targetClassMapping = getClassMapping(target.getParent()) != null;
-
-        final Mapping mapping = sourceClassMapping ? getClassMapping(source
-                .getParent()) : getClassMapping(target.getParent());
+        Mapping mapping;
+        if (getClassMapping(source.getParent()) != null) {
+            mapping = getClassMapping(source.getParent());
+        } else {
+            mapping = getClassMapping(target.getParent());
+        }
+        
 
         final Field field = new Field();
-        field.setA(createField(source, !sourceClassMapping));
-        field.setB(createField(target, !targetClassMapping));
+        field.setA(createField(source, mapping.getClassA().getContent()));
+        field.setB(createField(target, mapping.getClassB().getContent()));
         mapping.getFieldOrFieldExclude().add(field);
     }
 
