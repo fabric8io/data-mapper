@@ -23,9 +23,14 @@ import org.apache.camel.impl.DefaultComponent;
  */
 public class TransformComponent extends DefaultComponent {
 
+    private static final String DEFAULT_DOZER_PATH = "dozerBeanMapping.xml";
+
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        Endpoint endpoint = new TransformEndpoint(uri, this, remaining);
+        TransformEndpoint endpoint = new TransformEndpoint(uri, this, remaining);
         setProperties(endpoint, parameters);
+        if (endpoint.getDozerConfigPath() == null) {
+            endpoint.setDozerConfigPath(DEFAULT_DOZER_PATH);
+        }
         return endpoint;
     }
 }

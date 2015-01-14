@@ -13,12 +13,15 @@
  */
 package org.jboss.mapper.camel.transform;
 
+import java.io.InputStream;
+
 import org.apache.camel.Component;
 import org.apache.camel.Consumer;
 import org.apache.camel.Processor;
 import org.apache.camel.Producer;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.apache.camel.spi.UriParam;
+import org.dozer.DozerBeanMapper;
 
 /**
  * Represents a Transform endpoint.
@@ -35,6 +38,10 @@ public class TransformEndpoint extends DefaultEndpoint {
     private String sourceModel;
     @UriParam
     private String targetModel;
+    @UriParam
+    private String dozerConfigPath;
+
+    private DozerBeanMapper mapper;
 
     /**
      * Create a new TransformEndpoint.
@@ -42,14 +49,14 @@ public class TransformEndpoint extends DefaultEndpoint {
      * @param component The {@link TransformComponent}.
      * @param name Name for this transform endpoint
      */
-    public TransformEndpoint(String endpointUri, Component component, String name) {
+    public TransformEndpoint(String endpointUri, Component component, String name) throws Exception {
         super(endpointUri, component);
         this.name = name;
     }
 
     @Override
     public Producer createProducer() throws Exception {
-        return new TranformProducer(this);
+        return new TransformProducer(this);
     }
 
     @Override
@@ -102,5 +109,35 @@ public class TransformEndpoint extends DefaultEndpoint {
     public void setName(String name) {
         this.name = name;
     }
+    
+    public String getDozerConfigPath() {
+        return dozerConfigPath;
+    }
 
+    public void setDozerConfigPath(String dozerConfigPath) {
+        this.dozerConfigPath = dozerConfigPath;
+    }
+    
+    public synchronized DozerBeanMapper getMapper() throws Exception {
+        if (mapper == null) {
+            initDozer();
+        }
+        return mapper;
+    }
+
+    private void initDozer() throws Exception {
+        mapper = new DozerBeanMapper();
+        InputStream mapStream = null;
+        try {
+            mapStream = getCamelContext().getClassResolver().loadResourceAsStream(dozerConfigPath);
+            if (mapStream == null) {
+                throw new Exception("Unable to resolve Dozer config: " + dozerConfigPath);
+            }
+            mapper.addMapping(mapStream);
+        } finally {
+            if (mapStream != null) {
+                mapStream.close();
+            }
+        }
+    }
 }

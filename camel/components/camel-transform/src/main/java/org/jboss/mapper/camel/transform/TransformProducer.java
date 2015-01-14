@@ -24,7 +24,7 @@ import org.apache.camel.spi.DataFormat;
 /**
  * The Transform producer.
  */
-public class TranformProducer extends DefaultProducer {
+public class TransformProducer extends DefaultProducer {
     private TransformEndpoint endpoint;
     private UnmarshalProcessor unmarshaller;
     private MarshalProcessor marshaller;
@@ -33,7 +33,7 @@ public class TranformProducer extends DefaultProducer {
      * Create a new producer for transform endpoints.
      * @param endpoint endpoint requiring a producer
      */
-    public TranformProducer(TransformEndpoint endpoint) {
+    public TransformProducer(TransformEndpoint endpoint) {
         super(endpoint);
         this.endpoint = endpoint;
     }
@@ -48,7 +48,7 @@ public class TranformProducer extends DefaultProducer {
         // Load the target model class and convert the body to that type to 
         // trigger the Dozer mapping.
         Class<?> targetModel = Class.forName(endpoint.getTargetModel());
-        Object targetObject = exchange.getOut().getBody(targetModel);
+        Object targetObject = endpoint.getMapper().map(exchange.getOut().getBody(), targetModel);
         exchange.getIn().setBody(targetObject);
         
         // Marshal the source content only if a marshaller is configured.

@@ -24,12 +24,14 @@ public class TransformComponentTest {
     private static final String UNMARSHAL_ID = "unmarshal456";
     private static final String SOURCE_MODEL = "org.example.A";
     private static final String TARGET_MODEL = "org.example.B";
+    private static final String DOZER_CONFIG_PATH = "test/dozerBeanMapping.xml";
     private static final String TRANSFORM_EP_1 =
             "transform:" + NAME 
             + "?marshalId=" + MARSHAL_ID 
             + "&unmarshalId=" + UNMARSHAL_ID 
             + "&sourceModel=" + SOURCE_MODEL 
-            + "&targetModel=" + TARGET_MODEL;
+            + "&targetModel=" + TARGET_MODEL
+            + "&dozerConfigPath=" + DOZER_CONFIG_PATH;
     
     @Test
     public void testCreateEndpoint() throws Exception {
@@ -42,5 +44,6 @@ public class TransformComponentTest {
         Assert.assertEquals(UNMARSHAL_ID, ep.getUnmarshalId());
         Assert.assertEquals(SOURCE_MODEL, ep.getSourceModel());
         Assert.assertEquals(TARGET_MODEL, ep.getTargetModel());
+        Assert.assertEquals(DOZER_CONFIG_PATH, ep.getDozerConfigPath());
     }
 }

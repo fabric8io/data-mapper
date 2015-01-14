@@ -3,7 +3,7 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint id="xml2json" uri="transform:xml2json?marshalId=myjson&amp;unmarshalId=myjaxb&amp;targetModel=example.xyz.XYZOrder"/>
+    <endpoint id="xml2json" uri="transform:xml2json?dozerConfigPath=org/jboss/mapper/camel/transform/dozerBeanMapping.xml&amp;marshalId=myjson&amp;unmarshalId=myjaxb&amp;targetModel=example.xyz.XYZOrder"/>
     <dataFormats>
         <json library="Jackson" id="myjson"/>
         <jaxb contextPath="example.abc" id="myjaxb"/>
