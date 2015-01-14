@@ -16,28 +16,42 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jface.dialogs.IInputValidator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.util.LocalSelectionTransfer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.TableLayout;
+import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerDropAdapter;
+import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabFolder2Adapter;
+import org.eclipse.swt.custom.CTabFolderEvent;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSourceAdapter;
 import org.eclipse.swt.dnd.DragSourceEvent;
@@ -45,15 +59,23 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
-import org.jboss.mapper.eclipse.DataBrowser.Listener;
 import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
@@ -63,23 +85,69 @@ import org.jboss.mapper.model.ModelBuilder;
  */
 public class DataMapper extends Composite {
 
+    static final Transfer[] XFERS = new Transfer[] { LocalSelectionTransfer.getTransfer() };
+    static final ISharedImages IMAGES = PlatformUI.getWorkbench().getSharedImages();
+
+    private static void findClasses( final IFolder folder,
+                                     final List< IResource > classes ) throws CoreException {
+        for ( final IResource resource : folder.members() ) {
+            if ( resource instanceof IFolder ) findClasses( ( IFolder ) resource, classes );
+            else if ( resource.getName().endsWith( ".class" ) ) classes.add( resource );
+        }
+    }
+
+    static String selectModel( final Shell shell,
+                               final IProject project,
+                               final Model existingModel,
+                               final String modelType ) {
+        final IFolder classesFolder = project.getFolder( "target/classes" );
+        final List< IResource > classes = new ArrayList<>();
+        try {
+            findClasses( classesFolder, classes );
+            final ResourceListSelectionDialog dlg =
+                new ResourceListSelectionDialog( shell, classes.toArray( new IResource[ classes.size() ] ) ) {
+
+                    @Override
+                    protected Control createDialogArea( final Composite parent ) {
+                        final Composite dlgArea = ( Composite ) super.createDialogArea( parent );
+                        for ( final Control child : dlgArea.getChildren() ) {
+                            if ( child instanceof Text ) {
+                                ( ( Text ) child ).setText( existingModel == null ? "*" : existingModel.getName() );
+                                break;
+                            }
+                        }
+                        return dlgArea;
+                    }
+                };
+            dlg.setTitle( "Select " + modelType );
+            if ( dlg.open() == Window.OK ) {
+                final IFile file = ( IFile ) dlg.getResult()[ 0 ];
+                String name = file.getFullPath().makeRelativeTo( classesFolder.getFullPath() ).toString().replace( '/', '.' );
+                name = name.substring( 0, name.length() - ".class".length() );
+                return name;
+            }
+        } catch ( final Exception e ) {
+            Activator.error( shell, e );
+        }
+        return null;
+    }
+
     final IFile configFile;
     ConfigBuilder configBuilder;
     URLClassLoader loader;
-    Model sourceModel = null;
-    Model targetModel = null;
-    TableViewer viewer;
+    Model sourceModel, targetModel;
+    TableViewer opViewer;
+    Text helpText;
 
     DataMapper( final Composite parent,
                 final IFile configFile ) {
         super( parent, SWT.NONE );
         this.configFile = configFile;
-        final File file = new File( configFile.getLocationURI() );
 
         try {
-            configBuilder = ConfigBuilder.loadConfig( file );
-            IJavaProject javaProject = JavaCore.create(configFile.getProject());
-            loader = (URLClassLoader) JavaUtil.getProjectClassLoader(javaProject, getClass().getClassLoader());
+            configBuilder = ConfigBuilder.loadConfig( new File( configFile.getLocationURI() ) );
+            final IJavaProject javaProject = JavaCore.create( configFile.getProject() );
+            loader = ( URLClassLoader ) JavaUtil.getProjectClassLoader( javaProject, getClass().getClassLoader() );
 
             final List< Mapping > mappings = configBuilder.getMappings().getMapping();
             if ( !mappings.isEmpty() ) {
@@ -88,32 +156,19 @@ public class DataMapper extends Composite {
                 targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
             }
 
-            this.setLayout(new FillLayout());
-            SashForm form = new SashForm(this, SWT.VERTICAL);
-            
+            setLayout( new FillLayout() );
+            SashForm splitter = new SashForm( this, SWT.VERTICAL );
+
             // Change the color used to paint the sashes
-            form.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-            form.SASH_WIDTH = 5;
-            
-            final ScrolledComposite sc = new ScrolledComposite(form, SWT.V_SCROLL);
-            sc.setExpandHorizontal(true);
-            sc.setExpandVertical(true);
-            
-            final Composite child1 = new Composite(sc, SWT.NONE);
-            sc.setContent(child1);
-            child1.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-            
-            viewer = new TableViewer( child1 );
-            final Table table = viewer.getTable();
-            table.setLayoutData( GridDataFactory.fillDefaults().span( 3, 1 ).grab( true, true ).create() );
+            splitter.setBackground( getDisplay().getSystemColor( SWT.COLOR_DARK_GRAY ) );
+            splitter.SASH_WIDTH = 5;
+
+            // Create mapped operations viewer
+            opViewer = new TableViewer( splitter );
+            final Table table = opViewer.getTable();
             table.setHeaderVisible( true );
-            
-            TableLayout layout=new TableLayout();
-            table.setLayout(layout);
-            
-            final TableViewerColumn sourceColumn = new TableViewerColumn( viewer, SWT.NONE );
+            final TableViewerColumn sourceColumn = new TableViewerColumn( opViewer, SWT.LEFT );
             sourceColumn.getColumn().setText( "Source Item" );
-            sourceColumn.getColumn().setAlignment( SWT.RIGHT );
             sourceColumn.setLabelProvider( new ColumnLabelProvider() {
 
                 @Override
@@ -121,9 +176,8 @@ public class DataMapper extends Composite {
                     return super.getText( ( ( Field ) element ).getA().getContent() );
                 }
             } );
-            final TableViewerColumn operationColumn = new TableViewerColumn( viewer, SWT.NONE );
+            final TableViewerColumn operationColumn = new TableViewerColumn( opViewer, SWT.CENTER );
             operationColumn.getColumn().setText( "Operation" );
-            operationColumn.getColumn().setAlignment( SWT.CENTER );
             operationColumn.setLabelProvider( new ColumnLabelProvider() {
 
                 @Override
@@ -131,9 +185,8 @@ public class DataMapper extends Composite {
                     return "=>";
                 }
             } );
-            final TableViewerColumn targetColumn = new TableViewerColumn( viewer, SWT.NONE );
+            final TableViewerColumn targetColumn = new TableViewerColumn( opViewer, SWT.LEFT );
             targetColumn.getColumn().setText( "Target Item" );
-            targetColumn.getColumn().setAlignment( SWT.LEFT );
             targetColumn.setLabelProvider( new ColumnLabelProvider() {
 
                 @Override
@@ -141,7 +194,7 @@ public class DataMapper extends Composite {
                     return super.getText( ( ( Field ) element ).getB().getContent() );
                 }
             } );
-            viewer.setContentProvider( new IStructuredContentProvider() {
+            opViewer.setContentProvider( new IStructuredContentProvider() {
 
                 @Override
                 public void dispose() {}
@@ -152,7 +205,7 @@ public class DataMapper extends Composite {
                     for ( final Mapping mapping : mappings ) {
                         for ( final Object field : mapping.getFieldOrFieldExclude() ) {
                             fields.add( field );
-                            viewer.setData(field.toString(), mapping);
+                            opViewer.setData( field.toString(), mapping );
                         }
                     }
                     return fields.toArray();
@@ -163,10 +216,8 @@ public class DataMapper extends Composite {
                                           final Object oldInput,
                                           final Object newInput ) {}
             } );
-            viewer.setInput( mappings );
-
+            opViewer.setInput( mappings );
             operationColumn.getColumn().pack();
-
             table.addControlListener( new ControlAdapter() {
 
                 @Override
@@ -177,97 +228,236 @@ public class DataMapper extends Composite {
                 }
             } );
 
-            final ScrolledComposite sc2 = new ScrolledComposite(form, SWT.V_SCROLL | SWT.H_SCROLL);
-            sc2.setExpandHorizontal(true);
-            sc2.setExpandVertical(true);
+            final Composite mapper = new Composite( splitter, SWT.NONE );
+            mapper.setBackground( getBackground() );
+            mapper.setLayout( GridLayoutFactory.swtDefaults().margins( 0, 5 ).numColumns( 3 ).create() );
 
-            final Composite child2 = new Composite(sc2, SWT.NONE);
-            child2.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-            sc2.setContent(child2);
+            // Create help text
+            helpText = new Text( mapper, SWT.MULTI | SWT.WRAP );
+            helpText.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
+            helpText.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
+            helpText.setBackground( getBackground() );
+            updateBrowserText();
 
-            final Text text = new Text( child2, SWT.MULTI | SWT.WRAP );
-            text.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
-            text.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
-            updateBrowserText( text );
-            text.setBackground( getBackground() );
-            text.pack();
-
-            final DataBrowser sourceBrowser = new DataBrowser( child2, this, "Source", sourceModel, new Listener() {
+            // Create source browser
+            final CTabFolder sourceTabFolder = createTabFolder( mapper, new Handler() {
 
                 @Override
-                public Model modelSelected( final String className ) {
-                    try {
-                        sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
-                        updateMappings();
-                        updateBrowserText( text );
-                    } catch ( final ClassNotFoundException e ) {
-                        Activator.error( getShell(), e );
-                    }
+                public void configureDragAndDrop( final TreeViewer viewer ) {
+                    viewer.addDragSupport( DND.DROP_MOVE, XFERS, new DragSourceAdapter() {
+
+                        @Override
+                        public void dragSetData( final DragSourceEvent event ) {
+                            if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) )
+                                LocalSelectionTransfer.getTransfer().setSelection( viewer.getSelection() );
+                        }
+                    } );
+                }
+
+                @Override
+                public Model model() {
                     return sourceModel;
                 }
+
+                @Override
+                public void setModel( Model model ) {
+                    sourceModel = model;
+                }
+
+                @Override
+                public String type() {
+                    return "Source";
+                }
             } );
-            sourceBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-            final Transfer[] xfers = new Transfer[] { LocalSelectionTransfer.getTransfer() };
-            sourceBrowser.viewer.addDragSupport( DND.DROP_MOVE, xfers, new DragSourceAdapter() {
+
+            // Create constants tab
+            final CTabItem constantsTab = new CTabItem( sourceTabFolder, SWT.NONE );
+            constantsTab.setText( "Constants" );
+            final Composite constantsPane = new Composite( sourceTabFolder, SWT.NONE );
+            constantsPane.setLayout( GridLayoutFactory.swtDefaults().create() );
+            final ToolBar constantsToolBar = new ToolBar( constantsPane, SWT.NONE );
+            final ToolItem addConstant = new ToolItem( constantsToolBar, SWT.PUSH );
+            addConstant.setImage( IMAGES.getImage( ISharedImages.IMG_OBJ_ADD ) );
+            addConstant.setToolTipText( "Add a new constant" );
+            final ToolItem deleteConstant = new ToolItem( constantsToolBar, SWT.PUSH );
+            deleteConstant.setImage( IMAGES.getImage( ISharedImages.IMG_ETOOL_DELETE ) );
+            deleteConstant.setToolTipText( "Delete the selected constant(s)" );
+            deleteConstant.setEnabled( false );
+            final ListViewer constantsViewer = new ListViewer( constantsPane );
+            constantsViewer.getList().setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
+            constantsViewer.addDragSupport( DND.DROP_MOVE, XFERS, new DragSourceAdapter() {
 
                 @Override
                 public void dragSetData( final DragSourceEvent event ) {
-                    if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) ) {
-                        LocalSelectionTransfer.getTransfer().setSelection( sourceBrowser.viewer.getSelection() );
+                    if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) )
+                        LocalSelectionTransfer.getTransfer().setSelection( constantsViewer.getSelection() );
+                }
+            } );
+            constantsViewer.setSorter( new ViewerSorter() );
+            constantsTab.setControl( constantsPane );
+            addConstant.addSelectionListener( new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected( SelectionEvent event ) {
+                    final InputDialog dlg = new InputDialog( getShell(),
+                                                             "Add Constant",
+                                                             "Enter a new constant value",
+                                                             null,
+                                                             new IInputValidator() {
+
+                                                                 @Override
+                                                                 public String isValid( String text ) {
+                                                                     return constantsViewer.getList().indexOf( text ) < 0 ? null : "Value already exists";
+                                                                 }
+                                                             } );
+                    if ( dlg.open() == Window.OK ) constantsViewer.add( dlg.getValue() );
+                }
+            } );
+            constantsViewer.addSelectionChangedListener( new ISelectionChangedListener() {
+
+                @Override
+                public void selectionChanged( SelectionChangedEvent event ) {
+                    deleteConstant.setEnabled( !event.getSelection().isEmpty() );
+                }
+            } );
+            deleteConstant.addSelectionListener( new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected( SelectionEvent event ) {
+                    for ( final Iterator< ? > iter = ( ( IStructuredSelection ) constantsViewer.getSelection() ).iterator(); iter.hasNext(); ) {
+                        constantsViewer.remove( iter.next() );
                     }
                 }
             } );
 
-            final Label label = new Label( child2, SWT.NONE );
+            final Label label = new Label( mapper, SWT.NONE );
             label.setText( "=>" );
 
-            final DataBrowser targetBrowser = new DataBrowser( child2, this, "Target", targetModel, new Listener() {
+            // Create target browser
+            createTabFolder( mapper, new Handler() {
 
                 @Override
-                public Model modelSelected( final String className ) {
-                    try {
-                        targetModel = ModelBuilder.fromJavaClass( loader.loadClass( className ) );
-                        updateMappings();
-                        updateBrowserText( text );
-                    } catch ( final ClassNotFoundException e ) {
-                        Activator.error( getShell(), e );
-                    }
+                public void configureDragAndDrop( final TreeViewer viewer ) {
+                    viewer.addDropSupport( DND.DROP_MOVE, XFERS, new ViewerDropAdapter( viewer ) {
+
+                        @Override
+                        public boolean performDrop( final Object data ) {
+                            // TODO handle constant once back-end supports it (i.e., once issue #82 is closed)
+                            final Model sourceModel = ( Model ) ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
+                            final Model targetModel = ( Model ) getCurrentTarget();
+                            configBuilder.map( sourceModel, targetModel );
+                            try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
+                                configBuilder.saveConfig( stream );
+                                configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
+                                opViewer.refresh();
+                            } catch ( final Exception e ) {
+                                Activator.error( getShell(), e );
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public boolean validateDrop( final Object target,
+                                                     final int operation,
+                                                     final TransferData transferType ) {
+                            return true;
+                        }
+                    } );
+                }
+
+                @Override
+                public Model model() {
                     return targetModel;
                 }
-            } );
-            targetBrowser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-            targetBrowser.viewer.addDropSupport( DND.DROP_MOVE, xfers, new ViewerDropAdapter( targetBrowser.viewer ) {
 
                 @Override
-                public boolean performDrop( final Object data ) {
-                    final Model sourceModel = ( Model ) ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
-                    final Model targetModel = ( Model ) getCurrentTarget();
-                    configBuilder.map( sourceModel, targetModel );
-                    try ( FileOutputStream stream = new FileOutputStream( file ) ) {
-                        configBuilder.saveConfig( stream );
-                        configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
-                        viewer.refresh();
-                    } catch ( final Exception e ) {
-                        Activator.error( getShell(), e );
-                    }
-                    return true;
+                public void setModel( Model model ) {
+                    targetModel = model;
                 }
 
                 @Override
-                public boolean validateDrop( final Object target,
-                                             final int operation,
-                                             final TransferData transferType ) {
-                    return true;
+                public String type() {
+                    return "Target";
                 }
             } );
 
-            form.setWeights(new int[] {25,75});
-            
-            sc.setMinSize(child1.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-            sc2.setMinSize(child2.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+            splitter.setWeights( new int[] { 25, 75 } );
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
         }
+    }
+
+    void createTab( CTabFolder tabFolder,
+                    Handler handler ) {
+        final CTabItem tab = new CTabItem( tabFolder, SWT.NONE, 0 );
+        tab.setText( handler.type() + ": " + handler.model().getName() );
+        tab.setShowClose( true );
+        final DataBrowser browser = new DataBrowser( tabFolder, handler.model() );
+        tab.setControl( browser );
+        handler.configureDragAndDrop( browser.viewer );
+        browser.viewer.setInput( handler.model() );
+        browser.layout();
+        tabFolder.setSelection( tab );
+    }
+
+    private CTabFolder createTabFolder( Composite mapper, final Handler handler ) {
+        final CTabFolder tabFolder = new CTabFolder( mapper, SWT.BORDER );
+        tabFolder.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
+        tabFolder.setBackground( getDisplay().getSystemColor( SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT ) );
+        final ToolBar toolBar = new ToolBar( tabFolder, SWT.RIGHT );
+        tabFolder.setTopRight( toolBar );
+        final ToolItem addSourceButton = new ToolItem( toolBar, SWT.NONE );
+        addSourceButton.setImage( IMAGES.getImage( ISharedImages.IMG_OBJ_ADD ) );
+        addSourceButton.setToolTipText( "Set transformation " + handler.type().toLowerCase() );
+        addSourceButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected( SelectionEvent event ) {
+                final String name = selectModel( getShell(), configFile.getProject(), handler.model(), handler.type() );
+                if ( name == null ) return;
+                try {
+                    handler.setModel( ModelBuilder.fromJavaClass( loader.loadClass( name ) ) );
+                    updateMappings();
+                    updateBrowserText();
+                    createTab( tabFolder, handler );
+                    toolBar.setVisible( false );
+                } catch ( final ClassNotFoundException e ) {
+                    Activator.error( getShell(), e );
+                }
+            }
+        } );
+        tabFolder.addCTabFolder2Listener( new CTabFolder2Adapter() {
+
+            @Override
+            public void close( CTabFolderEvent event ) {
+                toolBar.setVisible( true );
+                handler.setModel( null );
+                updateBrowserText();
+            }
+        } );
+        if ( handler.model() == null ) tabFolder.setTopRight( toolBar );
+        else createTab( tabFolder, handler );
+        return tabFolder;
+    }
+
+    /**
+     * @param field
+     * @return <code>true</code> if the supplied field was successfully removed
+     */
+    public boolean deleteFieldMapping( Field field ) {
+        final Mapping mapping = ( Mapping ) opViewer.getData( field.toString() );
+        final boolean removed = mapping.getFieldOrFieldExclude().remove( field );
+        if ( removed ) {
+            try {
+                configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
+                configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
+                opViewer.refresh();
+                return true;
+            } catch ( final Exception e ) {
+                Activator.error( getShell(), e );
+            }
+        }
+        return false;
     }
 
     /**
@@ -288,12 +478,12 @@ public class DataMapper extends Composite {
         }
     }
 
-    void updateBrowserText( final Text text ) {
-        if ( sourceModel == null && targetModel == null ) text.setText( "Select the source and target models below." );
-        else if ( sourceModel == null ) text.setText( "Select the source model below." );
-        else if ( targetModel == null ) text.setText( "Select the target model below." );
-        else text.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
-                           sourceModel.getName() + " to target " + targetModel.getName() );
+    void updateBrowserText() {
+        if ( sourceModel == null && targetModel == null ) helpText.setText( "Select the source and target models below." );
+        else if ( sourceModel == null ) helpText.setText( "Select the source model below." );
+        else if ( targetModel == null ) helpText.setText( "Select the target model below." );
+        else helpText.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
+                               sourceModel.getName() + " to target " + targetModel.getName() );
     }
 
     void updateMappings() {
@@ -304,32 +494,20 @@ public class DataMapper extends Composite {
         try {
             configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
             configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
-            viewer.refresh();
+            opViewer.refresh();
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
         }
     }
 
-    /**
-     * @param field
-     * @return <code>true</code> if the supplied field was successfully removed
-     */
-    public boolean deleteFieldMapping(Field field) {
-        Mapping mapping = (Mapping) viewer.getData(field.toString());
-        boolean removed = mapping.getFieldOrFieldExclude().remove(field);
-        if (removed) {
-            try {
-                configBuilder.saveConfig(
-                        new FileOutputStream(
-                                new File( configFile.getLocationURI())));
-                configFile.getProject()
-                    .refreshLocal( IResource.DEPTH_INFINITE, null );
-                viewer.refresh();
-                return true;
-            } catch ( final Exception e ) {
-                Activator.error( getShell(), e );
-            }
-        }
-        return false;
+    interface Handler {
+
+        void configureDragAndDrop( TreeViewer viewer );
+
+        Model model();
+
+        void setModel( Model model );
+
+        String type();
     }
 }
