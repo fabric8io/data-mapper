@@ -3,18 +3,10 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:java2java?sourceModel=source.Input&amp;targetModel=target.Output" id="java2java"/>
+    <endpoint uri="transform:java2java?sourceModel=source.Input&amp;targetModel=target.Output&amp;dozerConfigPath=dozerBeanMapping.xml" id="java2java"/>
     <route>
         <from uri="direct:begin"/>
         <to uri="direct:end"/>
     </route>
 </camelContext>
-<bean class="org.apache.camel.converter.dozer.DozerTypeConverterLoader" id="dozerConverterLoader"/>
-  <bean class="org.dozer.DozerBeanMapper" id="mapper">
-    <property name="mappingFiles">
-      <list>
-        <value>dozerBeanMapping.xml</value>
-      </list>
-    </property>
-  </bean>
 </beans>

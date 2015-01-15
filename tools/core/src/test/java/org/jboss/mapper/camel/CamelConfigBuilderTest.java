@@ -16,7 +16,6 @@ public class CamelConfigBuilderTest {
 
     private static final String NEW_CONFIG = "new-camel-config.xml";
     private static final String MULTI_CONFIG = "multiple-camel-config.xml";
-    private static final String MULTI_DOZER = "multiple-dozer-config.xml";
     private static final String XML_JSON = "xml-to-json.xml";
     private static final String JAVA_XML = "java-to-xml.xml";
     private static final String JAVA_JAVA = "java-to-java.xml";
@@ -85,18 +84,6 @@ public class CamelConfigBuilderTest {
                 TransformType.JSON, "json.XYZOrder");
         XMLUnit.setIgnoreWhitespace(true);
         XMLAssert.assertXMLEqual(multiDoc, config.getConfiguration().getOwnerDocument());
-    }
-    
-    @Test
-    public void multipleDozerConfigs() throws Exception {
-        // Add another transform endpoint with a new dozer configuration
-        Document multiDozer = loadDocument(MULTI_DOZER);
-        CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(JAVA_JAVA));
-        config.addTransformation("abc123", "dozerBeanMapping2.xml",
-                TransformType.JAVA, "source.Input", 
-                TransformType.JAVA, "target.Output");
-        XMLUnit.setIgnoreWhitespace(true);
-        XMLAssert.assertXMLEqual(multiDozer, config.getConfiguration().getOwnerDocument());
     }
     
     private Document loadDocument(String path) throws Exception {

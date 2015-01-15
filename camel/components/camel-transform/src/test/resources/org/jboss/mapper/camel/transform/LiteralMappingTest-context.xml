@@ -3,13 +3,11 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:java2xml?sourceModel=source.Input&amp;targetModel=target.Output&amp;marshalId=target&amp;dozerConfigPath=dozerBeanMapping.xml" id="java2xml"/>
-    <dataFormats>
-        <jaxb contextPath="target" id="target"/>
-    </dataFormats>
+    <endpoint id="java2java" uri="transform:java2java?dozerConfigPath=org/jboss/mapper/camel/transform/literalMapping.xml&amp;targetModel=example.xyz.XYZOrder"/>
     <route>
-        <from uri="direct:begin"/>
-        <to uri="direct:end"/>
+        <from uri="direct:start"/>
+        <to ref="java2java"/>
+        <to uri="mock:result"/>
     </route>
 </camelContext>
 </beans>

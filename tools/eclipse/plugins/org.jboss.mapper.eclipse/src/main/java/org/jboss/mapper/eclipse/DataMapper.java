@@ -149,7 +149,7 @@ public class DataMapper extends Composite {
             final IJavaProject javaProject = JavaCore.create( configFile.getProject() );
             loader = ( URLClassLoader ) JavaUtil.getProjectClassLoader( javaProject, getClass().getClassLoader() );
 
-            final List< Mapping > mappings = configBuilder.getMappings().getMapping();
+            final List< Mapping > mappings = configBuilder.getDozerConfig().getMapping();
             if ( !mappings.isEmpty() ) {
                 final Mapping mainMapping = mappings.get( 0 );
                 sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassA().getContent() ) );
@@ -488,8 +488,7 @@ public class DataMapper extends Composite {
 
     void updateMappings() {
         if ( sourceModel == null || targetModel == null ) return;
-        final List< Mapping > mappings = configBuilder.getMappings().getMapping();
-        mappings.clear();
+        configBuilder.clearMappings();
         configBuilder.addClassMapping( sourceModel.getType(), targetModel.getType() );
         try {
             configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );

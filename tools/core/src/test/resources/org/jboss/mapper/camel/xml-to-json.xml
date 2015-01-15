@@ -3,7 +3,7 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:xml2json?sourceModel=xml.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=xml" id="xml2json"/>
+    <endpoint uri="transform:xml2json?sourceModel=xml.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=xml&amp;dozerConfigPath=dozerBeanMapping.xml" id="xml2json"/>
     <dataFormats>
         <jaxb contextPath="xml" id="xml"/>
         <json library="Jackson" id="transform-json"/>
@@ -13,12 +13,4 @@
         <to uri="direct:end"/>
     </route>
 </camelContext>
-<bean class="org.apache.camel.converter.dozer.DozerTypeConverterLoader" id="dozerConverterLoader"/>
-  <bean class="org.dozer.DozerBeanMapper" id="mapper">
-    <property name="mappingFiles">
-      <list>
-        <value>dozerBeanMapping.xml</value>
-      </list>
-    </property>
-  </bean>
 </beans>
