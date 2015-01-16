@@ -43,8 +43,8 @@ public class DataMapperEditorMappingPage extends EditorPart {
         IMenuService mSvc = (IMenuService) win.getService(IMenuService.class);
         MenuManager mgr = new MenuManager();
         mSvc.populateContributionManager(mgr, "popup:" + DM_VIEWER_POPUPMENU);
-        mapper.viewer.getTable().setMenu(mgr.createContextMenu(mapper.viewer.getTable()));
-        getSite().setSelectionProvider(mapper.viewer);
+        mapper.opViewer.getTable().setMenu(mgr.createContextMenu(mapper.opViewer.getTable()));
+        getSite().setSelectionProvider(mapper.opViewer);
     }
 
     /**

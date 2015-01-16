@@ -40,32 +40,32 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.dozer.ConfigBuilder;
 
 /**
- * 
+ *
  */
 public class DozerMappingWizard extends Wizard implements INewWizard {
-    
+
     static final String DEFAULT_DOZER_CONFIG_FILE_NAME = "dozerBeanMapping.xml";
-    
+
     IProject project;
     IFile dozerConfigFile;
     Text sourceFileText, targetFileText;
     Button sourceFileButton, targetFileButton;
-    
+
     /**
-     * 
+     *
      */
     public DozerMappingWizard() {
         addPage( constructMainPage() );
     }
-    
+
     private IWizardPage constructMainPage() {
         return new WizardPage( "New Data Mapping", "New Data Mapping", Activator.imageDescriptor( "transform.png" ) ) {
-            
+
             Text nameText;
-            
+
             /**
              * {@inheritDoc}
-             * 
+             *
              * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
              */
             @Override
@@ -85,7 +85,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                                                                        .align( SWT.FILL, SWT.CENTER )
                                                                        .create() );
                 projectViewer.setLabelProvider( new LabelProvider() {
-                    
+
                     @Override
                     public String getText( final Object element ) {
                         return ( ( IProject ) element ).getName();
@@ -94,7 +94,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                 projectViewer.add( ResourcesPlugin.getWorkspace().getRoot().getProjects() );
                 if ( project != null ) projectViewer.setSelection( new StructuredSelection( project ) );
                 projectViewer.getCombo().addSelectionListener( new SelectionAdapter() {
-                    
+
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
                         project = ( IProject ) ( ( IStructuredSelection ) projectViewer.getSelection() ).getFirstElement();
@@ -108,7 +108,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                 nameText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                        .align( SWT.FILL, SWT.CENTER ).create() );
                 nameText.addKeyListener( new KeyAdapter() {
-                    
+
                     @Override
                     public void keyReleased( final KeyEvent event ) {
                         validatePage();
@@ -123,10 +123,10 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                 sourceFileButton = new Button( page, SWT.NONE );
                 sourceFileButton.setText( "..." );
                 sourceFileButton.addSelectionListener( new SelectionAdapter() {
-                    
+
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        final String name = DataBrowser.selectModel( getShell(), project, null, "Source" );
+                        final String name = DataMapper.selectModel( getShell(), project, null, "Source" );
                         if ( name != null ) sourceFileText.setText( name );
                     }
                 } );
@@ -139,15 +139,15 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                 targetFileButton = new Button( page, SWT.NONE );
                 targetFileButton.setText( "..." );
                 targetFileButton.addSelectionListener( new SelectionAdapter() {
-                    
+
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        final String name = DataBrowser.selectModel( getShell(), project, null, "Target" );
+                        final String name = DataMapper.selectModel( getShell(), project, null, "Target" );
                         if ( name != null ) targetFileText.setText( name );
                     }
                 } );
                 page.addPaintListener( new PaintListener() {
-                    
+
                     @Override
                     public void paintControl( final PaintEvent event ) {
                         if ( project == null ) projectViewer.getCombo().setFocus();
@@ -157,7 +157,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
                 } );
                 validatePage();
             }
-            
+
             void validatePage() {
                 if ( project != null ) {
                     sourceFileButton.setEnabled( true );
@@ -183,10 +183,10 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
             }
         };
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
      */
     @Override
@@ -200,10 +200,10 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
         project = ( ( IResource ) ( ( IAdaptable ) selection.getFirstElement() ).getAdapter( IResource.class ) ).getProject();
         if ( project != null ) dozerConfigFile = project.getFile( "src/main/resources/" + DEFAULT_DOZER_CONFIG_FILE_NAME );
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
