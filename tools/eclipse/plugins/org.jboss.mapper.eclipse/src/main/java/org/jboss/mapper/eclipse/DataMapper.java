@@ -73,6 +73,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
+import org.jboss.mapper.Literal;
 import org.jboss.mapper.dozer.ConfigBuilder;
 import org.jboss.mapper.dozer.config.Field;
 import org.jboss.mapper.dozer.config.Mapping;
@@ -173,7 +174,9 @@ public class DataMapper extends Composite {
 
                 @Override
                 public String getText( final Object element ) {
-                    return super.getText( ( ( Field ) element ).getA().getContent() );
+                    Field field = ( Field ) element;
+                    String literal = field.getCustomConverterParam();
+                    return literal == null ? super.getText( field.getA().getContent() ) : "\"" + literal + "\"";
                 }
             } );
             final TableViewerColumn operationColumn = new TableViewerColumn( opViewer, SWT.CENTER );
@@ -329,6 +332,14 @@ public class DataMapper extends Composite {
                     }
                 }
             } );
+            // Initialize constants from config
+            for ( final Mapping mapping : mappings ) {
+                for ( final Object object : mapping.getFieldOrFieldExclude() ) {
+                    Field field = (Field) object;
+                    String literal = field.getCustomConverterParam();
+                    if ( literal != null ) constantsViewer.add( literal );
+                }
+            }
 
             final Label label = new Label( mapper, SWT.NONE );
             label.setText( "=>" );
@@ -342,10 +353,10 @@ public class DataMapper extends Composite {
 
                         @Override
                         public boolean performDrop( final Object data ) {
-                            // TODO handle constant once back-end supports it (i.e., once issue #82 is closed)
-                            final Model sourceModel = ( Model ) ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
-                            final Model targetModel = ( Model ) getCurrentTarget();
-                            configBuilder.map( sourceModel, targetModel );
+                            Object source =
+                                ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
+                            if (source instanceof Model) configBuilder.map( (Model) source, ( Model ) getCurrentTarget() );
+                            else configBuilder.map( new Literal( source.toString() ), ( Model ) getCurrentTarget() );
                             try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
                                 configBuilder.saveConfig( stream );
                                 configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );

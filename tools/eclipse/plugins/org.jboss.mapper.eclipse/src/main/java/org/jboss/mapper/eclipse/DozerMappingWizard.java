@@ -2,7 +2,6 @@ package org.jboss.mapper.eclipse;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
