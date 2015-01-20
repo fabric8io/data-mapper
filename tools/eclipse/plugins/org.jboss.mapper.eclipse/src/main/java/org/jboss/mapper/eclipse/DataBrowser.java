@@ -11,7 +11,6 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -23,9 +22,9 @@ class DataBrowser extends Composite {
     Model model;
     final TreeViewer viewer;
 
-    DataBrowser( final CTabFolder tabFolder,
+    DataBrowser( final Composite parent,
                  final Model model ) {
-        super( tabFolder, SWT.NONE );
+        super( parent, SWT.NONE );
         this.model = model;
         setLayout( GridLayoutFactory.fillDefaults().numColumns( 2 ).create() );
         viewer = new TreeViewer( this );

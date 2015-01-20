@@ -165,8 +165,18 @@ public class DataMapper extends Composite {
             splitter.SASH_WIDTH = 5;
 
             // Create mapped operations viewer
-            opViewer = new TableViewer( splitter );
+            final Composite opPane = new Composite( splitter, SWT.NONE );
+            opPane.setLayout( GridLayoutFactory.fillDefaults().create() );
+            opPane.setBackground( getBackground() );
+            // Create tool bar for mapped operations
+            final ToolBar opToolBar = new ToolBar( opPane, SWT.NONE );
+            final ToolItem deleteOp = new ToolItem( opToolBar, SWT.PUSH );
+            deleteOp.setImage( IMAGES.getImage( ISharedImages.IMG_ETOOL_DELETE ) );
+            deleteOp.setToolTipText( "Delete the selected operation(s)" );
+            deleteOp.setEnabled( false );
+            opViewer = new TableViewer( opPane );
             final Table table = opViewer.getTable();
+            table.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
             table.setHeaderVisible( true );
             final TableViewerColumn sourceColumn = new TableViewerColumn( opViewer, SWT.LEFT );
             sourceColumn.getColumn().setText( "Source Item" );
@@ -220,6 +230,24 @@ public class DataMapper extends Composite {
                                           final Object newInput ) {}
             } );
             opViewer.setInput( mappings );
+            opViewer.addSelectionChangedListener( new ISelectionChangedListener() {
+
+                @Override
+                public void selectionChanged( SelectionChangedEvent event ) {
+                    deleteOp.setEnabled( !event.getSelection().isEmpty() );
+                }
+            } );
+            deleteOp.addSelectionListener( new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected( SelectionEvent event ) {
+                    for ( final Iterator< ? > iter = ( ( IStructuredSelection ) opViewer.getSelection() ).iterator(); iter.hasNext(); ) {
+                        Field field = ( Field ) iter.next();
+                        deleteFieldMapping( field );
+                        opViewer.remove( field );
+                    }
+                }
+            } );
             operationColumn.getColumn().pack();
             table.addControlListener( new ControlAdapter() {
 
@@ -277,7 +305,8 @@ public class DataMapper extends Composite {
             final CTabItem constantsTab = new CTabItem( sourceTabFolder, SWT.NONE );
             constantsTab.setText( "Constants" );
             final Composite constantsPane = new Composite( sourceTabFolder, SWT.NONE );
-            constantsPane.setLayout( GridLayoutFactory.swtDefaults().create() );
+            constantsPane.setLayout( GridLayoutFactory.fillDefaults().create() );
+            constantsPane.setBackground( getBackground() );
             final ToolBar constantsToolBar = new ToolBar( constantsPane, SWT.NONE );
             final ToolItem addConstant = new ToolItem( constantsToolBar, SWT.PUSH );
             addConstant.setImage( IMAGES.getImage( ISharedImages.IMG_OBJ_ADD ) );
@@ -403,8 +432,13 @@ public class DataMapper extends Composite {
         final CTabItem tab = new CTabItem( tabFolder, SWT.NONE, 0 );
         tab.setText( handler.type() + ": " + handler.model().getName() );
         tab.setShowClose( true );
-        final DataBrowser browser = new DataBrowser( tabFolder, handler.model() );
-        tab.setControl( browser );
+        Composite pane = new Composite( tabFolder, SWT.NONE );
+        pane.setBackground( getBackground() );
+        tab.setControl( pane );
+        pane.setLayout( GridLayoutFactory.fillDefaults().create() );
+        ToolBar toolBar = new ToolBar( pane, SWT.NONE );
+        final DataBrowser browser = new DataBrowser( pane, handler.model() );
+        browser.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
         handler.configureDragAndDrop( browser.viewer );
         browser.viewer.setInput( handler.model() );
         browser.layout();
