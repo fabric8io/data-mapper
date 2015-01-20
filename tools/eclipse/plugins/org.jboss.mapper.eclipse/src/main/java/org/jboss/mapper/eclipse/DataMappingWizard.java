@@ -2,6 +2,8 @@ package org.jboss.mapper.eclipse;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,6 +14,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -309,7 +312,32 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                         typeComboViewer.setSelection( new StructuredSelection( ModelType.JAVA ) );
                                         break;
                                     case "json":
-                                        typeComboViewer.setSelection( new StructuredSelection( ModelType.JSON ) );
+                                        try ( InputStream stream = project.getFile( name ).getContents() ) {
+                                            char quote = '\0';
+                                            final StringBuilder builder = new StringBuilder();
+                                            ModelType type = ModelType.JSON;
+                                            for ( char chr = (char) stream.read(); chr != -1; chr = (char) stream.read() ) {
+                                                // Find quote
+                                                if ( quote == '\0' ) {
+                                                    if ( chr == '"' || chr == '\'' ) quote = chr;
+                                                } else if ( chr == quote ) {
+                                                    final String keyword = builder.toString();
+                                                    switch ( keyword ) {
+                                                        case "$schema":
+                                                        case "title":
+                                                        case "type":
+                                                        case "id":
+                                                            type = ModelType.JSON_SCHEMA;
+                                                    }
+                                                    break;
+                                                }
+                                                else builder.append( chr );
+                                            }
+                                            typeComboViewer.setSelection( new StructuredSelection( type ) );
+                                        } catch ( IOException | CoreException e ) {
+                                            Activator.error( getShell(), e );
+                                            typeComboViewer.setSelection( new StructuredSelection( ModelType.JSON ) );
+                                        }
                                         break;
                                     case "xml":
                                         typeComboViewer.setSelection( new StructuredSelection( ModelType.XML ) );
@@ -551,8 +579,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         if ( dozerConfigFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) )
             return false;
         final ConfigBuilder dozerConfigBuilder = ConfigBuilder.newConfig();
-        File newFile = new File(dozerConfigFile.getLocationURI());
-        if (!newFile.getParentFile().exists()) {
+        final File newFile = new File( dozerConfigFile.getLocationURI() );
+        if ( !newFile.getParentFile().exists() ) {
             newFile.getParentFile().mkdirs();
         }
         try ( FileOutputStream dozerConfigStream = new FileOutputStream( newFile ) ) {
