@@ -17,12 +17,19 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
+import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.eclipse.viewers.ModelViewerUsedFieldsFilter;
 import org.jboss.mapper.model.Model;
 
 class ModelViewer extends Composite {
 
     Model model;
     final TreeViewer treeViewer;
+    boolean showFieldTypesInLabel = true;
+    boolean showMappedFields = true;
+    MapperConfiguration mapperConfig;
+    ModelViewerUsedFieldsFilter usedFieldsFilter;
+    String modelType;
 
     ModelViewer( final Composite parent,
                  final Model model ) {
@@ -34,6 +41,12 @@ class ModelViewer extends Composite {
         ToolItem collapseAllButton = new ToolItem( toolBar, SWT.PUSH );
         collapseAllButton.setImage( Activator.imageDescriptor( "collapseall16.gif" ).createImage() );
         treeViewer = new TreeViewer( this );
+        ToolItem filterTypesButton = new ToolItem( toolBar, SWT.CHECK );
+        filterTypesButton.setImage( Activator.imageDescriptor( "filter16.gif" ).createImage() );
+        filterTypesButton.setToolTipText("Show/hide Types");
+        ToolItem filterMappedFieldsButton = new ToolItem( toolBar, SWT.CHECK );
+        filterMappedFieldsButton.setImage( Activator.imageDescriptor( "filter16.gif" ).createImage() );
+        filterMappedFieldsButton.setToolTipText("Show/hide Mapped Fields");
         treeViewer.setComparator( new ViewerComparator() {
 
             @Override
@@ -51,6 +64,9 @@ class ModelViewer extends Composite {
             @Override
             public String getText( final Object element ) {
                 final Model model = ( Model ) element;
+                if (!showFieldTypesInLabel) {
+                	return model.getName();
+                }
                 return model.getName() + ": " + model.getType();
             }
         } );
@@ -99,10 +115,46 @@ class ModelViewer extends Composite {
                 treeViewer.collapseAll();
             }
         } );
+        filterTypesButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(org.eclipse.swt.events.SelectionEvent event) {
+                ToolItem item = (ToolItem) event.widget;
+                showFieldTypesInLabel = !item.getSelection();
+                treeViewer.refresh(true);
+            }
+        } );
+        
+        usedFieldsFilter = new ModelViewerUsedFieldsFilter(mapperConfig, modelType);
+        filterMappedFieldsButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(org.eclipse.swt.events.SelectionEvent event) {
+                ToolItem item = (ToolItem) event.widget;
+                showMappedFields = !item.getSelection();
+                usedFieldsFilter.setShowMappedFields(showMappedFields);
+                treeViewer.refresh(true);
+            }
+        } );
         treeViewer.setInput( model );
+        treeViewer.addFilter(usedFieldsFilter);
     }
 
     void setInput( Object object ) {
         treeViewer.setInput( object );
+    }
+    
+    void setMapperConfiguration(MapperConfiguration config) {
+    	this.mapperConfig = config;
+    	if (usedFieldsFilter != null) {
+    		usedFieldsFilter.setMapperConfiguration(config);
+    	}
+    }
+    
+    void setModelType(String inType) {
+    	this.modelType = inType;
+    	if (usedFieldsFilter != null) {
+    		usedFieldsFilter.setViewerType(inType);
+    	}
     }
 }

@@ -146,7 +146,6 @@ class TransformationPane extends Composite {
 
             // Create source viewer
             final CTabFolder sourceTabFolder = createTabFolder( mapper, new Handler() {
-
                 @Override
                 public void configureDragAndDrop( final ModelViewer viewer ) {
                     viewer.treeViewer.addDragSupport( DND.DROP_MOVE,
@@ -189,8 +188,7 @@ class TransformationPane extends Composite {
 
             // Create target viewer
             createTabFolder( mapper, new Handler() {
-
-                @Override
+            	@Override
                 public void configureDragAndDrop( final ModelViewer viewer ) {
                     viewer.treeViewer.addDropSupport( DND.DROP_MOVE,
                                                       new Transfer[] { LocalSelectionTransfer.getTransfer() },
@@ -211,6 +209,7 @@ class TransformationPane extends Composite {
                                                      final TransferData transferType ) {
                             return true;
                         }
+
                     } );
                 }
 
@@ -247,6 +246,8 @@ class TransformationPane extends Composite {
         tab.setControl( viewer );
         viewer.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
         handler.configureDragAndDrop( viewer );
+        viewer.setMapperConfiguration(mapperConfig);
+        viewer.setModelType(handler.type());
         viewer.setInput( handler.model() );
         viewer.layout();
         tabFolder.setSelection( tab );
