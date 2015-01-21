@@ -73,31 +73,6 @@
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               id="org.jboss.mapper.eclipse.menus.top"
-               label="%menu.label"
-               mnemonic="%menu.mnemonic">
-            <command
-                  commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
-                  id="org.jboss.mapper.eclipse.menus.sampleCommand"
-                  mnemonic="%command.mnemonic">
-            </command>
-         </menu>
-      </menuContribution>
-      <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
-         <toolbar
-               id="org.jboss.mapper.eclipse.toolbars.editorToolbar">
-            <command
-                  commandId="org.jboss.mapper.eclipse.commands.deleteFieldMappingCommand"
-                  icon="icons/sample.gif"
-                  id="org.jboss.mapper.eclipse.toolbars.deleteFieldMapping"
-                  tooltip="%command.tooltip">
-            </command>
-         </toolbar>
-      </menuContribution>
-      <menuContribution
             allPopups="false"
             locationURI="popup:dm_viewer_popupmenu">
          <command

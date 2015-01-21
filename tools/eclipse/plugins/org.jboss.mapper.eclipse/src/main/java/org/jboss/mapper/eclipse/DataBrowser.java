@@ -10,6 +10,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -28,6 +29,15 @@ class DataBrowser extends Composite {
         this.model = model;
         setLayout( GridLayoutFactory.fillDefaults().numColumns( 2 ).create() );
         viewer = new TreeViewer( this );
+        viewer.setComparator( new ViewerComparator() {
+
+            @Override
+            public int compare( Viewer viewer,
+                                Object model1,
+                                Object model2 ) {
+                return ( ( Model ) model1 ).getName().compareTo( ( ( Model ) model2 ).getName() );
+            }
+        });
         final TreeViewerColumn column = new TreeViewerColumn( viewer, SWT.NONE );
         final Tree tree = viewer.getTree();
         tree.setLayoutData( GridDataFactory.fillDefaults().span( 2, 1 ).grab( true, true ).create() );

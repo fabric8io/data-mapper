@@ -43,8 +43,8 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerDropAdapter;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -325,7 +325,7 @@ public class DataMapper extends Composite {
                         LocalSelectionTransfer.getTransfer().setSelection( constantsViewer.getSelection() );
                 }
             } );
-            constantsViewer.setSorter( new ViewerSorter() );
+            constantsViewer.setComparator( new ViewerComparator() );
             constantsTab.setControl( constantsPane );
             addConstant.addSelectionListener( new SelectionAdapter() {
 
@@ -463,9 +463,9 @@ public class DataMapper extends Composite {
                 try {
                     handler.setModel( ModelBuilder.fromJavaClass( loader.loadClass( name ) ) );
                     updateMappings();
-                    updateBrowserText();
                     createTab( tabFolder, handler );
                     toolBar.setVisible( false );
+                    updateBrowserText();
                 } catch ( final ClassNotFoundException e ) {
                     Activator.error( getShell(), e );
                 }
@@ -480,8 +480,10 @@ public class DataMapper extends Composite {
                 updateBrowserText();
             }
         } );
-        if ( handler.model() == null ) tabFolder.setTopRight( toolBar );
-        else createTab( tabFolder, handler );
+        if ( handler.model() != null ) {
+            toolBar.setVisible( false );
+            createTab( tabFolder, handler );
+        }
         return tabFolder;
     }
 
