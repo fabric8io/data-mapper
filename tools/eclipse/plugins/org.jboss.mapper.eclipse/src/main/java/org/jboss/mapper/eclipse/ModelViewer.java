@@ -12,6 +12,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
@@ -94,7 +95,7 @@ class ModelViewer extends Composite {
         collapseAllButton.addSelectionListener( new SelectionAdapter() {
 
             @Override
-            public void widgetSelected(org.eclipse.swt.events.SelectionEvent event) {
+            public void widgetSelected( SelectionEvent event ) {
                 treeViewer.collapseAll();
             }
         } );

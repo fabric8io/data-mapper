@@ -82,7 +82,7 @@ class LiteralsViewer extends Composite {
                                                                  return listViewer.getList().indexOf( text ) < 0 ? null : "Value already exists";
                                                              }
                                                          } );
-                if ( dlg.open() == Window.OK ) listViewer.add( dlg.getValue() );
+                if ( dlg.open() == Window.OK ) listViewer.add( dlg.getValue() ); // TODO should be a literal
             }
         } );
         listViewer.addSelectionChangedListener( new ISelectionChangedListener() {

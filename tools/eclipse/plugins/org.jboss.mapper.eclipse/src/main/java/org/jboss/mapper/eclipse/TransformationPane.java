@@ -70,6 +70,7 @@ class TransformationPane extends Composite {
         }
     }
 
+    // TODO change to select source or class; Util.selectFile
     static String selectModel( final Shell shell,
                                final IProject project,
                                final Model existingModel,
@@ -125,7 +126,7 @@ class TransformationPane extends Composite {
 
             sourceModel = mapperConfig.getSourceModel();
             targetModel = mapperConfig.getTargetModel();
-            
+
             setLayout( new FillLayout() );
             SashForm splitter = new SashForm( this, SWT.VERTICAL );
 

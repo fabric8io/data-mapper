@@ -40,7 +40,7 @@ import org.jboss.mapper.model.Model;
 class TransformationViewer extends Composite {
 
     final IFile configFile;
-    MapperConfiguration mapperConfig;
+    final MapperConfiguration mapperConfig;
     final TableViewer viewer;
 
     TransformationViewer( final Composite parent,
@@ -71,12 +71,10 @@ class TransformationViewer extends Composite {
 
             @Override
             public String getText( final Object element ) {
-                MappingOperation<?,?> mapping = ( MappingOperation<?,?> ) element;
-                if ( MappingType.LITERAL == mapping.getType() ) {
-                    return "\"" + ( (LiteralMapping) mapping ).getSource().getValue() + "\"";
-                } else {
-                    return super.getText( ( (FieldMapping) mapping ).getSource().getName() );
-                }
+                MappingOperation< ?, ? > mapping = ( MappingOperation< ?, ? > ) element;
+                if ( MappingType.LITERAL == mapping.getType() )
+                    return "\"" + ( ( LiteralMapping ) mapping ).getSource().getValue() + "\"";
+                return super.getText( ( ( FieldMapping ) mapping ).getSource().getName() );
             }
         } );
         final TableViewerColumn operationColumn = new TableViewerColumn( viewer, SWT.CENTER );
