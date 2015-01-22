@@ -125,7 +125,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
 
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        final String name = DataMapper.selectModel( getShell(), project, null, "Source" );
+                        final String name = TransformationPane.selectModel( getShell(), project, null, "Source" );
                         if ( name != null ) sourceFileText.setText( name );
                     }
                 } );
@@ -141,7 +141,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
 
                     @Override
                     public void widgetSelected( final SelectionEvent event ) {
-                        final String name = DataMapper.selectModel( getShell(), project, null, "Target" );
+                        final String name = TransformationPane.selectModel( getShell(), project, null, "Target" );
                         if ( name != null ) targetFileText.setText( name );
                     }
                 } );

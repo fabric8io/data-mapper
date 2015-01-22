@@ -26,7 +26,7 @@ public class DataMapperEditorMappingPage extends EditorPart {
 
     static final String DM_VIEWER_POPUPMENU = "dm_viewer_popupmenu"; //$NON-NLS-1$
 
-    private DataMapper mapper;
+    private TransformationPane mapper;
 
     /**
      * {@inheritDoc}
@@ -35,7 +35,7 @@ public class DataMapperEditorMappingPage extends EditorPart {
      */
     @Override
     public void createPartControl( final Composite parent ) {
-        mapper = new DataMapper( parent, ( ( FileEditorInput ) getEditorInput() ).getFile() );
+        mapper = new TransformationPane( parent, ( ( FileEditorInput ) getEditorInput() ).getFile() );
 
         // Create a menu manager and create context menu
         IWorkbench wb = PlatformUI.getWorkbench();
@@ -43,8 +43,6 @@ public class DataMapperEditorMappingPage extends EditorPart {
         IMenuService mSvc = (IMenuService) win.getService(IMenuService.class);
         MenuManager mgr = new MenuManager();
         mSvc.populateContributionManager(mgr, "popup:" + DM_VIEWER_POPUPMENU);
-        mapper.opViewer.getTable().setMenu(mgr.createContextMenu(mapper.opViewer.getTable()));
-        getSite().setSelectionProvider(mapper.opViewer);
     }
 
     /**
@@ -101,7 +99,7 @@ public class DataMapperEditorMappingPage extends EditorPart {
     /**
      * @return The DataMapper widget used by this editor page
      */
-    public DataMapper mapper() {
+    public TransformationPane mapper() {
         return mapper;
     }
 

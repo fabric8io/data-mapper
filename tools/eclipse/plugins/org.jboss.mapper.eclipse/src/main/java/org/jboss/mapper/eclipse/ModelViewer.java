@@ -14,22 +14,29 @@ import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.jboss.mapper.model.Model;
 
-class DataBrowser extends Composite {
+class ModelViewer extends Composite {
 
     Model model;
-    final TreeViewer viewer;
+    final TreeViewer treeViewer;
 
-    DataBrowser( final Composite parent,
+    ModelViewer( final Composite parent,
                  final Model model ) {
         super( parent, SWT.NONE );
         this.model = model;
-        setLayout( GridLayoutFactory.fillDefaults().numColumns( 2 ).create() );
-        viewer = new TreeViewer( this );
-        viewer.setComparator( new ViewerComparator() {
+        setBackground( parent.getBackground() );
+        setLayout( GridLayoutFactory.fillDefaults().create() );
+        ToolBar toolBar = new ToolBar( this, SWT.NONE );
+        ToolItem collapseAllButton = new ToolItem( toolBar, SWT.PUSH );
+        collapseAllButton.setImage( Activator.imageDescriptor( "collapseall16.gif" ).createImage() );
+        treeViewer = new TreeViewer( this );
+        treeViewer.setComparator( new ViewerComparator() {
 
             @Override
             public int compare( Viewer viewer,
@@ -38,9 +45,9 @@ class DataBrowser extends Composite {
                 return ( ( Model ) model1 ).getName().compareTo( ( ( Model ) model2 ).getName() );
             }
         });
-        final TreeViewerColumn column = new TreeViewerColumn( viewer, SWT.NONE );
-        final Tree tree = viewer.getTree();
-        tree.setLayoutData( GridDataFactory.fillDefaults().span( 2, 1 ).grab( true, true ).create() );
+        final TreeViewerColumn column = new TreeViewerColumn( treeViewer, SWT.NONE );
+        final Tree tree = treeViewer.getTree();
+        tree.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
         column.setLabelProvider( new ColumnLabelProvider() {
 
             @Override
@@ -49,7 +56,7 @@ class DataBrowser extends Composite {
                 return model.getName() + ": " + model.getType();
             }
         } );
-        viewer.setContentProvider( new ITreeContentProvider() {
+        treeViewer.setContentProvider( new ITreeContentProvider() {
 
             @Override
             public void dispose() {}
@@ -85,14 +92,24 @@ class DataBrowser extends Composite {
                                       final Object oldInput,
                                       final Object newInput ) {}
         } );
-
         tree.addControlListener( new ControlAdapter() {
 
             @Override
             public void controlResized( final ControlEvent event ) {
-                column.getColumn().setWidth( viewer.getTree().getSize().x - 2 );
+                column.getColumn().setWidth( treeViewer.getTree().getSize().x - 2 );
             }
         } );
-        viewer.setInput( model );
+        collapseAllButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(org.eclipse.swt.events.SelectionEvent event) {
+                treeViewer.collapseAll();
+            }
+        } );
+        treeViewer.setInput( model );
+    }
+
+    void setInput( Object object ) {
+        treeViewer.setInput( object );
     }
 }
