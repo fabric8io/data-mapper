@@ -13,43 +13,12 @@
  */
 package org.jboss.mapper;
 
+import org.jboss.mapper.model.Model;
+
 /**
  * A LiteralMapping represents a mapping where the source is a string literal,
  * represented by Literal, and the target is a model field.
  */
-public class LiteralMapping implements MappingOperation<Literal, String> {
+public interface LiteralMapping extends MappingOperation<Literal, Model> {
 
-    private Literal source;
-    private String target;
-
-    /**
-     * Create a new LiteralMapping.
-     * @param source source literal
-     * @param target target field name
-     */
-    public LiteralMapping(Literal source, String target) {
-        this.source = source;
-        this.target = target;
-    }
-    
-    /**
-     * Returns the literal used as the source for this mapping.
-     */
-    @Override
-    public Literal getSource() {
-        return source;
-    }
-    
-    /**
-     * Returns the field name used as the target for this mapping.
-     */
-    @Override
-    public String getTarget() {
-        return target;
-    }
-    
-    @Override
-    public MappingType getType() {
-        return MappingType.LITERAL;
-    }
 }

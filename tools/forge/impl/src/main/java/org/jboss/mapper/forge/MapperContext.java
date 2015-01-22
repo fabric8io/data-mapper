@@ -16,14 +16,14 @@ package org.jboss.mapper.forge;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.MapperConfiguration;
 import org.jboss.mapper.model.Model;
 
 public class MapperContext {
 
     private Model sourceModel;
     private Model targetModel;
-    private ConfigBuilder config;
+    private MapperConfiguration config;
     private List<String> generatedTypes = new LinkedList<String>();
     private String sourceType;
     private String targetType;
@@ -46,11 +46,11 @@ public class MapperContext {
         this.targetModel = targetModel;
     }
 
-    public ConfigBuilder getConfig() {
+    public MapperConfiguration getConfig() {
         return config;
     }
 
-    public void setConfig(ConfigBuilder config) {
+    public void setConfig(MapperConfiguration config) {
         this.config = config;
     }
 

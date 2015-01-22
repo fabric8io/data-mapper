@@ -36,7 +36,8 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.dozer.DozerMapperConfiguration;
 
 /**
  *
@@ -208,7 +209,7 @@ public class DozerMappingWizard extends Wizard implements INewWizard {
     @Override
     public boolean performFinish() {
         if ( dozerConfigFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) ) return false;
-        final ConfigBuilder configBuilder = ConfigBuilder.newConfig();
+        final MapperConfiguration configBuilder = DozerMapperConfiguration.newConfig();
         if ( !sourceFileText.getText().trim().isEmpty() && !targetFileText.getText().trim().isEmpty() )
             configBuilder.addClassMapping( sourceFileText.getText().trim(), targetFileText.getText().trim() );
         File newFile = new File(dozerConfigFile.getLocationURI());

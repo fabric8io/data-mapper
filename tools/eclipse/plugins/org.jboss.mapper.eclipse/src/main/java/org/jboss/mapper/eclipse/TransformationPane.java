@@ -54,8 +54,8 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.jboss.mapper.Literal;
-import org.jboss.mapper.dozer.ConfigBuilder;
-import org.jboss.mapper.dozer.config.Mapping;
+import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.dozer.DozerMapperConfiguration;
 import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
@@ -107,7 +107,7 @@ class TransformationPane extends Composite {
     }
 
     final IFile configFile;
-    ConfigBuilder configBuilder;
+    MapperConfiguration mapperConfig;
     URLClassLoader loader;
     Model sourceModel, targetModel;
     TransformationViewer xformViewer;
@@ -119,22 +119,18 @@ class TransformationPane extends Composite {
         this.configFile = configFile;
 
         try {
-            configBuilder = ConfigBuilder.loadConfig( new File( configFile.getLocationURI() ) );
             final IJavaProject javaProject = JavaCore.create( configFile.getProject() );
             loader = ( URLClassLoader ) JavaUtil.getProjectClassLoader( javaProject, getClass().getClassLoader() );
+            mapperConfig = DozerMapperConfiguration.loadConfig( new File( configFile.getLocationURI() ), loader );
 
-            final List< Mapping > mappings = configBuilder.getDozerConfig().getMapping();
-            if ( !mappings.isEmpty() ) {
-                final Mapping mainMapping = mappings.get( 0 );
-                sourceModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassA().getContent() ) );
-                targetModel = ModelBuilder.fromJavaClass( loader.loadClass( mainMapping.getClassB().getContent() ) );
-            }
-
+            sourceModel = mapperConfig.getSourceModel();
+            targetModel = mapperConfig.getTargetModel();
+            
             setLayout( new FillLayout() );
             SashForm splitter = new SashForm( this, SWT.VERTICAL );
 
             // Create transformation viewer
-            xformViewer = new TransformationViewer( splitter, mappings, configFile, configBuilder );
+            xformViewer = new TransformationViewer( splitter, configFile, mapperConfig );
 
             final Composite mapper = new Composite( splitter, SWT.NONE );
             mapper.setBackground( getBackground() );
@@ -183,7 +179,7 @@ class TransformationPane extends Composite {
             // Create literals tab
             final CTabItem literalsTab = new CTabItem( sourceTabFolder, SWT.NONE );
             literalsTab.setText( "Literals" );
-            final LiteralsViewer literalsViewer = new LiteralsViewer( sourceTabFolder, configBuilder );
+            final LiteralsViewer literalsViewer = new LiteralsViewer( sourceTabFolder, mapperConfig );
             literalsTab.setControl( literalsViewer );
             literalsTab.setImage( Activator.imageDescriptor( "literal16.gif" ).createImage() );
 
@@ -322,8 +318,8 @@ class TransformationPane extends Composite {
 
     void updateMappings() {
         if ( sourceModel == null || targetModel == null ) return;
-        configBuilder.clearMappings();
-        configBuilder.addClassMapping( sourceModel.getType(), targetModel.getType() );
+        mapperConfig.removeAllMappings();
+        mapperConfig.addClassMapping( sourceModel.getType(), targetModel.getType() );
         xformViewer.save();
     }
 

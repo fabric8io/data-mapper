@@ -3,8 +3,8 @@
 	xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
 	
 	<mapping>
-        <class-a>example.a</class-a>
-        <class-b>example.b</class-b>
+        <class-a>example.AClass</class-a>
+        <class-b>example.BClass</class-b>
         <field>
             <a>A1</a>
             <b>B1</b>
@@ -12,7 +12,7 @@
     </mapping>
     <mapping>
         <class-a>org.jboss.mapper.camel.transform.LiteralMapper</class-a>
-        <class-b>example.b</class-b>
+        <class-b>example.BClass</class-b>
         <field custom-converter="org.jboss.mapper.camel.transform.LiteralMapper" 
                custom-converter-param="123">
             <a>literal</a>

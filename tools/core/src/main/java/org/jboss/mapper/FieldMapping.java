@@ -13,44 +13,13 @@
  */
 package org.jboss.mapper;
 
+import org.jboss.mapper.model.Model;
+
 /**
  * A basic mapping operation where one field is assigned to another field.
- * The source and target types are Strings which contain the name of the field 
- * being mapped.
+ * The source and target types are Models that represent nodes used in the 
+ * mapping.
  */
-public class FieldMapping implements MappingOperation<String, String> {
+public interface FieldMapping extends MappingOperation<Model, Model> {
     
-    private String source;
-    private String target;
-    
-    /**
-     * Create a new FieldMapping.
-     * @param source name of the source model field
-     * @param target name of the target model field
-     */
-    public FieldMapping(String source, String target) {
-        this.source = source;
-        this.target = target;
-    }
-
-    /**
-     * Returns the source model field name.
-     */
-    @Override
-    public String getSource() {
-        return source;
-    }
-    
-    /**
-     * Returns the target model field name.
-     */
-    @Override
-    public String getTarget() {
-        return target;
-    }
-    
-    @Override
-    public MappingType getType() {
-        return MappingType.FIELD;
-    }
 }

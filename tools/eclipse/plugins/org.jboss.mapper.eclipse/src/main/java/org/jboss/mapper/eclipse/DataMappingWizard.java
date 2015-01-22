@@ -58,10 +58,11 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.part.FileEditorInput;
+import org.jboss.mapper.MapperConfiguration;
 import org.jboss.mapper.TransformType;
 import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.dozer.DozerMapperConfiguration;
 import org.jboss.mapper.model.json.JsonModelGenerator;
 import org.jboss.mapper.model.xml.XmlModelGenerator;
 
@@ -578,7 +579,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         // Save Dozer config
         if ( dozerConfigFile.exists() && !MessageDialog.openConfirm( getShell(), "Confirm", "Overwrite existing file?" ) )
             return false;
-        final ConfigBuilder dozerConfigBuilder = ConfigBuilder.newConfig();
+        final MapperConfiguration dozerConfigBuilder = DozerMapperConfiguration.newConfig();
         final File newFile = new File( dozerConfigFile.getLocationURI() );
         if ( !newFile.getParentFile().exists() ) {
             newFile.getParentFile().mkdirs();

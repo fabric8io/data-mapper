@@ -1,8 +1,5 @@
 package org.jboss.mapper.eclipse;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -64,12 +61,7 @@ class ModelViewer extends Composite {
             @Override
             public Object[] getChildren( final Object parentElement ) {
                 final Model model = ( Model ) parentElement;
-                final List< Model > fieldModels = new ArrayList<>();
-                for ( final String name : model.listFields() ) {
-                    final Model fieldModel = model.get( name );
-                    if ( fieldModel != null ) fieldModels.add( fieldModel );
-                }
-                return fieldModels.toArray( new Model[ fieldModels.size() ] );
+                return model.getChildren().toArray();
             }
 
             @Override

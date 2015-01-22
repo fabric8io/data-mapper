@@ -29,26 +29,27 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
+import org.jboss.mapper.FieldMapping;
 import org.jboss.mapper.Literal;
-import org.jboss.mapper.dozer.ConfigBuilder;
-import org.jboss.mapper.dozer.config.Field;
-import org.jboss.mapper.dozer.config.Mapping;
+import org.jboss.mapper.LiteralMapping;
+import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.MappingOperation;
+import org.jboss.mapper.MappingType;
 import org.jboss.mapper.model.Model;
 
 class TransformationViewer extends Composite {
 
     final IFile configFile;
-    ConfigBuilder configBuilder;
+    MapperConfiguration mapperConfig;
     final TableViewer viewer;
 
     TransformationViewer( final Composite parent,
-                          final List< Mapping > mappings,
                           final IFile configFile,
-                          final ConfigBuilder configBuilder ) {
+                          final MapperConfiguration mapperConfig ) {
         super( parent, SWT.NONE );
 
         this.configFile = configFile;
-        this.configBuilder = configBuilder;
+        this.mapperConfig = mapperConfig;
 
         setLayout( GridLayoutFactory.fillDefaults().create() );
         setBackground( parent.getBackground() );
@@ -70,9 +71,12 @@ class TransformationViewer extends Composite {
 
             @Override
             public String getText( final Object element ) {
-                Field field = ( Field ) element;
-                String literal = field.getCustomConverterParam();
-                return literal == null ? super.getText( field.getA().getContent() ) : "\"" + literal + "\"";
+                MappingOperation<?,?> mapping = ( MappingOperation<?,?> ) element;
+                if ( MappingType.LITERAL == mapping.getType() ) {
+                    return "\"" + ( (LiteralMapping) mapping ).getSource().getValue() + "\"";
+                } else {
+                    return super.getText( ( (FieldMapping) mapping ).getSource().getName() );
+                }
             }
         } );
         final TableViewerColumn operationColumn = new TableViewerColumn( viewer, SWT.CENTER );
@@ -90,7 +94,8 @@ class TransformationViewer extends Composite {
 
             @Override
             public String getText( final Object element ) {
-                return super.getText( ( ( Field ) element ).getB().getContent() );
+                Model target = ( Model )( ( MappingOperation<?,?> ) element ).getTarget();
+                return super.getText( target.getName() );
             }
         } );
         viewer.setContentProvider( new IStructuredContentProvider() {
@@ -100,14 +105,12 @@ class TransformationViewer extends Composite {
 
             @Override
             public Object[] getElements( final Object inputElement ) {
-                final List< Object > fields = new ArrayList<>();
-                for ( final Mapping mapping : mappings ) {
-                    for ( final Object field : mapping.getFieldOrFieldExclude() ) {
-                        fields.add( field );
-                        table.setData( field.toString(), mapping );
-                    }
+                final List< Object > fieldMappings = new ArrayList<>();
+                for ( final MappingOperation<?,?> mapping : mapperConfig.getMappings() ) {
+                    fieldMappings.add( mapping );
+                    table.setData( mapping.toString(), mapping );
                 }
-                return fields.toArray();
+                return fieldMappings.toArray();
             }
 
             @Override
@@ -127,22 +130,20 @@ class TransformationViewer extends Composite {
             @Override
             public void widgetSelected( SelectionEvent event ) {
                 for ( final Iterator< ? > iter = ( ( IStructuredSelection ) viewer.getSelection() ).iterator(); iter.hasNext(); ) {
-                    Field field = ( Field ) iter.next();
-                    final Mapping mapping = ( Mapping ) table.getData( field.toString() );
-                    if ( mapping.getFieldOrFieldExclude().remove( field ) ) {
-                        try {
-                            configBuilder.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
-                            configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
-                            viewer.remove( field );
-                            viewer.refresh();
-                        } catch ( final Exception e ) {
-                            Activator.error( getShell(), e );
-                        }
+                    MappingOperation<?,?> mapping = ( MappingOperation<?,?> ) iter.next();
+                    mapperConfig.removeMapping(mapping);
+                    try {
+                        mapperConfig.saveConfig( new FileOutputStream( new File( configFile.getLocationURI() ) ) );
+                        configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
+                        viewer.remove( mapping );
+                        viewer.refresh();
+                    } catch ( final Exception e) {
+                        Activator.error( getShell(), e );
                     }
                 }
             }
         } );
-        viewer.setInput( mappings );
+        viewer.setInput( mapperConfig.getMappings() );
         operationColumn.getColumn().pack();
         table.addControlListener( new ControlAdapter() {
 
@@ -157,19 +158,19 @@ class TransformationViewer extends Composite {
 
     void map( Literal literal,
               Model targetModel ) {
-        configBuilder.map( literal, targetModel );
+        mapperConfig.map( literal, targetModel );
         save();
     }
 
     void map( Model sourceModel,
               Model targetModel ) {
-        configBuilder.map( sourceModel, targetModel );
+        mapperConfig.map( sourceModel, targetModel );
         save();
     }
 
     void save() {
         try ( FileOutputStream stream = new FileOutputStream( new File( configFile.getLocationURI() ) ) ) {
-            configBuilder.saveConfig( stream );
+            mapperConfig.saveConfig( stream );
             configFile.getProject().refreshLocal( IResource.DEPTH_INFINITE, null );
             viewer.refresh();
         } catch ( final Exception e ) {

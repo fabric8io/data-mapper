@@ -33,7 +33,7 @@ import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.dozer.DozerMapperConfiguration;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
 
@@ -77,13 +77,13 @@ public abstract class AbstractMapperCommand extends AbstractProjectCommand {
         return mc;
     }
 
-    protected ConfigBuilder loadConfig(Project project) throws Exception {
+    protected DozerMapperConfiguration loadConfig(Project project) throws Exception {
         String configPath = getMapperContext(project).getDozerPath();
-        ConfigBuilder config;
+        DozerMapperConfiguration config;
         if (getFile(project, configPath).exists()) {
-            config = ConfigBuilder.loadConfig(getFile(project, configPath));
+            config = DozerMapperConfiguration.loadConfig(getFile(project, configPath));
         } else {
-            config = ConfigBuilder.newConfig();
+            config = DozerMapperConfiguration.newConfig();
         }
         getMapperContext(project).setConfig(config);
         return config;

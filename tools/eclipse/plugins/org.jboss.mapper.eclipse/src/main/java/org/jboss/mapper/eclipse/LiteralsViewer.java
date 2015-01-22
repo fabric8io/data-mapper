@@ -27,12 +27,12 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.jboss.mapper.Literal;
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.MapperConfiguration;
 
 class LiteralsViewer extends Composite {
 
     LiteralsViewer( Composite parent,
-                     final ConfigBuilder configBuilder ) {
+                     final MapperConfiguration mapperConfig ) {
         super( parent, SWT.NONE );
 
         setLayout( GridLayoutFactory.fillDefaults().create() );
@@ -64,8 +64,7 @@ class LiteralsViewer extends Composite {
 
             @Override
             public String getText( final Object element ) {
-                final Literal literal = ( Literal ) element;
-                return literal.getValue();
+                return ( String ) element;
             }
         } );
         addButton.addSelectionListener( new SelectionAdapter() {
@@ -103,6 +102,8 @@ class LiteralsViewer extends Composite {
             }
         } );
         // Initialize literals from config
-        listViewer.add( configBuilder.getLiterals().toArray() );
-}
+        for ( Literal literal : mapperConfig.getLiterals() ) {
+            listViewer.add( literal.getValue());
+        }
+    }
 }

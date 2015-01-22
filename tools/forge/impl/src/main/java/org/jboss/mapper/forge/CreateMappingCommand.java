@@ -23,7 +23,8 @@ import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jboss.mapper.dozer.ConfigBuilder;
+import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.dozer.DozerMapperConfiguration;
 
 public class CreateMappingCommand extends AbstractMapperCommand {
 
@@ -40,7 +41,7 @@ public class CreateMappingCommand extends AbstractMapperCommand {
     
     @Inject
     @WithAttributes(label = "Dozer Config",
-        defaultValue = ConfigBuilder.DEFAULT_DOZER_CONFIG,
+        defaultValue = DozerMapperConfiguration.DEFAULT_DOZER_CONFIG,
         required = true, 
         description = "Path to the Dozer configuration file")
     UIInput<String> dozerConfig;
@@ -59,7 +60,7 @@ public class CreateMappingCommand extends AbstractMapperCommand {
         Project project = getSelectedProject(context);
         // Create configuration
         getMapperContext(project).setDozerPath(dozerConfig.getValue());
-        ConfigBuilder config = loadConfig(project);
+        MapperConfiguration config = loadConfig(project);
         config.addClassMapping(sourceModel.getValue(), targetModel.getValue());
 
         // Load models into mapper context

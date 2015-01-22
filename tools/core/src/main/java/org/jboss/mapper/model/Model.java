@@ -13,7 +13,9 @@
  */
 package org.jboss.mapper.model;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,7 +34,7 @@ public class Model {
         this.name = name;
         this.type = type;
     }
-
+    
     public Model addChild(String name, String type) {
         Model n = new Model(name, type);
         n.parent = this;
@@ -47,7 +49,14 @@ public class Model {
     }
 
     public Model get(String nodeName) {
-        return children.get(nodeName);
+        if (nodeName.contains(".")) {
+            int idx = nodeName.indexOf(".");
+            String parent = nodeName.substring(0, idx);
+            String child = nodeName.substring(idx + 1, nodeName.length());
+            return children.get(parent).get(child);
+        } else {
+            return children.get(nodeName);
+        }
     }
 
     public String getName() {
@@ -70,6 +79,10 @@ public class Model {
         this.isCollection = isCollection;
         return this;
     }
+    
+    public List<Model> getChildren() {
+        return new ArrayList<Model>(children.values());
+    }
 
     public List<String> listFields() {
         List<String> fields = new LinkedList<String>();
@@ -84,6 +97,41 @@ public class Model {
                     prefix + field.getName() + ".");
         }
         return fieldList;
+    }
+    
+    @Override
+    public String toString() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        print(new PrintStream(bos, true));
+        return bos.toString();
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        } else if (obj == this) {
+            return true;
+        }
+        Model comp = (Model)obj;
+        return isEqual(modelClass, comp.getModelClass())
+                && isEqual(name, comp.getName())
+                //&& isEqual(parent, comp.parent)
+                && isEqual(type, comp.type)
+                && isEqual(children, comp.children);
+    }
+    
+    @Override
+    public int hashCode() {
+        return hash(modelClass, name, type, children);
+    }
+
+    public Class<?> getModelClass() {
+        return modelClass;
+    }
+
+    public void setModelClass(Class<?> modelClass) {
+        this.modelClass = modelClass;
     }
 
     private void printModel(Model node, int depth, PrintStream out) {
@@ -103,11 +151,24 @@ public class Model {
         return sb.toString();
     }
 
-    public Class<?> getModelClass() {
-        return modelClass;
+    private boolean isEqual(Object a, Object b) {
+        // basic checks
+        if (a == null && b == null) {
+            return true;
+        } else if ((a == null && b != null) || (b == null && a != null)) {
+            return false;
+        } else {
+            return a.equals(b);
+        }
     }
-
-    public void setModelClass(Class<?> modelClass) {
-        this.modelClass = modelClass;
+    
+    private int hash(Object ... vals) {
+        int hash = 7;
+        for (Object val : vals) {
+            if (val != null) {
+                hash = hash * 37 + val.hashCode();
+            }
+        }
+        return hash;
     }
 }
