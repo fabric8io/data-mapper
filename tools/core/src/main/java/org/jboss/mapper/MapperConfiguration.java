@@ -90,4 +90,22 @@ public interface MapperConfiguration {
      * @return target model
      */
     Model getTargetModel();
+    
+    /**
+     * Use a custom mapping class for an existing FieldMapping.
+     * @param mapping mapping to customize
+     * @param mappingClass class to use for customizing the mapping
+     * @return the new CustomMapping
+     */
+    CustomMapping customizeMapping(FieldMapping mapping, String mappingClass);
+
+    /**
+     * Use a custom mapping class for an existing FieldMapping.
+     * @param mapping mapping to customize
+     * @param mappingClass class to use for customizing the mapping
+     * @param mappingOperation operation in the mappingClass to use
+     * @return CustomMapping
+     */
+    CustomMapping customizeMapping(FieldMapping mapping, 
+            String mappingClass, String mappingOperation);
 }

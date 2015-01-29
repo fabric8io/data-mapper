@@ -52,5 +52,4 @@ public class DozerFieldMapping extends BaseDozerMapping implements FieldMapping 
     public MappingType getType() {
         return MappingType.FIELD;
     }
-    
 }

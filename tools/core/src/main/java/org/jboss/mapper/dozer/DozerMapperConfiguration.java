@@ -22,6 +22,8 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
+import org.jboss.mapper.CustomMapping;
+import org.jboss.mapper.FieldMapping;
 import org.jboss.mapper.Literal;
 import org.jboss.mapper.LiteralMapping;
 import org.jboss.mapper.MapperConfiguration;
@@ -41,6 +43,8 @@ public class DozerMapperConfiguration implements MapperConfiguration {
     
     private static final String LITERAL_MAPPER_CLASS = 
             "org.jboss.mapper.camel.transform.LiteralMapper";
+    private static final String CUSTOM_MAPPER_CLASS = 
+            "org.jboss.mapper.camel.transform.CustomMapper";
     private static final String DOZER_SCHEMA_LOC = 
             "http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd";
 
@@ -116,8 +120,17 @@ public class DozerMapperConfiguration implements MapperConfiguration {
                 } else {
                     Model sourceParentModel = loadModel(mapping.getClassA().getContent());
                     Model sourceModel = sourceParentModel.get(field.getA().getContent());
-                    mappings.add(new DozerFieldMapping(
-                            sourceModel, targetModel, mapping, field));
+                    DozerFieldMapping fieldMapping = new DozerFieldMapping(
+                            sourceModel, targetModel, mapping, field);
+                    // check to see if this field mapping is customized
+                    if (CUSTOM_MAPPER_CLASS.equals(field.getCustomConverter())) {
+                        String[] params = field.getCustomConverterParam().split(",");
+                        String mapperClass = params[0];
+                        String mapperOperation = params.length > 1 ? params[1] : null;
+                        fieldMapping = new DozerCustomMapping(
+                                fieldMapping, mapperClass, mapperOperation);
+                    }
+                    mappings.add(fieldMapping);
                 }
             }
         }
@@ -215,12 +228,29 @@ public class DozerMapperConfiguration implements MapperConfiguration {
         return targetMappings;
     }
 
+    @Override
+    public CustomMapping customizeMapping(FieldMapping mapping, String mappingClass) {
+        return customizeMapping(mapping, mappingClass, null);
+    }
+
+    @Override
+    public CustomMapping customizeMapping(FieldMapping mapping, String mappingClass, String mappingOperation) {
+        DozerFieldMapping fieldMapping = (DozerFieldMapping)mapping;
+        // update the Dozer config to use the custom converter
+        fieldMapping.getField().setCustomConverter(CUSTOM_MAPPER_CLASS);
+        String param = mappingClass;
+        if (mappingOperation != null) {
+            param += "," + mappingOperation;
+        }
+        fieldMapping.getField().setCustomConverterParam(param);
+        return new DozerCustomMapping(fieldMapping, mappingClass, mappingOperation);
+    }
+
     boolean requiresClassMapping(final Model source, final Model target) {
         // If a class mapping already exists, then no need to add a new one
         if (getClassMapping(source) != null || getClassMapping(target) != null) {
             return false;
         }
-
         return true;
     }
     
@@ -339,5 +369,4 @@ public class DozerMapperConfiguration implements MapperConfiguration {
         }
         return jaxbCtx;
     }
-
 }

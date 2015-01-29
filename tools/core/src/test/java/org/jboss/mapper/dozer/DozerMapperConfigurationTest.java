@@ -17,6 +17,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jboss.mapper.CustomMapping;
 import org.jboss.mapper.FieldMapping;
 import org.jboss.mapper.Literal;
 import org.jboss.mapper.LiteralMapping;
@@ -39,6 +40,9 @@ public class DozerMapperConfigurationTest {
             new File("src/test/resources/org/jboss/mapper/dozer/exampleMapping.xml");
     private static final File CONFIG_ROOT = 
             new File("target/test-classes/org/jboss/mapper/dozer");
+    
+    private static final String CUSTOM_CLASS = "org.foo.TestCustomizer";
+    private static final String CUSTOM_OPERATION = "customMap";
     
     private Model modelA;
     private Model modelB;
@@ -195,6 +199,43 @@ public class DozerMapperConfigurationTest {
         
         config.removeMapping(mapping);
         Assert.assertEquals(0, config.getMappings().size());
+    }
+    
+    @Test
+    public void customMappingClassOnly() throws Exception {
+        final String customizeClass = "org.foo.TestCustomizer";
+        DozerMapperConfiguration config = loadConfig("emptyDozerMapping.xml");
+        Model source = modelA.get("A1");
+        Model target = modelB.get("B1");
+        FieldMapping mapping = config.map(source, target);
+        config.customizeMapping(mapping, customizeClass);
+        Assert.assertEquals(1, config.getMappings().size());
+        CustomMapping custom = (CustomMapping)config.getMappings().get(0);
+        Assert.assertEquals(customizeClass, custom.getMappingClass());
+        Assert.assertNull(custom.getMappingOperation());
+    }
+    
+    @Test
+    public void customMappingClassAndOperation() throws Exception {
+        final String customizeClass = "org.foo.TestCustomizer";
+        final String customizeOperation = "customMap";
+        DozerMapperConfiguration config = loadConfig("emptyDozerMapping.xml");
+        Model source = modelA.get("A1");
+        Model target = modelB.get("B1");
+        FieldMapping mapping = config.map(source, target);
+        config.customizeMapping(mapping, customizeClass, customizeOperation);
+        Assert.assertEquals(1, config.getMappings().size());
+        CustomMapping custom = (CustomMapping)config.getMappings().get(0);
+        Assert.assertEquals(customizeClass, custom.getMappingClass());
+        Assert.assertEquals(customizeOperation, custom.getMappingOperation());
+    }
+    
+    @Test
+    public void loadCustomMappingConfig() throws Exception {
+        DozerMapperConfiguration config = loadConfig("customMapping.xml");
+        CustomMapping custom = (CustomMapping)config.getMappings().get(0);
+        Assert.assertEquals(CUSTOM_CLASS, custom.getMappingClass());
+        Assert.assertEquals(CUSTOM_OPERATION, custom.getMappingOperation());
     }
     
     private DozerMapperConfiguration loadConfig(String configName) throws Exception {
