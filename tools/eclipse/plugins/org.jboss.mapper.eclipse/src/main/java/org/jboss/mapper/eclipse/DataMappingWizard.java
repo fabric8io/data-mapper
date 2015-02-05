@@ -28,6 +28,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -219,8 +220,12 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             final IEditorDescriptor desc =
                 PlatformUI.getWorkbench().getEditorRegistry().getEditors( file.getName(),
                                                                           Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID ) )[ 0 ];
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
+            IEditorPart editor =
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
                                                                                              desc.getId() );
+            DataMapperEditor dmEditor = (DataMapperEditor) editor;
+            DataMapperEditorMappingPage page = (DataMapperEditorMappingPage) dmEditor.getSelectedPage();
+            page.mapper.setEndpointID(uiModel.getId());
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
             return false;

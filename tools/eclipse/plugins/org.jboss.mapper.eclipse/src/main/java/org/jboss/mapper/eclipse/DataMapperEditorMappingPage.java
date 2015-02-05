@@ -26,7 +26,7 @@ public class DataMapperEditorMappingPage extends EditorPart {
 
     static final String DM_VIEWER_POPUPMENU = "dm_viewer_popupmenu"; //$NON-NLS-1$
 
-    private TransformationPane mapper;
+    TransformationPane mapper;
 
     /**
      * {@inheritDoc}

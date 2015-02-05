@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -42,6 +43,7 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.TransferData;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -56,7 +58,9 @@ import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.jboss.mapper.Literal;
 import org.jboss.mapper.MapperConfiguration;
 import org.jboss.mapper.dozer.DozerMapperConfiguration;
+import org.jboss.mapper.eclipse.internal.Handler;
 import org.jboss.mapper.eclipse.util.JavaUtil;
+import org.jboss.mapper.eclipse.util.PanelUIUtil;
 import org.jboss.mapper.model.Model;
 import org.jboss.mapper.model.ModelBuilder;
 
@@ -113,11 +117,21 @@ class TransformationPane extends Composite {
     Model sourceModel, targetModel;
     TransformationViewer xformViewer;
     Text helpText;
+    ModelPane sourceModelPane;
+    ModelPane targetModelPane;
+    private ToolItem addSourceButton;
+    private ToolItem addTargetButton;
+    private Image changeToolItemImage;
+    private Image addToolItemImage;
+    private Image literalsItemImage;
 
     TransformationPane( final Composite parent,
                 final IFile configFile ) {
         super( parent, SWT.NONE );
         this.configFile = configFile;
+        changeToolItemImage = Activator.imageDescriptor("change16.gif").createImage();
+        addToolItemImage = PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_OBJ_ADD );
+        literalsItemImage = Activator.imageDescriptor( "literal16.gif" ).createImage();
 
         try {
             final IJavaProject javaProject = JavaCore.create( configFile.getProject() );
@@ -142,157 +156,29 @@ class TransformationPane extends Composite {
             helpText.setLayoutData( GridDataFactory.fillDefaults().grab( true, false ).span( 3, 1 ).create() );
             helpText.setForeground( getDisplay().getSystemColor( SWT.COLOR_BLUE ) );
             helpText.setBackground( getBackground() );
-            updateBrowserText();
-
-            // Create source viewer
-            final CTabFolder sourceTabFolder = createTabFolder( mapper, new Handler() {
-                @Override
-                public void configureDragAndDrop( final ModelViewer viewer ) {
-                    viewer.treeViewer.addDragSupport( DND.DROP_MOVE,
-                                                      new Transfer[] { LocalSelectionTransfer.getTransfer() },
-                                                      new DragSourceAdapter() {
-
-                        @Override
-                        public void dragSetData( final DragSourceEvent event ) {
-                            if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) )
-                                LocalSelectionTransfer.getTransfer().setSelection( viewer.treeViewer.getSelection() );
-                        }
-                    } );
-                }
-
-                @Override
-                public Model model() {
-                    return sourceModel;
-                }
-
-                @Override
-                public void setModel( Model model ) {
-                    sourceModel = model;
-                }
-
-                @Override
-                public String type() {
-                    return "Source";
-                }
-            } );
+            sourceModelPane = new ModelPane();
+            createSourceModelPane(sourceModelPane, mapper);
 
             // Create literals tab
-            final CTabItem literalsTab = new CTabItem( sourceTabFolder, SWT.NONE );
+            final CTabItem literalsTab = new CTabItem( sourceModelPane.modeltabFolder, SWT.NONE );
             literalsTab.setText( "Literals" );
-            final LiteralsViewer literalsViewer = new LiteralsViewer( sourceTabFolder, mapperConfig );
+            final LiteralsViewer literalsViewer = new LiteralsViewer( sourceModelPane.modeltabFolder, mapperConfig );
             literalsTab.setControl( literalsViewer );
-            literalsTab.setImage( Activator.imageDescriptor( "literal16.gif" ).createImage() );
+            literalsTab.setImage( literalsItemImage );
 
             final Label label = new Label( mapper, SWT.NONE );
             label.setText( "=>" );
 
-            // Create target viewer
-            createTabFolder( mapper, new Handler() {
-            	@Override
-                public void configureDragAndDrop( final ModelViewer viewer ) {
-                    viewer.treeViewer.addDropSupport( DND.DROP_MOVE,
-                                                      new Transfer[] { LocalSelectionTransfer.getTransfer() },
-                                                      new ViewerDropAdapter( viewer.treeViewer ) {
-
-                        @Override
-                        public boolean performDrop( final Object data ) {
-                            Object source =
-                                ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
-                            if (source instanceof Model) xformViewer.map( (Model) source, ( Model ) getCurrentTarget() );
-                            else xformViewer.map( new Literal( source.toString() ), ( Model ) getCurrentTarget() );
-                            return true;
-                        }
-
-                        @Override
-                        public boolean validateDrop( final Object target,
-                                                     final int operation,
-                                                     final TransferData transferType ) {
-                            return true;
-                        }
-
-                    } );
-                }
-
-                @Override
-                public Model model() {
-                    return targetModel;
-                }
-
-                @Override
-                public void setModel( Model model ) {
-                    targetModel = model;
-                }
-
-                @Override
-                public String type() {
-                    return "Target";
-                }
-            } );
+            targetModelPane = new ModelPane();
+            createTargetModelPane(targetModelPane, mapper);
 
             splitter.setBackground( getDisplay().getSystemColor( SWT.COLOR_DARK_GRAY ) );
             splitter.SASH_WIDTH = 5;
             splitter.setWeights( new int[] { 25, 75 } );
+            updateBrowserText();
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
         }
-    }
-
-    void createTab( CTabFolder tabFolder,
-                    Handler handler ) {
-        final CTabItem tab = new CTabItem( tabFolder, SWT.NONE, 0 );
-        tab.setText( handler.type() + ": " + handler.model().getName() );
-        tab.setShowClose( true );
-        final ModelViewer viewer = new ModelViewer( tabFolder, handler.model() );
-        tab.setControl( viewer );
-        viewer.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-        handler.configureDragAndDrop( viewer );
-        viewer.setMapperConfiguration(mapperConfig);
-        viewer.setModelType(handler.type());
-        viewer.setInput( handler.model() );
-        viewer.layout();
-        tabFolder.setSelection( tab );
-    }
-
-    private CTabFolder createTabFolder( Composite mapper, final Handler handler ) {
-        final CTabFolder tabFolder = new CTabFolder( mapper, SWT.BORDER );
-        tabFolder.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-        final ToolBar toolBar = new ToolBar( tabFolder, SWT.RIGHT );
-        tabFolder.setTopRight( toolBar );
-        final ToolItem addSourceButton = new ToolItem( toolBar, SWT.NONE );
-        addSourceButton.setImage( PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_OBJ_ADD ) );
-        addSourceButton.setToolTipText( "Set transformation " + handler.type().toLowerCase() );
-        addSourceButton.addSelectionListener( new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected( SelectionEvent event ) {
-                final String name = selectModel( getShell(), configFile.getProject(), handler.model(), handler.type() );
-                if ( name == null ) return;
-                try {
-                    handler.setModel( ModelBuilder.fromJavaClass( loader.loadClass( name ) ) );
-                    updateMappings();
-                    createTab( tabFolder, handler );
-                    toolBar.setVisible( false );
-                    updateBrowserText();
-                } catch ( final ClassNotFoundException e ) {
-                    Activator.error( getShell(), e );
-                }
-            }
-        } );
-        tabFolder.addCTabFolder2Listener( new CTabFolder2Adapter() {
-
-            @Override
-            public void close( CTabFolderEvent event ) {
-                toolBar.setVisible( true );
-                handler.setModel( null );
-                updateBrowserText();
-            }
-        } );
-        if ( handler.model() != null ) {
-            toolBar.setVisible( false );
-            createTab( tabFolder, handler );
-        }
-        tabFolder.setBackground( getDisplay().getSystemColor( SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT ) );
-        return tabFolder;
     }
 
     /**
@@ -303,10 +189,19 @@ class TransformationPane extends Composite {
     @Override
     public void dispose() {
         super.dispose();
+        disposeImage(changeToolItemImage);
+        disposeImage(addToolItemImage);
+        disposeImage(literalsItemImage);
         if ( loader != null ) try {
             loader.close();
         } catch ( final IOException e ) {
             Activator.error( getShell(), e );
+        }
+    }
+    
+    private void disposeImage(Image toDispose) {
+        if (toDispose != null && !toDispose.isDisposed()) {
+            toDispose.dispose();
         }
     }
 
@@ -316,6 +211,25 @@ class TransformationPane extends Composite {
         else if ( targetModel == null ) helpText.setText( "Select the target model below." );
         else helpText.setText( "Create a new mapping in the list of operations above by dragging an item below from source " +
                                sourceModel.getName() + " to target " + targetModel.getName() );
+        
+        if (addSourceButton != null && !addSourceButton.isDisposed()) {
+            if (sourceModel == null) {
+                addSourceButton.setText("Add Source");
+                addSourceButton.setImage(addToolItemImage);
+            } else {
+                addSourceButton.setText("Change Source");
+                addSourceButton.setImage(changeToolItemImage);
+            }
+        }
+        if (addTargetButton != null && !addTargetButton.isDisposed()) {
+            if (targetModel == null) {
+                addTargetButton.setText("Add Target");
+                addTargetButton.setImage(addToolItemImage);
+            } else {
+                addTargetButton.setText("Change Target");
+                addTargetButton.setImage(changeToolItemImage);
+            }
+        }
     }
 
     void updateMappings() {
@@ -325,14 +239,199 @@ class TransformationPane extends Composite {
         xformViewer.save();
     }
 
-    interface Handler {
+    class ModelPane {
+        public CTabFolder modeltabFolder;
+        public ToolBar toolBar;
+        public ModelViewer modelViewer;
+        public Handler handler;
+        public CTabItem tab;
+    }
 
-        void configureDragAndDrop( ModelViewer viewer );
+    void createSourceModelPane(final ModelPane pane, Composite parent) {
+        pane.modeltabFolder = PanelUIUtil.createTabFolder(parent);
+        pane.toolBar = PanelUIUtil.createTabFolderToolbar(pane.modeltabFolder);
+        pane.handler = new Handler() {
 
-        Model model();
+            Stack<Model> history = new Stack<Model>();
 
-        void setModel( Model model );
+            @Override
+            public void configureDragAndDrop( final ModelViewer viewer ) {
+                viewer.treeViewer.addDragSupport( DND.DROP_MOVE,
+                                                  new Transfer[] { LocalSelectionTransfer.getTransfer() },
+                                                  new DragSourceAdapter() {
 
-        String type();
+                    @Override
+                    public void dragSetData( final DragSourceEvent event ) {
+                        if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) ) {
+                            LocalSelectionTransfer.getTransfer().setSelection( viewer.treeViewer.getSelection() );
+                        }
+                    }
+
+                } );
+            }
+
+            @Override
+            public Model model() {
+                return sourceModel;
+            }
+
+            @Override
+            public void setModel( Model model ) {
+                sourceModel = model;
+                history.push(model);
+            }
+
+            @Override
+            public String type() {
+                return "Source";
+            }
+
+            @Override
+            public Stack<Model> getModelHistory() {
+                return history;
+            }
+        };
+        pane.tab = PanelUIUtil.createTab(pane.modeltabFolder, pane.handler);
+        pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+        pane.handler.getModelHistory().push(sourceModel);
+        
+        addSourceButton = new ToolItem( pane.toolBar, SWT.NONE );
+        addSourceButton.setImage(addToolItemImage);
+        addSourceButton.setToolTipText( "Set transformation " + pane.handler.type().toLowerCase() );
+        addSourceButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected( SelectionEvent event ) {
+                final String name = selectModel( getShell(), configFile.getProject(), pane.handler.model(), pane.handler.type() );
+                if ( name == null ) return;
+                try {
+                    pane.handler.setModel( ModelBuilder.fromJavaClass( loader.loadClass( name ) ) );
+                    xformViewer.sourcehistory = pane.handler.getModelHistory();
+                    updateMappings();
+                    pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+                    pane.modelViewer.setMapperConfiguration(mapperConfig);
+                    pane.modelViewer.setModelType(pane.handler.type());
+                    updateBrowserText();
+                } catch ( final ClassNotFoundException e ) {
+                    Activator.error( getShell(), e );
+                }
+            }
+        } );
+        pane.modeltabFolder.addCTabFolder2Listener( new CTabFolder2Adapter() {
+
+            @Override
+            public void close( CTabFolderEvent event ) {
+                pane.toolBar.setVisible( true );
+                pane.handler.setModel( null );
+                updateBrowserText();
+            }
+        } );
+        pane.toolBar.setVisible( true );
+        if ( pane.handler.model() != null ) {
+            pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+            pane.modelViewer.setMapperConfiguration(mapperConfig);
+            pane.modelViewer.setModelType(pane.handler.type());
+            xformViewer.sourcehistory = pane.handler.getModelHistory();
+        }
+    }
+
+    void createTargetModelPane(final ModelPane pane, Composite parent) {
+        pane.modeltabFolder = PanelUIUtil.createTabFolder(parent);
+        pane.toolBar = PanelUIUtil.createTabFolderToolbar(pane.modeltabFolder);
+        pane.handler = new Handler() {
+            
+            Stack<Model> history = new Stack<Model>();
+
+            @Override
+            public void configureDragAndDrop( final ModelViewer viewer ) {
+                viewer.treeViewer.addDropSupport( DND.DROP_MOVE,
+                                                  new Transfer[] { LocalSelectionTransfer.getTransfer() },
+                                                  new ViewerDropAdapter( viewer.treeViewer ) {
+
+                    @Override
+                    public boolean performDrop( final Object data ) {
+                        Object source =
+                            ( ( IStructuredSelection ) LocalSelectionTransfer.getTransfer().getSelection() ).getFirstElement();
+                        if (source instanceof Model) xformViewer.map( (Model) source, ( Model ) getCurrentTarget() );
+                        else xformViewer.map( new Literal( source.toString() ), ( Model ) getCurrentTarget() );
+                        return true;
+                    }
+
+                    @Override
+                    public boolean validateDrop( final Object target,
+                                                 final int operation,
+                                                 final TransferData transferType ) {
+                        return true;
+                    }
+                } );
+            }
+
+            @Override
+            public Model model() {
+                return targetModel;
+            }
+
+            @Override
+            public void setModel( Model model ) {
+                targetModel = model;
+                history.push(model);
+            }
+
+            @Override
+            public String type() {
+                return "Target";
+            }
+
+            @Override
+            public Stack<Model> getModelHistory() {
+                return history;
+            }
+        };
+        pane.tab = PanelUIUtil.createTab(pane.modeltabFolder, pane.handler);
+        pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+        pane.handler.getModelHistory().push(targetModel);
+        
+        addTargetButton = new ToolItem( pane.toolBar, SWT.NONE );
+        addTargetButton.setImage(addToolItemImage);
+        addTargetButton.setToolTipText( "Set transformation " + pane.handler.type().toLowerCase() );
+        addTargetButton.addSelectionListener( new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected( SelectionEvent event ) {
+                final String name = selectModel( getShell(), configFile.getProject(), pane.handler.model(), pane.handler.type() );
+                if ( name == null ) return;
+                try {
+                    pane.handler.setModel( ModelBuilder.fromJavaClass( loader.loadClass( name ) ) );
+                    xformViewer.targethistory = pane.handler.getModelHistory();
+                    updateMappings();
+                    pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+                    pane.modelViewer.setMapperConfiguration(mapperConfig);
+                    pane.modelViewer.setModelType(pane.handler.type());
+                    updateBrowserText();
+                } catch ( final ClassNotFoundException e ) {
+                    Activator.error( getShell(), e );
+                }
+            }
+        } );
+        pane.modeltabFolder.addCTabFolder2Listener( new CTabFolder2Adapter() {
+
+            @Override
+            public void close( CTabFolderEvent event ) {
+                pane.toolBar.setVisible( true );
+                pane.handler.setModel( null );
+                updateBrowserText();
+            }
+        } );
+        pane.toolBar.setVisible( true );
+        if ( pane.handler.model() != null ) {
+            pane.modelViewer = PanelUIUtil.createModelViewer(pane.modeltabFolder, pane.tab, pane.handler);
+            pane.modelViewer.setMapperConfiguration(mapperConfig);
+            pane.modelViewer.setModelType(pane.handler.type());
+            xformViewer.targethistory = pane.handler.getModelHistory();
+        }
+    }
+    
+    public void setEndpointID(String id) {
+        this.xformViewer.endpointID = id;
     }
 }
