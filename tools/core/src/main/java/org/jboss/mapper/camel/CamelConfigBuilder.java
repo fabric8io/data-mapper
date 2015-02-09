@@ -51,9 +51,7 @@ import org.w3c.dom.NodeList;
  */
 public class CamelConfigBuilder {
 
-    private static String SPRING_NS = "http://www.springframework.org/schema/beans";
     private static String CAMEL_NS = "http://camel.apache.org/schema/spring";
-    private static String TRANSFORM_SCHEME = "transform";
     
     // JAXB classes for Camel config model
     private JAXBContext jaxbCtx;
@@ -118,8 +116,10 @@ public class CamelConfigBuilder {
         DataFormat marshaller = createDataFormat(target, targetClass);
         
         // Create a transformation endpoint
-        camelContext.getEndpoint().add(createTransformEndpoint(dozerConfigPath,
-                transformId, sourceClass, targetClass, unmarshaller, marshaller));
+        String unmarshallerId = unmarshaller != null ? unmarshaller.getId() : null;
+        String marshallerId = marshaller != null ? marshaller.getId() : null;
+        camelContext.getEndpoint().add(EndpointHelper.createEndpoint(dozerConfigPath,
+                transformId, sourceClass, targetClass, unmarshallerId, marshallerId));
         
         // Replace Camel Context in config DOM
         ObjectFactory of = new ObjectFactory();
@@ -144,11 +144,22 @@ public class CamelConfigBuilder {
     public List<String> getTransformEndpointIds() {
         List<String> endpointIds = new LinkedList<String>();
         for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
-            if (ep.getUri().startsWith(TRANSFORM_SCHEME)) {
+            if (ep.getUri().startsWith(EndpointHelper.TRANSFORM_SCHEME)) {
                 endpointIds.add(ep.getId());
             }
         }
         return endpointIds;
+    }
+    
+    public CamelEndpointFactoryBean getEndpoint(String endpointId) {
+        CamelEndpointFactoryBean endpoint = null;
+        for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
+            if (endpointId.equals(ep.getId())) {
+                endpoint = ep;
+                break;
+            }
+        }
+        return endpoint;
     }
 
     private DataFormat createDataFormat(TransformType type, String className) throws Exception {
@@ -169,30 +180,6 @@ public class CamelConfigBuilder {
         }
         
         return dataFormat;
-    }
-
-    private CamelEndpointFactoryBean createTransformEndpoint(String dozerConfigPath, 
-            String transformId, String sourceClass, String targetClass, 
-            DataFormat unmarshaller, DataFormat marshaller) 
-            throws Exception {
-        
-        CamelEndpointFactoryBean endpoint = new CamelEndpointFactoryBean();
-        endpoint.setId(transformId);
-        StringBuffer uriBuf = new StringBuffer(TRANSFORM_SCHEME + ":" + transformId + "?");
-        uriBuf.append("sourceModel=" + sourceClass);
-        uriBuf.append("&targetModel=" + targetClass);
-        if (marshaller != null) {
-            uriBuf.append("&marshalId=" + marshaller.getId());
-        }
-        if (unmarshaller != null) {
-            uriBuf.append("&unmarshalId=" + unmarshaller.getId());
-        }
-        if (dozerConfigPath != null) {
-            uriBuf.append("&dozerConfigPath=" + dozerConfigPath);
-        }
-        
-        endpoint.setUri(uriBuf.toString());
-        return endpoint;
     }
 
     private DataFormat createJsonDataFormat() throws Exception {
