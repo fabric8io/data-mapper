@@ -291,7 +291,7 @@ class NewTransformationWizardPage extends WizardPage {
 
             @Override
             public void widgetSelected( final SelectionEvent event ) {
-                final String path = Util.selectFile( getShell(), model.getProject(), schemaType, pathText );
+                final String path = Util.selectFile( getShell(), model.getProject(), schemaType );
                 if ( path != null ) {
                     pathText.setText( path );
                     if ( typeComboViewer.getSelection().isEmpty() ) {
