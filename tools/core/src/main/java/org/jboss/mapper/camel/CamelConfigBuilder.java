@@ -92,6 +92,15 @@ public class CamelConfigBuilder {
      * @return the <beans> element from the application context
      */
     public Element getConfiguration() {
+        // It's possible that there were updates to the JAXB config model
+        // without a corresponding saveConfig(), so refresh the camelContext
+        // in our DOM
+        try {
+            updateCamelContext();
+        } catch (JAXBException jaxbEx) {
+            throw new RuntimeException(
+                    "Failed to update DOM with JAXB model for camelContext", jaxbEx);
+        }
         return camelConfig;
     }
 
@@ -120,12 +129,6 @@ public class CamelConfigBuilder {
         String marshallerId = marshaller != null ? marshaller.getId() : null;
         camelContext.getEndpoint().add(EndpointHelper.createEndpoint(dozerConfigPath,
                 transformId, sourceClass, targetClass, unmarshallerId, marshallerId));
-        
-        // Replace Camel Context in config DOM
-        ObjectFactory of = new ObjectFactory();
-        DocumentFragment frag = camelConfig.getOwnerDocument().createDocumentFragment();
-        getJAXBContext().createMarshaller().marshal(of.createCamelContext(camelContext), frag);
-        camelConfig.replaceChild(frag.getFirstChild(), getCamelContextElement());
     }
     
     /**
@@ -135,6 +138,7 @@ public class CamelConfigBuilder {
      * @throws Exception failed to save configuration
      */
     public void saveConfig(final OutputStream output) throws Exception {
+        updateCamelContext();
         Transformer t = TransformerFactory.newInstance().newTransformer();
         t.setOutputProperty(OutputKeys.INDENT, "yes");
         t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -268,5 +272,14 @@ public class CamelConfigBuilder {
     private Element getCamelContextElement() {
         return getChildElement(camelConfig, CAMEL_NS, "camelContext");
     }
-
+    
+    // If the JAXB config model for CamelContext was changed, call this method
+    // to marshal those changes into the DOM for the Spring application context
+    private void updateCamelContext() throws JAXBException {
+        // Replace Camel Context in config DOM
+        ObjectFactory of = new ObjectFactory();
+        DocumentFragment frag = camelConfig.getOwnerDocument().createDocumentFragment();
+        getJAXBContext().createMarshaller().marshal(of.createCamelContext(camelContext), frag);
+        camelConfig.replaceChild(frag.getFirstChild(), getCamelContextElement());
+    }
 }
