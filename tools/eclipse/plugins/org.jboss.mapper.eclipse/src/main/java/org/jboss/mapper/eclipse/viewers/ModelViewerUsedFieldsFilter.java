@@ -33,7 +33,7 @@ public class ModelViewerUsedFieldsFilter extends ViewerFilter {
 	
 	@Override
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
-		if (mapConfig != null) {
+		if (mapConfig != null && element instanceof Model) {
 			List<MappingOperation<?, ?>> mappings = null; 
 			if (viewerType.equalsIgnoreCase("Source")) {
 				mappings = mapConfig.getMappingsForSource((Model) element);

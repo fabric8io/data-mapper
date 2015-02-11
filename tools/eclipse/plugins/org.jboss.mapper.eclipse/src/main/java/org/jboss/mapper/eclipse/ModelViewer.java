@@ -5,6 +5,7 @@ import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -33,6 +34,7 @@ public class ModelViewer extends Composite {
     MapperConfiguration mapperConfig;
     ModelViewerUsedFieldsFilter usedFieldsFilter;
     String modelType;
+    private final RootWrapper mRootWrapper = new RootWrapper();
 
     public ModelViewer(final Composite parent, final Model model) {
         super(parent, SWT.NONE);
@@ -53,13 +55,48 @@ public class ModelViewer extends Composite {
 
             @Override
             public int compare(Viewer viewer, Object model1, Object model2) {
-                return ((Model) model1).getName().compareTo(((Model) model2).getName());
+                if (model1 instanceof Model && model2 instanceof Model) {
+                    return ((Model) model1).getName().compareTo(((Model) model2).getName());
+                }
+                return 0;
             }
         });
         treeViewer.setLabelProvider(new MyLabelProvider());
 
         final Tree tree = treeViewer.getTree();
         tree.setLayoutData(GridDataFactory.fillDefaults().grab(true, true).create());
+
+        treeViewer.setComparer(new IElementComparer() {
+            public int hashCode(Object element) {
+                if (element instanceof Model) {
+                    Model key = ((Model) element);
+                    if (key != null) {
+                        return key.hashCode();
+                    }
+                }
+                if (element != null) {
+                    return element.hashCode();
+                }
+                return 0;
+            }
+
+            public boolean equals(Object a, Object b) {
+                if (a instanceof Model && b instanceof Model) {
+                    Model keyA = ((Model) a);
+                    Model keyB = ((Model) b);
+                    if (keyA != null) {
+                        return keyA.equals(keyB);
+                    }
+                }
+                if (a != null && a instanceof Model && b instanceof Model) {
+                    return a.equals(b);
+                }
+                if (a instanceof RootWrapper && b instanceof RootWrapper) {
+                    return true;
+                }
+                return false;
+            }
+        });
 
         treeViewer.setContentProvider(new ITreeContentProvider() {
 
@@ -69,8 +106,17 @@ public class ModelViewer extends Composite {
 
             @Override
             public Object[] getChildren(final Object parentElement) {
-                final Model model = (Model) parentElement;
-                return model.getChildren().toArray();
+                if (parentElement instanceof RootWrapper) {
+                    Model root = ((RootWrapper)parentElement).getRoot();
+                    if (root != null) {
+                        return new Object[] { root };
+                    }
+                }    
+                if (parentElement instanceof Model) {
+                    final Model model = (Model) parentElement;
+                    return model.getChildren().toArray();
+                }
+                return new Object[0];
             }
 
             @Override
@@ -80,12 +126,18 @@ public class ModelViewer extends Composite {
 
             @Override
             public Object getParent(final Object element) {
-                return ((Model) element).getParent();
+                if (element instanceof Model) {
+                    return ((Model) element).getParent();
+                }
+                return null;
             }
 
             @Override
             public boolean hasChildren(final Object element) {
-                return getChildren(element).length > 0;
+                if (element instanceof Model) {
+                    return getChildren(element).length > 0;
+                }
+                return false;
             }
 
             @Override
@@ -121,12 +173,13 @@ public class ModelViewer extends Composite {
                 treeViewer.refresh(true);
             }
         });
-        treeViewer.setInput(model);
+        treeViewer.setInput(mRootWrapper);
         treeViewer.addFilter(usedFieldsFilter);
     }
 
     public void setInput(Object object) {
-        treeViewer.setInput(object);
+        mRootWrapper.setRoot((Model) object);
+        treeViewer.setInput(mRootWrapper);
     }
 
     void setMapperConfiguration(MapperConfiguration config) {
@@ -203,6 +256,18 @@ public class ModelViewer extends Composite {
             } else {
                 return images.getImage(ISharedImages.IMG_FIELD_PUBLIC);
             }
+        }
+    }
+    
+    private static class RootWrapper {
+        private Model mRoot;
+        
+        public void setRoot(Model model) {
+            mRoot = model;
+        }
+        
+        public Model getRoot() {
+            return mRoot;
         }
     }
 }
