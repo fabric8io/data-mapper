@@ -42,9 +42,9 @@ public class DozerMapperConfiguration implements MapperConfiguration {
     public static final String DEFAULT_DOZER_CONFIG = "dozerBeanMapping.xml";
     
     private static final String LITERAL_MAPPER_CLASS = 
-            "org.jboss.mapper.camel.transform.LiteralMapper";
-    private static final String CUSTOM_MAPPER_CLASS = 
-            "org.jboss.mapper.camel.transform.CustomMapper";
+            "org.apache.camel.component.dozer.LiteralMapper";
+    private static final String LITERAL_MAPPER_ID = "_literalMapping";
+    private static final String CUSTOM_MAPPER_ID = "_customMapping";
     private static final String DOZER_SCHEMA_LOC = 
             "http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd";
 
@@ -113,7 +113,7 @@ public class DozerMapperConfiguration implements MapperConfiguration {
                 Field field = (Field)o;
                 Model targetModel = targetParentModel.get(field.getB().getContent());
                 
-                if (LITERAL_MAPPER_CLASS.equals(field.getCustomConverter())) {
+                if (LITERAL_MAPPER_ID.equals(field.getCustomConverterId())) {
                     mappings.add(new DozerLiteralMapping(
                             new Literal(field.getCustomConverterParam()),
                             targetModel, mapping, field));
@@ -123,7 +123,7 @@ public class DozerMapperConfiguration implements MapperConfiguration {
                     DozerFieldMapping fieldMapping = new DozerFieldMapping(
                             sourceModel, targetModel, mapping, field);
                     // check to see if this field mapping is customized
-                    if (CUSTOM_MAPPER_CLASS.equals(field.getCustomConverter())) {
+                    if (CUSTOM_MAPPER_ID.equals(field.getCustomConverterId())) {
                         String[] params = field.getCustomConverterParam().split(",");
                         String mapperClass = params[0];
                         String mapperOperation = params.length > 1 ? params[1] : null;
@@ -171,7 +171,7 @@ public class DozerMapperConfiguration implements MapperConfiguration {
         Field field = new Field();
         field.setA(createField(literalModel, LITERAL_MAPPER_CLASS));
         field.setB(createField(target, mapping.getClassB().getContent()));
-        field.setCustomConverter(LITERAL_MAPPER_CLASS);
+        field.setCustomConverterId(LITERAL_MAPPER_ID);
         field.setCustomConverterParam(literal.getValue());
         mapping.getFieldOrFieldExclude().add(field);
         
@@ -237,7 +237,7 @@ public class DozerMapperConfiguration implements MapperConfiguration {
     public CustomMapping customizeMapping(FieldMapping mapping, String mappingClass, String mappingOperation) {
         DozerFieldMapping fieldMapping = (DozerFieldMapping)mapping;
         // update the Dozer config to use the custom converter
-        fieldMapping.getField().setCustomConverter(CUSTOM_MAPPER_CLASS);
+        fieldMapping.getField().setCustomConverterId(CUSTOM_MAPPER_ID);
         String param = mappingClass;
         if (mappingOperation != null) {
             param += "," + mappingOperation;

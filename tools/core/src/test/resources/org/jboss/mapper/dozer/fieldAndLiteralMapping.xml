@@ -13,8 +13,7 @@
     <mapping>
         <class-a>org.jboss.mapper.camel.transform.LiteralMapper</class-a>
         <class-b>example.BClass</class-b>
-        <field custom-converter="org.jboss.mapper.camel.transform.LiteralMapper" 
-               custom-converter-param="123">
+        <field custom-converter-id="_literalMapping" custom-converter-param="123">
             <a>literal</a>
             <b>B2</b>
         </field>
