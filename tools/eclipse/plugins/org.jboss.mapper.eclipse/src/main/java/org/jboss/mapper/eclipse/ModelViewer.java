@@ -1,17 +1,18 @@
 package org.jboss.mapper.eclipse;
 
+import java.util.List;
+
 import org.eclipse.jdt.ui.ISharedImages;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IElementComparer;
-import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StyledCellLabelProvider;
+import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -22,6 +23,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.jboss.mapper.MapperConfiguration;
+import org.jboss.mapper.MappingOperation;
 import org.jboss.mapper.eclipse.viewers.ModelViewerUsedFieldsFilter;
 import org.jboss.mapper.model.Model;
 
@@ -29,7 +31,7 @@ public class ModelViewer extends Composite {
 
     Model model;
     final TreeViewer treeViewer;
-    boolean showFieldTypesInLabel = true;
+    boolean showFieldTypesInLabel = false;
     boolean showMappedFields = true;
     MapperConfiguration mapperConfig;
     ModelViewerUsedFieldsFilter usedFieldsFilter;
@@ -61,7 +63,7 @@ public class ModelViewer extends Composite {
                 return 0;
             }
         });
-        treeViewer.setLabelProvider(new MyLabelProvider());
+        treeViewer.setLabelProvider(new MyStyledLabelProvider());
 
         final Tree tree = treeViewer.getTree();
         tree.setLayoutData(GridDataFactory.fillDefaults().grab(true, true).create());
@@ -157,7 +159,7 @@ public class ModelViewer extends Composite {
             @Override
             public void widgetSelected(org.eclipse.swt.events.SelectionEvent event) {
                 ToolItem item = (ToolItem) event.widget;
-                showFieldTypesInLabel = !item.getSelection();
+                showFieldTypesInLabel = item.getSelection();
                 treeViewer.refresh(true);
             }
         });
@@ -196,57 +198,54 @@ public class ModelViewer extends Composite {
         }
     }
 
-    class MyLabelDecorator implements ILabelDecorator {
-
+    class MyStyledLabelProvider extends StyledCellLabelProvider {
+        
+        private static final String LIST_OF = "List of ";
+        
         @Override
-        public void addListener(ILabelProviderListener arg0) {
+        public void update(ViewerCell cell) {
+          Object element = cell.getElement();
+          StyledString text = new StyledString();
+          Model modelForLabel = (Model) element;
+          if (isMapped(element)) {
+              text.append("*", StyledString.DECORATIONS_STYLER);
+          }
+          text.append(modelForLabel.getName());
+          if (showFieldTypesInLabel) {
+              String type = modelForLabel.getType(); 
+              if ( type.startsWith( "[" ) ) { 
+                  text.append(":", StyledString.DECORATIONS_STYLER);
+                  text.append(" " + LIST_OF, StyledString.COUNTER_STYLER);
+                  text.append(type.substring( 1, type.length() - 1 ), 
+                          StyledString.DECORATIONS_STYLER);
+              } else {
+                  text.append(": " + type, StyledString.DECORATIONS_STYLER);
+              }
+          }
+          Image image = getImage(element);
+          cell.setImage(image);
+          cell.setText(text.toString());
+          cell.setStyleRanges(text.getStyleRanges());
+          super.update(cell);
+
         }
 
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public boolean isLabelProperty(Object arg0, String arg1) {
+        private boolean isMapped(Object element) {
+            if (mapperConfig != null && element instanceof Model) {
+                List<MappingOperation<?, ?>> mappings = null; 
+                if (modelType.equalsIgnoreCase("Source")) {
+                    mappings = mapperConfig.getMappingsForSource((Model) element);
+                } else if (modelType.equalsIgnoreCase("Target")) {
+                    mappings = mapperConfig.getMappingsForTarget((Model) element);
+                }
+                if (mappings != null && !mappings.isEmpty()) {
+                    return true;
+                }
+            }
             return false;
         }
-
-        @Override
-        public void removeListener(ILabelProviderListener arg0) {
-        }
-
-        @Override
-        public Image decorateImage(Image arg0, Object arg1) {
-            return null;
-        }
-
-        @Override
-        public String decorateText(String arg0, Object element) {
-            final Model model = (Model) element;
-            if (!showFieldTypesInLabel) {
-                return model.getName();
-            }
-            return model.getName() + ": " + model.getType();
-        }
-    }
-
-    class MyLabelProvider extends DecoratingLabelProvider {
-
-        public MyLabelProvider() {
-            super(new MyTreeLabelProvider(), new MyLabelDecorator());
-        }
-    }
-
-    class MyTreeLabelProvider extends LabelProvider {
-
-        @Override
-        public String getText(final Object element) {
-            final Model model = (Model) element;
-            return model.getName();
-        }
-
-        @Override
-        public Image getImage(Object element) {
+        
+        private Image getImage(Object element) {
             final Model model = (Model) element;
             ISharedImages images = JavaUI.getSharedImages();
             if (model.isCollection()) {
@@ -269,5 +268,9 @@ public class ModelViewer extends Composite {
         public Model getRoot() {
             return mRoot;
         }
+    }
+    
+    public void refresh(){
+        this.treeViewer.refresh(true);
     }
 }

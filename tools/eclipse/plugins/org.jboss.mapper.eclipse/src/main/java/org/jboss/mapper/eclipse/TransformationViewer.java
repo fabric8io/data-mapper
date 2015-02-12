@@ -7,11 +7,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -59,12 +63,14 @@ class TransformationViewer extends Composite {
     Stack<Model> sourcehistory = null;
     Stack<Model> targethistory = null;
     String endpointID = null;
+    private ListenerList _changeListeners;
 
     TransformationViewer(final Composite parent, final IFile configFile, final MapperConfiguration mapperConfig) {
         super(parent, SWT.NONE);
 
         this.configFile = configFile;
         this.mapperConfig = mapperConfig;
+        _changeListeners = new ListenerList();
 
         setLayout(GridLayoutFactory.fillDefaults().create());
         setBackground(parent.getBackground());
@@ -180,6 +186,7 @@ class TransformationViewer extends Composite {
     void save() {
         try (FileOutputStream stream = new FileOutputStream(new File(configFile.getLocationURI()))) {
             mapperConfig.saveConfig(stream);
+            configFile.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
             if (sourcehistory != null && sourcehistory.size() > 0 || targethistory != null
                             && targethistory.size() > 0) {
                 Model initialSource = null;
@@ -240,6 +247,7 @@ class TransformationViewer extends Composite {
                         System.out.println("Now saving the camel file...");
                         try (FileOutputStream camelConfigStream = new FileOutputStream(camelFile)) {
                             builder.saveConfig(camelConfigStream);
+                            project.refreshLocal(IResource.DEPTH_INFINITE, null);
                         } catch (final Exception e) {
                             Activator.error(getShell(), e);
                         }
@@ -262,8 +270,8 @@ class TransformationViewer extends Composite {
                     targethistory.push(lastSource);
                 }
             }
-            configFile.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
             viewer.refresh();
+            fireChangedEvent(this);
         } catch (final Exception e) {
             Activator.error(getShell(), e);
         }
@@ -284,4 +292,35 @@ class TransformationViewer extends Composite {
         return false;
     }
 
+    /**
+     * If we changed, fire a changed event.
+     * 
+     * @param source
+     */
+    protected void fireChangedEvent(Object source) {
+        ChangeEvent e = new ChangeEvent(source);
+        // inform any listeners of the resize event
+        Object[] listeners = this._changeListeners.getListeners();
+        for (int i = 0; i < listeners.length; ++i) {
+            ((ChangeListener) listeners[i]).stateChanged(e);
+        }
+    }
+
+    /**
+     * Add a change listener.
+     * 
+     * @param listener new listener
+     */
+    public void addChangeListener(ChangeListener listener) {
+        this._changeListeners.add(listener);
+    }
+
+    /**
+     * Remove a change listener.
+     * 
+     * @param listener old listener
+     */
+    public void removeChangeListener(ChangeListener listener) {
+        this._changeListeners.remove(listener);
+    }
 }

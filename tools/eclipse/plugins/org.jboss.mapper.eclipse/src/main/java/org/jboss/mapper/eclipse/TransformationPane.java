@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -429,6 +432,15 @@ class TransformationPane extends Composite {
             pane.modelViewer.setModelType(pane.handler.type());
             xformViewer.targethistory = pane.handler.getModelHistory();
         }
+        xformViewer.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                // the config changed - update the model labels in case
+                // something changed in the mapped fields (for decorators)
+                sourceModelPane.modelViewer.refresh();
+                targetModelPane.modelViewer.refresh();
+            }
+        });
     }
     
     public void setEndpointID(String id) {
