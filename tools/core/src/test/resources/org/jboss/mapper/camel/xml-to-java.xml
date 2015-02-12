@@ -3,7 +3,7 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:xml2java?sourceModel=source.Input&amp;targetModel=target.Output&amp;unmarshalId=source&amp;dozerConfigPath=dozerBeanMapping.xml" id="xml2java"/>
+    <endpoint uri="dozer:xml2java?sourceModel=source.Input&amp;targetModel=target.Output&amp;unmarshalId=source&amp;mappingFile=dozerBeanMapping.xml" id="xml2java"/>
     <dataFormats>
         <jaxb contextPath="source" id="source"/>
     </dataFormats>

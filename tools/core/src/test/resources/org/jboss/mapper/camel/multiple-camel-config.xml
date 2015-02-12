@@ -3,8 +3,8 @@
 
    <!-- Camel route -->
    <camelContext xmlns="http://camel.apache.org/schema/spring">
-    <endpoint uri="transform:xml2json?sourceModel=xml.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=xml&amp;dozerConfigPath=dozerBeanMapping.xml" id="xml2json"/>
-    <endpoint uri="transform:xml2json2?sourceModel=org.foo.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=orgfoo&amp;dozerConfigPath=dozerBeanMapping.xml" id="xml2json2"/>
+    <endpoint uri="dozer:xml2json?sourceModel=xml.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=xml&amp;mappingFile=dozerBeanMapping.xml" id="xml2json"/>
+    <endpoint uri="dozer:xml2json2?sourceModel=org.foo.ABCOrder&amp;targetModel=json.XYZOrder&amp;marshalId=transform-json&amp;unmarshalId=orgfoo&amp;mappingFile=dozerBeanMapping.xml" id="xml2json2"/>
     <dataFormats>
         <jaxb contextPath="xml" id="xml"/>
         <jaxb contextPath="org.foo" id="orgfoo"/>

@@ -21,12 +21,12 @@ import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
  */
 public final class EndpointHelper {
     
-    public static String TRANSFORM_SCHEME = "transform";
+    public static String DOZER_SCHEME = "dozer";
     public static String SOURCE_MODEL = "sourceModel";
     public static String TARGET_MODEL = "targetModel";
     public static String MARSHAL_ID = "marshalId";
     public static String UNMARSHAL_ID = "unmarshalId";
-    public static String DOZER_CONFIG_PATH = "dozerConfigPath";
+    public static String MAPPING_FILE = "mappingFile";
 
     public static CamelEndpointFactoryBean createEndpoint(
             String dozerConfigPath, 
@@ -38,7 +38,7 @@ public final class EndpointHelper {
         
         CamelEndpointFactoryBean endpoint = new CamelEndpointFactoryBean();
         endpoint.setId(transformId);
-        StringBuffer uriBuf = new StringBuffer(TRANSFORM_SCHEME + ":" + transformId + "?");
+        StringBuffer uriBuf = new StringBuffer(DOZER_SCHEME + ":" + transformId + "?");
         uriBuf.append(SOURCE_MODEL + "=" + sourceClass);
         uriBuf.append("&" + TARGET_MODEL + "=" + targetClass);
         if (marshallerId != null) {
@@ -48,7 +48,7 @@ public final class EndpointHelper {
             uriBuf.append("&" + UNMARSHAL_ID + "=" + unmarshallerId);
         }
         if (dozerConfigPath != null) {
-            uriBuf.append("&" + DOZER_CONFIG_PATH + "=" + dozerConfigPath);
+            uriBuf.append("&" + MAPPING_FILE + "=" + dozerConfigPath);
         }
         
         endpoint.setUri(uriBuf.toString());

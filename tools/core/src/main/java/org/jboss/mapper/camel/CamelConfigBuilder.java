@@ -148,7 +148,7 @@ public class CamelConfigBuilder {
     public List<String> getTransformEndpointIds() {
         List<String> endpointIds = new LinkedList<String>();
         for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
-            if (ep.getUri().startsWith(EndpointHelper.TRANSFORM_SCHEME)) {
+            if (ep.getUri().startsWith(EndpointHelper.DOZER_SCHEME)) {
                 endpointIds.add(ep.getId());
             }
         }
