@@ -33,6 +33,8 @@ public class CamelConfigBuilderTest {
     private static final String JAVA_XML = "java-to-xml.xml";
     private static final String JAVA_JAVA = "java-to-java.xml";
     private static final String XML_JAVA = "xml-to-java.xml";
+    private static final String BLUEPRINT_CONFIG = "blueprint-config.xml";
+    private static final String NEW_BLUEPRINT_CONFIG = "new-blueprint-config.xml";
 
     @Test
     public void createXmlToJson() throws Exception {
@@ -79,12 +81,32 @@ public class CamelConfigBuilderTest {
     }
     
     @Test
-    public void readConfig() throws Exception {
-        CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(XML_JSON));
+    public void readSpringConfig() throws Exception {
+        CamelSpringBuilder config = (CamelSpringBuilder)CamelConfigBuilder.loadConfig(getFile(XML_JSON));
         Assert.assertNotNull(config.getCamelContext());
         Assert.assertEquals(1, config.getCamelContext().getEndpoint().size());
         Assert.assertEquals(2, config.getCamelContext().getDataFormats()
                 .getAvroOrBarcodeOrBase64().size());
+    }
+    
+    @Test
+    public void readBlueprintConfig() throws Exception {
+        CamelBlueprintBuilder config = (CamelBlueprintBuilder)CamelConfigBuilder.loadConfig(getFile(BLUEPRINT_CONFIG));
+        Assert.assertNotNull(config.getCamelContext());
+        Assert.assertEquals(1, config.getCamelContext().getEndpoint().size());
+        Assert.assertEquals(2, config.getCamelContext().getDataFormats()
+                .getAvroOrBarcodeOrBase64().size());
+    }
+    
+    @Test
+    public void createBlueprintConfig() throws Exception {
+        Document blueprintDoc = loadDocument(BLUEPRINT_CONFIG);
+        CamelConfigBuilder config = CamelConfigBuilder.loadConfig(getFile(NEW_BLUEPRINT_CONFIG));
+        config.addTransformation("xml2json", DozerMapperConfiguration.DEFAULT_DOZER_CONFIG,
+                TransformType.XML, "abcorder.ABCOrder", 
+                TransformType.JSON, "xyzorderschema.XyzOrderSchema");
+        XMLUnit.setIgnoreWhitespace(true);
+        XMLAssert.assertXMLEqual(blueprintDoc, config.getConfiguration().getOwnerDocument());
     }
     
     @Test

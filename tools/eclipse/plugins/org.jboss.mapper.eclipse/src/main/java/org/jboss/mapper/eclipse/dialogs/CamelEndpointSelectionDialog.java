@@ -27,7 +27,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.camel.CamelConfigBuilder;
-import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
 import org.jboss.mapper.eclipse.util.Util;
 
 public class CamelEndpointSelectionDialog extends TitleAreaDialog {
@@ -106,8 +105,7 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
                 ISelection sel = arg0.getSelection();
                 if (sel != null && !sel.isEmpty()) {
                     IStructuredSelection ssel = (IStructuredSelection) sel;
-                    CamelEndpointFactoryBean endpoint = (CamelEndpointFactoryBean) ssel.getFirstElement();
-                    _endpointID = endpoint.getId();
+                    _endpointID = (String) ssel.getFirstElement();
                 }
                 getButton(IDialogConstants.OK_ID).setEnabled(validate());
             }
@@ -123,9 +121,8 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
 
         @Override
         public String getText(Object element) {
-            if (element instanceof CamelEndpointFactoryBean) {
-                CamelEndpointFactoryBean endpoint = (CamelEndpointFactoryBean) element;
-                return endpoint.getId();
+            if (element instanceof String) {
+                return (String) element;
             }
             return super.getText(element);
         }
@@ -158,7 +155,7 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
         }
         if (_camelConfigBuilder != null && _updateCamelBuilder) {
             _endpointCombo.setContentProvider(new ArrayContentProvider());
-            _endpointCombo.setInput(_camelConfigBuilder.getCamelContext().getEndpoint());
+            _endpointCombo.setInput(_camelConfigBuilder.getTransformEndpointIds());
         }
         _updateCamelBuilder = false;
         if ( _endpointID == null || _endpointID.toString().trim().isEmpty() ) {
@@ -166,13 +163,7 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
         } else {
             final String id = _endpointID.trim();
             if (_camelConfigBuilder != null) {
-                CamelEndpointFactoryBean foundBean = null;
-                for ( final CamelEndpointFactoryBean bean : _camelConfigBuilder.getCamelContext().getEndpoint() ) {
-                    if ( id.equalsIgnoreCase( bean.getId() ) ) {
-                        foundBean = bean;
-                    }
-                }
-                if (foundBean == null) {
+                if (_camelConfigBuilder.getEndpoint(id) == null) {
                     _errMessage =  "An endpoint does not exist with the specified id";
                 }
             }

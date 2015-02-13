@@ -13,7 +13,7 @@
  */
 package org.jboss.mapper.camel;
 
-import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
+import org.jboss.mapper.camel.spring.CamelEndpointFactoryBean;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,11 +27,11 @@ public class EndpointHelperTest {
             + "marshalId=transform-json&amp;"
             + "unmarshalId=xml&amp;"
             + "dozerConfigPath=dozerBeanMapping.xml";
-    private CamelEndpointFactoryBean endpoint;
+    private CamelEndpoint endpoint;
     
     @Before
     public void setUp() {
-        endpoint = new CamelEndpointFactoryBean();
+        endpoint = new CamelEndpoint(new CamelEndpointFactoryBean());
         endpoint.setUri(URI_1);
     }
 
@@ -59,7 +59,7 @@ public class EndpointHelperTest {
     
     @Test
     public void replaceEndpointParameter() {
-        CamelEndpointFactoryBean ep = new CamelEndpointFactoryBean();
+        CamelEndpoint ep = new CamelEndpoint(new CamelEndpointFactoryBean());
         String beforeUri = "transform:xml2json?targetModel=test.ReplaceMe";
         String afterUri = "transform:xml2json?targetModel=example.Object";
         ep.setUri(beforeUri);

@@ -13,8 +13,6 @@
  */
 package org.jboss.mapper.camel;
 
-import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
-
 /**
  * Utility methods that help with constructing or modifying a transformation
  * endpoint.
@@ -28,7 +26,7 @@ public final class EndpointHelper {
     public static String UNMARSHAL_ID = "unmarshalId";
     public static String MAPPING_FILE = "mappingFile";
 
-    public static CamelEndpointFactoryBean createEndpoint(
+    public static String createEndpointUri(
             String dozerConfigPath, 
             String transformId, 
             String sourceClass, 
@@ -36,8 +34,6 @@ public final class EndpointHelper {
             String unmarshallerId, 
             String marshallerId) {
         
-        CamelEndpointFactoryBean endpoint = new CamelEndpointFactoryBean();
-        endpoint.setId(transformId);
         StringBuffer uriBuf = new StringBuffer(DOZER_SCHEME + ":" + transformId + "?");
         uriBuf.append(SOURCE_MODEL + "=" + sourceClass);
         uriBuf.append("&" + TARGET_MODEL + "=" + targetClass);
@@ -51,20 +47,18 @@ public final class EndpointHelper {
             uriBuf.append("&" + MAPPING_FILE + "=" + dozerConfigPath);
         }
         
-        endpoint.setUri(uriBuf.toString());
-        return endpoint;
+        return uriBuf.toString();
     }
     
-    public static void setSourceModel(CamelEndpointFactoryBean endpoint, String sourceModel) {
+    public static void setSourceModel(CamelEndpoint endpoint, String sourceModel) {
         replaceEndpointParameter(endpoint, SOURCE_MODEL, sourceModel);
     }
     
-    public static void setTargetModel(CamelEndpointFactoryBean endpoint, String targetModel) {
+    public static void setTargetModel(CamelEndpoint endpoint, String targetModel) {
         replaceEndpointParameter(endpoint, TARGET_MODEL, targetModel);
     }
     
-    public static void replaceEndpointParameter(
-            CamelEndpointFactoryBean endpoint, String key, String val) {
+    public static void replaceEndpointParameter(CamelEndpoint endpoint, String key, String val) {
         
         StringBuilder uriStr = new StringBuilder(endpoint.getUri());
         if (uriStr.indexOf(key + "=") < 0) {

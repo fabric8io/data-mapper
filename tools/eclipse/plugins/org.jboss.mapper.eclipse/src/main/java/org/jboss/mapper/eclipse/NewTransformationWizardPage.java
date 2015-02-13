@@ -48,7 +48,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.camel.CamelConfigBuilder;
-import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
+import org.jboss.mapper.camel.CamelEndpoint;
 import org.jboss.mapper.eclipse.DataMappingWizard.Model;
 import org.jboss.mapper.eclipse.DataMappingWizard.ModelType;
 import org.jboss.mapper.eclipse.util.SWTValueUpdater;
@@ -203,8 +203,8 @@ class NewTransformationWizardPage extends WizardPage {
                             if ( !Character.isJavaIdentifierPart( chr ) )
                                 return ValidationStatus.error( "The transformation ID may only contain letters, digits, currency symbols, or underscores" );
                         }
-                        for ( final CamelEndpointFactoryBean bean : _model.camelConfigBuilder.getCamelContext().getEndpoint() ) {
-                            if ( id.equalsIgnoreCase( bean.getId() ) )
+                        for ( final String endpointId : _model.camelConfigBuilder.getTransformEndpointIds() ) {
+                            if ( id.equalsIgnoreCase( endpointId ) )
                                 return ValidationStatus.error( "A transformation with the supplied ID already exists" );
                         }
                         return ValidationStatus.ok();
