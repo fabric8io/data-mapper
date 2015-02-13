@@ -21,6 +21,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.jboss.mapper.eclipse.Activator;
+import org.jboss.mapper.eclipse.dialogs.ClasspathResourceSelectionDialog;
 
 /**
  *
@@ -143,7 +144,7 @@ public class Util {
         boolean accept( IType type );
     }
 
-    public static String selectResourceFromWorkspace(Shell shell, final String extension,
+    public static IResource selectResourceFromWorkspace(Shell shell, final String extension,
             final IProject project) {
         IJavaProject javaProject = null;
         if (project != null) {
@@ -163,6 +164,6 @@ public class Util {
             return null;
         }
         IFile resource = (IFile) result[0];
-        return resource.getProjectRelativePath().toString();
+        return resource;
     }
 }

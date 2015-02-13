@@ -1,8 +1,20 @@
+/******************************************************************************* 
+ * Copyright (c) 2015 Red Hat, Inc. 
+ *  All rights reserved. 
+ * This program is made available under the terms of the 
+ * Eclipse Public License v1.0 which accompanies this distribution, 
+ * and is available at http://www.eclipse.org/legal/epl-v10.html 
+ * 
+ * Contributors: 
+ * Red Hat, Inc. - initial API and implementation 
+ ******************************************************************************/
 package org.jboss.mapper.eclipse.dialogs;
 
 import java.io.File;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -27,6 +39,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.camel.CamelConfigBuilder;
+import org.jboss.mapper.eclipse.NewTransformationWizard;
+import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.eclipse.util.Util;
 
 @SuppressWarnings( "synthetic-access" )
@@ -80,12 +94,26 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
 
             @Override
             public void widgetSelected( final SelectionEvent event ) {
-                final String path = Util.selectResourceFromWorkspace(getShell(), ".xml", _project);
-                if ( path != null ) {
-                    _camelFilePath = path;
-                    camelFilePathText.setText(path);
-                    _updateCamelBuilder = true;
-                    getButton(IDialogConstants.OK_ID).setEnabled(validate());
+
+                IResource res = Util.selectResourceFromWorkspace(getShell(), ".xml", _project);
+                if ( res != null ) {
+                    IPath respath = JavaUtil.getJavaPathForResource(res);
+                    String relpath = respath.makeRelative().toString();
+                    try {
+                        File camelFile = new File( _project.getFile( relpath ).getLocationURI() );
+                        if (!camelFile.exists()) {
+                            camelFile = new File ( _project.getFile( NewTransformationWizard.RESOURCES_PATH + relpath ).getLocationURI() );
+                            if (camelFile.exists()) {
+                                _camelFilePath = relpath;
+                                camelFilePathText.setText(relpath);
+                                _updateCamelBuilder = true;
+                                getButton(IDialogConstants.OK_ID).setEnabled(validate());
+                            }
+                        }
+                    } catch ( final Exception e ) {
+                        // swallow
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -146,9 +174,15 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
         } else {
             try {
                 File testFile = new File( _project.getFile(_camelFilePath).getLocationURI() );
-                CamelConfigBuilder testBuilder = CamelConfigBuilder.loadConfig( testFile );
-                if (_updateCamelBuilder) {
-                    _camelConfigBuilder = testBuilder;
+                if (!testFile.exists()) {
+                    testFile = new File ( _project.getFile( NewTransformationWizard.RESOURCES_PATH + _camelFilePath ).getLocationURI() );
+                    if (testFile.exists()) {
+                        _camelFilePath = NewTransformationWizard.RESOURCES_PATH + _camelFilePath;
+                        CamelConfigBuilder testBuilder = CamelConfigBuilder.loadConfig( testFile );
+                        if (_updateCamelBuilder) {
+                            _camelConfigBuilder = testBuilder;
+                        }
+                    }
                 }
             } catch ( final Exception e ) {
                 _errMessage = "The Camel file path must refer to a valid Camel file";

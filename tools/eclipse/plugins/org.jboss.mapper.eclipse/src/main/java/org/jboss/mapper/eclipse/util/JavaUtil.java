@@ -238,4 +238,38 @@ public final class JavaUtil {
         String[] sourceComplianceLevels= getSourceComplianceLevels(context);
         return JavaConventions.validateJavaTypeName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
     }
+
+    /**
+     * Returns the resource path relative to its containing
+     * IPackageFragmentRoot. If the resource is not located within a Java source
+     * directory, the project name is stripped from the path.
+     * 
+     * @param resource the resource.
+     * 
+     * @return the relative path.
+     */
+    public static IPath getJavaPathForResource(final IResource resource) {
+        if (resource == null || resource.getType() == IResource.PROJECT || resource.getType() == IResource.ROOT) {
+            return null;
+        }
+        IJavaProject project = JavaCore.create(resource.getProject());
+        if (project == null) {
+            // just remove the project segment.
+            return resource.getFullPath().removeFirstSegments(1);
+        }
+        IResource container = resource;
+        if (container.getType() == IResource.FILE) {
+            container = container.getParent();
+        }
+        IJavaElement element = null;
+        for (; element == null && container != null; container = container.getParent()) {
+            element = JavaCore.create(container, project);
+        }
+        if (element == null) {
+            return resource.getFullPath().removeFirstSegments(1);
+        } else if (element.getElementType() == IJavaElement.PACKAGE_FRAGMENT) {
+            return resource.getFullPath().makeRelativeTo(element.getParent().getPath());
+        }
+        return resource.getFullPath().makeRelativeTo(element.getPath());
+    }
 }

@@ -19,7 +19,9 @@ import org.eclipse.core.databinding.validation.IValidator;
 import org.eclipse.core.databinding.validation.ValidationStatus;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.databinding.fieldassist.ControlDecorationSupport;
 import org.eclipse.jface.databinding.fieldassist.ControlDecorationUpdater;
@@ -50,6 +52,7 @@ import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.eclipse.NewTransformationWizard.Model;
 import org.jboss.mapper.eclipse.NewTransformationWizard.ModelType;
+import org.jboss.mapper.eclipse.util.JavaUtil;
 import org.jboss.mapper.eclipse.util.SWTValueUpdater;
 import org.jboss.mapper.eclipse.util.Util;
 
@@ -58,7 +61,6 @@ class NewTransformationWizardPage extends WizardPage {
     final DataBindingContext _context = new DataBindingContext( SWTObservables.getRealm( Display
                                                                                                 .getCurrent() ) );
     final ObservablesManager _observablesManager = new ObservablesManager();
-    WizardPageSupport _support;
     final Model _model;
     
     NewTransformationWizardPage( final Model model ) {
@@ -82,11 +84,12 @@ class NewTransformationWizardPage extends WizardPage {
             
             @Override
             public void run() {
-                createPage( parent );
-            }
-        } );
+                
+                createPage(parent);
+            };
+        });
         
-        _support = WizardPageSupport.create( this, _context );
+        WizardPageSupport.create( this, _context );
         setErrorMessage( null );
     }
     
@@ -173,7 +176,7 @@ class NewTransformationWizardPage extends WizardPage {
         final Composite page = new Composite( parent, SWT.NONE );
         setControl( page );
         page.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-        
+
         // Create project widgets
         Label label = new Label( page, SWT.NONE );
         label.setText( "Project:" );
@@ -186,13 +189,13 @@ class NewTransformationWizardPage extends WizardPage {
                                                                .create() );
         projectViewer.getCombo().setToolTipText( label.getToolTipText() );
         projectViewer.setLabelProvider( new LabelProvider() {
-            
+
             @Override
             public String getText( final Object element ) {
                 return ( ( IProject ) element ).getName();
             }
         } );
-        
+
         // Create ID widgets
         label = new Label( page, SWT.NONE );
         label.setText( "ID:" );
@@ -201,40 +204,42 @@ class NewTransformationWizardPage extends WizardPage {
         idText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                              .align( SWT.FILL, SWT.CENTER ).create() );
         idText.setToolTipText( label.getToolTipText() );
-        
+
         // Create file path widgets
         label = new Label( page, SWT.NONE );
         label.setText( "Dozer File path: " );
-        label.setToolTipText( "The path to the Dozer transformation file." );
+        label.setToolTipText("The path to the Dozer transformation file.");
         final Text pathText = new Text( page, SWT.BORDER );
         pathText.setLayoutData( GridDataFactory.swtDefaults().span( 2, 1 ).grab( true, false )
                                                .align( SWT.FILL, SWT.CENTER ).create() );
         pathText.setToolTipText( label.getToolTipText() );
-        
+
         // Create camel file path widgets
         label = new Label( page, SWT.NONE );
         label.setText( "Camel File path: " );
-        label.setToolTipText( "Path to the Camel configuration file." );
+        label.setToolTipText("Path to the Camel configuration file.");
         final Text camelFilePathText = new Text( page, SWT.BORDER );
         camelFilePathText.setLayoutData( GridDataFactory.swtDefaults().span( 1, 1 ).grab( true, false )
-                                                        .align( SWT.FILL, SWT.CENTER ).create() );
+                                               .align( SWT.FILL, SWT.CENTER ).create() );
         camelFilePathText.setToolTipText( label.getToolTipText() );
         final Button camelPathButton = new Button( page, SWT.NONE );
-        camelPathButton.setText( "..." );
-        camelPathButton.setToolTipText( "Browse to select an available Camel file." );
+        camelPathButton.setText("...");
+        camelPathButton.setToolTipText("Browse to select an available Camel file.");
         camelPathButton.addSelectionListener( new SelectionAdapter() {
-            
+
             @Override
             public void widgetSelected( final SelectionEvent event ) {
-                final String path = Util.selectResourceFromWorkspace( getShell(), ".xml", _model.getProject() );
-                if ( path != null ) {
-                    _model.setCamelFilePath( path );
-                    camelFilePathText.setText( path );
-                    camelFilePathText.notifyListeners( SWT.Modify, new Event() );
+                IResource res = Util.selectResourceFromWorkspace(getShell(), ".xml", _model.getProject());
+                if ( res != null ) {
+                    IPath respath = JavaUtil.getJavaPathForResource(res);
+                    String path = respath.makeRelative().toString();
+                    _model.setCamelFilePath(path);
+                    camelFilePathText.setText(path);
+                    camelFilePathText.notifyListeners(SWT.Modify, new Event());
                 }
-            }
-        } );
-        
+            };
+        });
+
         // Create source widgets
         Group group = new Group( page, SWT.SHADOW_ETCHED_IN );
         Label fileLabel = new Label( group, SWT.NONE );
@@ -243,7 +248,7 @@ class NewTransformationWizardPage extends WizardPage {
         Label typeLabel = new Label( group, SWT.NONE );
         final ComboViewer sourceTypeViewer = new ComboViewer( new Combo( group, SWT.READ_ONLY ) );
         createFileControls( group, fileLabel, "Source", sourcePathText, sourcePathButton, typeLabel, sourceTypeViewer );
-        
+
         // Create target widgets
         group = new Group( page, SWT.SHADOW_ETCHED_IN );
         fileLabel = new Label( group, SWT.NONE );
@@ -252,16 +257,16 @@ class NewTransformationWizardPage extends WizardPage {
         typeLabel = new Label( group, SWT.NONE );
         final ComboViewer targetTypeViewer = new ComboViewer( new Combo( group, SWT.READ_ONLY ) );
         createFileControls( group, fileLabel, "Target", targetPathText, targetPathButton, typeLabel, targetTypeViewer );
-        
+
         // Bind project widget to UI model
         projectViewer.setContentProvider( new ObservableListContentProvider() );
         IObservableValue widgetValue = ViewerProperties.singleSelection().observe( projectViewer );
         IObservableValue modelValue = BeanProperties.value( Model.class, "project" ).observe( _model );
         UpdateValueStrategy strategy = new UpdateValueStrategy();
         strategy.setBeforeSetValidator( new IValidator() {
-            
+
             @Override
-            public IStatus validate( final Object value ) {
+            public IStatus validate( Object value ) {
                 if ( value == null ) {
                     sourcePathButton.setEnabled( false );
                     targetPathButton.setEnabled( false );
@@ -274,15 +279,15 @@ class NewTransformationWizardPage extends WizardPage {
         } );
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT );
         projectViewer.setInput( Properties.selfList( IProject.class ).observe( _model.projects ) );
-        
+
         // Bind transformation ID widget to UI model
         widgetValue = WidgetProperties.text( SWT.Modify ).observe( idText );
         modelValue = BeanProperties.value( Model.class, "id" ).observe( _model );
         strategy = new UpdateValueStrategy();
         strategy.setBeforeSetValidator( new IValidator() {
-            
+
             @Override
-            public IStatus validate( final Object value ) {
+            public IStatus validate( Object value ) {
                 if ( value == null || value.toString().trim().isEmpty() )
                     return ValidationStatus.error( "A transformation ID must be supplied" );
                 final String id = value.toString().trim();
@@ -291,33 +296,35 @@ class NewTransformationWizardPage extends WizardPage {
                     if ( !Character.isJavaIdentifierPart( chr ) )
                         return ValidationStatus.error( "The transformation ID may only contain letters, digits, currency symbols, or underscores" );
                 }
-                for ( final String endpointId : _model.camelConfigBuilder.getTransformEndpointIds() ) {
-                    if ( id.equalsIgnoreCase( endpointId ) )
-                        return ValidationStatus.error( "A transformation with the supplied ID already exists" );
+                if (_model.camelConfigBuilder != null) {
+                    for ( final String endpointId : _model.camelConfigBuilder.getTransformEndpointIds() ) {
+                        if ( id.equalsIgnoreCase( endpointId ) )
+                            return ValidationStatus.error( "A transformation with the supplied ID already exists" );
+                    }
                 }
                 return ValidationStatus.ok();
             }
         } );
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT );
-        
+
         // Bind file path widget to UI model
         widgetValue = WidgetProperties.text( SWT.Modify ).observe( pathText );
         modelValue = BeanProperties.value( Model.class, "filePath" ).observe( _model );
         strategy = new UpdateValueStrategy();
         strategy.setBeforeSetValidator( new IValidator() {
-            
+
             @Override
-            public IStatus validate( final Object value ) {
-                if ( value == null || value.toString().trim().isEmpty() ) {
-                return ValidationStatus.error(
-                                       "The transformation file path must be supplied" );
+            public IStatus validate( Object value ) {
+                if (value == null || value.toString().trim().isEmpty()) {
+                    return ValidationStatus.error( 
+                            "The transformation file path must be supplied" );
                 }
-                if ( !( value.toString().trim().isEmpty() ) ) {
+                if (value != null && !(value.toString().trim().isEmpty())) {
                     try {
-                        final IFile file = _model.getProject().getFile( NewTransformationWizard.RESOURCES_PATH +
-                                                                        ( String ) value );
-                        if ( file.exists() ) {
-                        return ValidationStatus.warning( "A transformation file with that name already exists." );
+                        final IFile file = _model.getProject().getFile( NewTransformationWizard.RESOURCES_PATH + 
+                                (String) value);
+                        if (file.exists()) {
+                            return ValidationStatus.warning("A transformation file with that name already exists.");
                         }
                     } catch ( final Exception e ) {
                         // empty
@@ -327,47 +334,46 @@ class NewTransformationWizardPage extends WizardPage {
             }
         } );
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT );
-        
+
         // Bind camel file path widget to UI model
-        final org.eclipse.core.databinding.Binding camelFilePathBinding = _context.bindValue(
-                                                                                              SWTObservables.observeText( camelFilePathText, new int[] { SWT.Modify } ),
-                                                                                              BeanProperties.value( Model.class, "camelFilePath" ).observe( _model ),
-                                                                                              new UpdateValueStrategy( UpdateValueStrategy.POLICY_CONVERT ).
-                                                                                                                                                           setBeforeSetValidator(
-                                                                                                                                                           new IValidator() {
-                                                                                                                                                               
-                                                                                                                                                               @Override
-                                                                                                                                                               public IStatus validate( final Object value ) {
-                                                                                                                                                                   if ( value == null || value.toString().trim().isEmpty() ) {
-                                                                                                                                                                   return ValidationStatus.error(
-                                                                                                                                                                                          "The Camel file path must be supplied" );
-                                                                                                                                                                   }
-                                                                                                                                                                   if ( !( value.toString().trim().isEmpty() ) ) {
-                                                                                                                                                                       try {
-                                                                                                                                                                           CamelConfigBuilder.loadConfig(
-                                                                                                                                                                                             new File( _model.getProject().getFile( ( String ) value ).getLocationURI() ) );
-                                                                                                                                                                       } catch ( final Exception e ) {
-                                                                                                                                                                           return ValidationStatus.error(
-                                                                                                                                                                                                  "The Camel file path must refer to a valid Camel file" );
-                                                                                                                                                                       }
-                                                                                                                                                                   }
-                                                                                                                                                                   return ValidationStatus.ok();
-                                                                                                                                                               }
-                                                                                                                                                           } ), null );
+        org.eclipse.core.databinding.Binding camelFilePathBinding = _context.bindValue(
+            SWTObservables.observeText(camelFilePathText, new int[] {SWT.Modify }),
+            BeanProperties.value( Model.class, "camelFilePath" ).observe( _model ),
+            new UpdateValueStrategy(UpdateValueStrategy.POLICY_CONVERT).
+                setBeforeSetValidator(
+                    new IValidator() {
+                    @Override
+                    public IStatus validate( Object value ) {
+                        if (value == null || value.toString().trim().isEmpty()) {
+                            return ValidationStatus.error( 
+                                    "The Camel file path must be supplied" );
+                        }
+                        if (value != null && !(value.toString().trim().isEmpty())) {
+                            try {
+                                CamelConfigBuilder.loadConfig( 
+                                        new File( _model.getProject().getFile((String) value).getLocationURI() ) );
+                            } catch ( final Exception e ) {
+                                return ValidationStatus.error( 
+                                        "The Camel file path must refer to a valid Camel file" );
+                            }
+                        }
+                        return ValidationStatus.ok();
+                    }
+            }), null);
         ControlDecorationSupport.create(
-                                         SWTValueUpdater.attach( camelFilePathBinding ), SWT.TOP | SWT.LEFT );
-        
+                SWTValueUpdater.attach(camelFilePathBinding), SWT.TOP | SWT.LEFT);
+
         final ControlDecorationUpdater sourceUpdator = new ControlDecorationUpdater();
         final ControlDecorationUpdater targetUpdator = new ControlDecorationUpdater();
-        
+
         // Bind source file path widget to UI model
         widgetValue = WidgetProperties.text( SWT.Modify ).observe( sourcePathText );
         modelValue = BeanProperties.value( Model.class, "sourceFilePath" ).observe( _model );
         strategy = new UpdateValueStrategy();
         strategy.setBeforeSetValidator( new IValidator() {
-            
+
             @Override
-            public IStatus validate( final Object value ) {
+            public IStatus validate( Object value ) {
                 final String path = value == null ? null : value.toString().trim();
                 if ( path == null || path.isEmpty() )
                     return ValidationStatus.error( "A source file path must be supplied for the supplied target file path" );
@@ -377,15 +383,15 @@ class NewTransformationWizardPage extends WizardPage {
             }
         } );
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT, null, sourceUpdator );
-        
+
         // Bind target file path widget to UI model
         widgetValue = WidgetProperties.text( SWT.Modify ).observe( targetPathText );
         modelValue = BeanProperties.value( Model.class, "targetFilePath" ).observe( _model );
         strategy = new UpdateValueStrategy();
         strategy.setBeforeSetValidator( new IValidator() {
-            
+
             @Override
-            public IStatus validate( final Object value ) {
+            public IStatus validate( Object value ) {
                 final String path = value == null ? null : value.toString().trim();
                 if ( path == null || path.isEmpty() )
                     return ValidationStatus.error( "A target file path must be supplied for the supplied source file path" );
@@ -395,24 +401,24 @@ class NewTransformationWizardPage extends WizardPage {
             }
         } );
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT, null, targetUpdator );
-        
+
         // Bind source type widget to UI model
         sourceTypeViewer.setContentProvider( new ObservableListContentProvider() );
         widgetValue = ViewerProperties.singleSelection().observe( sourceTypeViewer );
         modelValue = BeanProperties.value( Model.class, "sourceType" ).observe( _model );
         _context.bindValue( widgetValue, modelValue );
         sourceTypeViewer.setInput( Properties.selfList( ModelType.class ).observe( Arrays.asList( ModelType.values() ) ) );
-        
+
         // Bind target type widget to UI model
         targetTypeViewer.setContentProvider( new ObservableListContentProvider() );
         widgetValue = ViewerProperties.singleSelection().observe( targetTypeViewer );
         modelValue = BeanProperties.value( Model.class, "targetType" ).observe( _model );
         _context.bindValue( widgetValue, modelValue );
         targetTypeViewer.setInput( Properties.selfList( ModelType.class ).observe( Arrays.asList( ModelType.values() ) ) );
-        
+
         // Set focus to appropriate control
         page.addPaintListener( new PaintListener() {
-            
+
             @Override
             public void paintControl( final PaintEvent event ) {
                 if ( _model.getProject() == null ) projectViewer.getCombo().setFocus();
@@ -420,17 +426,17 @@ class NewTransformationWizardPage extends WizardPage {
                 page.removePaintListener( this );
             }
         } );
-        
-        for ( final Object observable : _context.getValidationStatusProviders() ) {
+
+        for ( Object observable : _context.getValidationStatusProviders() ) {
             ( ( Binding ) observable ).getTarget().addChangeListener( new IChangeListener() {
-                
+
                 @Override
-                public void handleChange( final ChangeEvent event ) {
+                public void handleChange( ChangeEvent event ) {
                     validatePage();
                 }
             } );
         }
-        
+
         if ( _model.getProject() == null ) validatePage();
         else projectViewer.setSelection( new StructuredSelection( _model.getProject() ) );
     }

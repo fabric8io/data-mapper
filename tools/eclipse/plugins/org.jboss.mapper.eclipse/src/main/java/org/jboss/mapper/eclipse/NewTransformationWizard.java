@@ -51,7 +51,7 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
 
     private static final String MAIN_PATH = "src/main/";
     private static final String JAVA_PATH = MAIN_PATH + "java/";
-    static final String RESOURCES_PATH = MAIN_PATH + "resources/";
+    public static final String RESOURCES_PATH = MAIN_PATH + "resources/";
     private static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
     private static final String DEFAULT_FILE_PATH = "transformation.xml";
     private static final String OBJECT_FACTORY_NAME = "ObjectFactory";
@@ -204,8 +204,8 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
                                                               uiModel.getSourceType().transformType, sourceClassName,
                                                               uiModel.getTargetType().transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream =
-                          new FileOutputStream( new File( uiModel.getProject()
-                                                          .getFile( uiModel.getCamelFilePath() ).getLocationURI() ) ) ) {
+                    new FileOutputStream( 
+                            new File( uiModel.getProject().getFile( RESOURCES_PATH + uiModel.camelFilePath ).getLocationURI() ) ) ) {
                     uiModel.camelConfigBuilder.saveConfig( camelConfigStream );
                 } catch ( final Exception e ) {
                     Activator.error( getShell(), e );
@@ -267,8 +267,8 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
         private String filePath = DEFAULT_FILE_PATH;
         private String sourceFilePath, targetFilePath;
         private ModelType sourceType, targetType;
-        private String camelFilePath = CAMEL_CONFIG_PATH;
-
+        private String camelFilePath;
+        
         /**
          * @param propertyName
          * @param listener
@@ -376,11 +376,21 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
             } catch ( final Exception e ) {
                 Activator.error( getShell(), e );
             }
-            try {
-                camelConfigBuilder =
-                    CamelConfigBuilder.loadConfig( new File( project.getFile( camelFilePath ).getLocationURI() ) );
-            } catch ( final Exception e ) {
-                // swallow
+
+            if (camelFilePath != null && !camelFilePath.trim().isEmpty()) {
+                try {
+                    IFile test = project.getFile( camelFilePath );
+                    if (!test.exists()) {
+                        test = project.getFile( RESOURCES_PATH + camelFilePath );
+                    }
+                    if (test != null && test.exists()) {
+                        File camelFile = new File( test.getLocationURI() );
+                        camelConfigBuilder = CamelConfigBuilder.loadConfig( camelFile );
+                    }
+                } catch ( final Exception e ) {
+                    // swallow
+//                    e.printStackTrace();
+                }
             }
         }
 
