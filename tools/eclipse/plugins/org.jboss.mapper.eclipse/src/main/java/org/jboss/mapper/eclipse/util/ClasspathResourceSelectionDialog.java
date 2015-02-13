@@ -1,12 +1,12 @@
-/******************************************************************************* 
- * Copyright (c) 2012 Red Hat, Inc. 
- *  All rights reserved. 
- * This program is made available under the terms of the 
- * Eclipse Public License v1.0 which accompanies this distribution, 
- * and is available at http://www.eclipse.org/legal/epl-v10.html 
- * 
- * Contributors: 
- * Red Hat, Inc. - initial API and implementation 
+/*******************************************************************************
+ * Copyright (c) 2012 Red Hat, Inc.
+ *  All rights reserved.
+ * This program is made available under the terms of the
+ * Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Red Hat, Inc. - initial API and implementation
  *
  * @author bfitzpat
  ******************************************************************************/
@@ -28,20 +28,21 @@ import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
 
 /**
  * Allows user to select a resource on the project's classpath.
- * 
+ *
  * @author bfitzpat
  * @author Rob Cernich
  */
 public class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog {
 
-    private Set<String> _fileExtensions;
-    private IJavaModel _fJavaModel;
+    Set<String> _fileExtensions;
+    IJavaModel _fJavaModel;
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
+     * @param title
      */
     public ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String title) {
         this(parentShell, container, Collections.<String> emptySet(), title);
@@ -49,12 +50,13 @@ public class ClasspathResourceSelectionDialog extends FilteredResourcesSelection
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
      * @param fileExtension the type of files to display; may be null
+     * @param title
      */
-    public ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, 
+    public ClasspathResourceSelectionDialog(Shell parentShell, IContainer container,
             String fileExtension, String title) {
         this(parentShell, container, fileExtension == null ? Collections.<String> emptySet() : Collections
                 .singleton(fileExtension), title);
@@ -62,12 +64,13 @@ public class ClasspathResourceSelectionDialog extends FilteredResourcesSelection
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
      * @param fileExtensions the types of files to display; may be null
+     * @param title
      */
-    public ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, 
+    public ClasspathResourceSelectionDialog(Shell parentShell, IContainer container,
             Set<String> fileExtensions, String title) {
         super(parentShell, false, container, IResource.FILE);
         _fJavaModel = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
@@ -80,11 +83,11 @@ public class ClasspathResourceSelectionDialog extends FilteredResourcesSelection
         return new ClasspathResourceFilter();
     }
 
-    private class ClasspathResourceFilter extends ResourceFilter {
+    class ClasspathResourceFilter extends ResourceFilter {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog.
          * ResourceFilter#matchItem(java.lang.Object)
          */
@@ -115,7 +118,7 @@ public class ClasspathResourceSelectionDialog extends FilteredResourcesSelection
          * <code>FilteredResourcesSelectionDialog</code> result of this method
          * must be combined with the <code>matchItem</code> method from super
          * class (<code>ResourceFilter</code>).
-         * 
+         *
          * @param resource A resource
          * @return <code>true</code> if item matches against given conditions
          *         <code>false</code> otherwise
@@ -133,7 +136,7 @@ public class ClasspathResourceSelectionDialog extends FilteredResourcesSelection
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog.
          * ResourceFilter
          * #equalsFilter(org.eclipse.ui.dialogs.FilteredItemsSelectionDialog

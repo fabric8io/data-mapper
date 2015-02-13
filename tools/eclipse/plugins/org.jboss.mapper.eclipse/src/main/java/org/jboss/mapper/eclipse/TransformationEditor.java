@@ -11,7 +11,7 @@ import org.eclipse.ui.part.MultiPageEditorPart;
 /**
  * 
  */
-public class DataMapperEditor extends MultiPageEditorPart {
+public class TransformationEditor extends MultiPageEditorPart {
     
     /**
      * {@inheritDoc}
@@ -21,7 +21,7 @@ public class DataMapperEditor extends MultiPageEditorPart {
     @Override
     protected void createPages() {
         try {
-            addPage( new DataMapperEditorMappingPage(), getEditorInput() );
+            addPage( new TransformationEditorMappingPage(), getEditorInput() );
         } catch ( final PartInitException e ) {
             e.printStackTrace();
         }

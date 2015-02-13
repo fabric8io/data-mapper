@@ -29,8 +29,9 @@ import org.eclipse.swt.widgets.Text;
 import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.eclipse.util.Util;
 
+@SuppressWarnings( "synthetic-access" )
 public class CamelEndpointSelectionDialog extends TitleAreaDialog {
-    
+
     String _camelFilePath;
     String _endpointID;
     IProject _project;
@@ -70,8 +71,8 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
                 getButton(IDialogConstants.OK_ID).setEnabled(validate());
             }
         });
-        
-        
+
+
         final Button camelPathButton = new Button( composite, SWT.NONE );
         camelPathButton.setText("...");
         camelPathButton.setToolTipText("Browse to select an available Camel file.");
@@ -81,12 +82,12 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
             public void widgetSelected( final SelectionEvent event ) {
                 final String path = Util.selectResourceFromWorkspace(getShell(), ".xml", _project);
                 if ( path != null ) {
-                    _camelFilePath = path;;
+                    _camelFilePath = path;
                     camelFilePathText.setText(path);
                     _updateCamelBuilder = true;
                     getButton(IDialogConstants.OK_ID).setEnabled(validate());
                 }
-            };
+            }
         });
 
         // Create ID widgets
@@ -99,7 +100,7 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
         _endpointCombo.getControl().setToolTipText( label.getToolTipText() );
         _endpointCombo.setLabelProvider(new EndpointLabelProvider());
         _endpointCombo.addSelectionChangedListener(new ISelectionChangedListener() {
-            
+
             @Override
             public void selectionChanged(SelectionChangedEvent arg0) {
                 ISelection sel = arg0.getSelection();
@@ -110,13 +111,13 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
                 getButton(IDialogConstants.OK_ID).setEnabled(validate());
             }
         });
-        
+
         validate();
         setErrorMessage(null);
 
         return parent;
     }
- 
+
     class EndpointLabelProvider extends LabelProvider {
 
         @Override
@@ -126,9 +127,9 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
             }
             return super.getText(element);
         }
-        
+
     }
-    
+
     public CamelEndpointSelectionDialog(Shell parentShell, IProject project, String camelFilePath) {
         super(parentShell);
         _project = project;
@@ -136,10 +137,10 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
         _endpointID = null;
         _errMessage = null;
     }
-    
-    private boolean validate() {
+
+    boolean validate() {
         _errMessage = null;
-        
+
         if (_camelFilePath == null || _camelFilePath.trim().isEmpty()) {
             _errMessage = "A Camel file path must be supplied";
         } else {
@@ -168,7 +169,7 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
                 }
             }
         }
-        
+
         setErrorMessage(_errMessage);
         return (getErrorMessage() == null);
     }
@@ -176,11 +177,12 @@ public class CamelEndpointSelectionDialog extends TitleAreaDialog {
     public String getEndpointID() {
         return _endpointID;
     }
-    
+
     public String getCamelFilePath() {
         return _camelFilePath;
     }
 
+    @Override
     protected Control createButtonBar(Composite parent) {
         Control rtnControl = super.createButtonBar(parent);
         getButton(IDialogConstants.OK_ID).setEnabled(validate());

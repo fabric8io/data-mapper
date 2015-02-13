@@ -10,7 +10,7 @@
             name="%dozer-mapping-wizard.name">
       </wizard>
       <wizard
-            class="org.jboss.mapper.eclipse.DataMappingWizard"
+            class="org.jboss.mapper.eclipse.NewTransformationWizard"
             icon="icons/transform16.png"
             id="org.jboss.mapper.eclipse.data-mapping-wizard"
             name="%data-mapping-wizard.name">
@@ -42,8 +42,8 @@
    <extension
          point="org.eclipse.ui.editors">
       <editor
-            class="org.jboss.mapper.eclipse.DataMapperEditor"
-            contributorClass="org.jboss.mapper.eclipse.DataMapperEditorContributor"
+            class="org.jboss.mapper.eclipse.TransformationEditor"
+            contributorClass="org.jboss.mapper.eclipse.TransformationEditorContributor"
             default="false"
             extensions="xml"
             icon="icons/transform16.png"

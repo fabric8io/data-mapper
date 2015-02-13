@@ -6,6 +6,7 @@ import org.eclipse.jdt.ui.ISharedImages;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
@@ -42,9 +43,10 @@ public class ModelViewer extends Composite {
                         final Model model ) {
         super( parent, SWT.NONE );
         this.model = model;
-        setBackground( parent.getBackground() );
+        setBackground( parent.getParent().getBackground() );
         setLayout( GridLayoutFactory.fillDefaults().create() );
         final ToolBar toolBar = new ToolBar( this, SWT.NONE );
+        toolBar.setBackground( getBackground() );
         final ToolItem collapseAllButton = new ToolItem( toolBar, SWT.PUSH );
         collapseAllButton.setImage( Activator.imageDescriptor( "collapseall16.gif" ).createImage() );
         treeViewer = new TreeViewer( this );
@@ -66,7 +68,8 @@ public class ModelViewer extends Composite {
                 return 0;
             }
         } );
-        treeViewer.setLabelProvider( new MyStyledLabelProvider() );
+        treeViewer.setLabelProvider( new LabelProvider() );
+        ColumnViewerToolTipSupport.enableFor( treeViewer );
 
         final Tree tree = treeViewer.getTree();
         tree.setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
@@ -191,9 +194,9 @@ public class ModelViewer extends Composite {
         }
     }
 
-    class MyStyledLabelProvider extends StyledCellLabelProvider {
+    class LabelProvider extends StyledCellLabelProvider {
 
-        private static final String LIST_OF = "List of ";
+        private static final String LIST_OF = "list of ";
 
         private Image getImage( final Object element ) {
             final Model model = ( Model ) element;
@@ -205,6 +208,27 @@ public class ModelViewer extends Composite {
             } else {
                 return images.getImage( ISharedImages.IMG_FIELD_PUBLIC );
             }
+        }
+
+        private String getText( final Object element,
+                                final StyledString text,
+                                final boolean showFieldTypesInLabel ) {
+            final Model modelForLabel = ( Model ) element;
+            text.append( modelForLabel.getName() );
+            if ( showFieldTypesInLabel ) {
+                final String type = modelForLabel.getType();
+                if ( type.startsWith( "[" ) ) {
+                    text.append( ":", StyledString.DECORATIONS_STYLER );
+                    text.append( " " + LIST_OF, StyledString.QUALIFIER_STYLER );
+                    text.append( type.substring( 1, type.length() - 1 ), StyledString.DECORATIONS_STYLER );
+                } else text.append( ": " + type, StyledString.DECORATIONS_STYLER );
+            }
+            return text.getString();
+        }
+
+        @Override
+        public String getToolTipText( final Object element ) {
+            return getText( element, new StyledString(), true );
         }
 
         private boolean isMapped( final Object element ) {
@@ -224,28 +248,11 @@ public class ModelViewer extends Composite {
         public void update( final ViewerCell cell ) {
             final Object element = cell.getElement();
             final StyledString text = new StyledString();
-            final Model modelForLabel = ( Model ) element;
-            if ( isMapped( element ) ) {
-                text.append( "*", StyledString.DECORATIONS_STYLER );
-            }
-            text.append( modelForLabel.getName() );
-            if ( showFieldTypesInLabel ) {
-                final String type = modelForLabel.getType();
-                if ( type.startsWith( "[" ) ) {
-                    text.append( ":", StyledString.DECORATIONS_STYLER );
-                    text.append( " " + LIST_OF, StyledString.COUNTER_STYLER );
-                    text.append( type.substring( 1, type.length() - 1 ),
-                                 StyledString.DECORATIONS_STYLER );
-                } else {
-                    text.append( ": " + type, StyledString.DECORATIONS_STYLER );
-                }
-            }
-            final Image image = getImage( element );
-            cell.setImage( image );
-            cell.setText( text.toString() );
+            if ( isMapped( element ) ) text.append( "*", StyledString.DECORATIONS_STYLER );
+            cell.setImage( getImage( element ) );
+            cell.setText( getText( element, text, showFieldTypesInLabel ) );
             cell.setStyleRanges( text.getStyleRanges() );
             super.update( cell );
-
         }
     }
 

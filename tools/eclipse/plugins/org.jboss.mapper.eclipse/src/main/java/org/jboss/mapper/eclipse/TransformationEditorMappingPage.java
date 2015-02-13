@@ -22,7 +22,7 @@ import org.eclipse.ui.part.FileEditorInput;
 /**
  *
  */
-public class DataMapperEditorMappingPage extends EditorPart {
+public class TransformationEditorMappingPage extends EditorPart {
 
     static final String DM_VIEWER_POPUPMENU = "dm_viewer_popupmenu"; //$NON-NLS-1$
 

@@ -47,24 +47,24 @@ import com.sun.codemodel.JPackage;
 /**
  *
  */
-public class DataMappingWizard extends Wizard implements INewWizard {
-    
+public class NewTransformationWizard extends Wizard implements INewWizard {
+
     private static final String MAIN_PATH = "src/main/";
     private static final String JAVA_PATH = MAIN_PATH + "java/";
-    public static final String RESOURCES_PATH = MAIN_PATH + "resources/";
+    static final String RESOURCES_PATH = MAIN_PATH + "resources/";
     private static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
     private static final String DEFAULT_FILE_PATH = "transformation.xml";
     private static final String OBJECT_FACTORY_NAME = "ObjectFactory";
-    
+
     final Model uiModel = new Model();
-    
+
     /**
      *
      */
-    public DataMappingWizard() {
+    public NewTransformationWizard() {
         addPage( new NewTransformationWizardPage( uiModel ) );
     }
-    
+
     private String generateModel( final String filePath,
                                   final ModelType type ) throws Exception {
         // Build class name from file name
@@ -152,10 +152,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                 return null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
      */
     @Override
@@ -174,10 +174,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             if ( uiModel.projects.contains( project ) ) uiModel.setProject( project );
         }
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
@@ -204,8 +204,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                               uiModel.getSourceType().transformType, sourceClassName,
                                                               uiModel.getTargetType().transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream =
-                    new FileOutputStream( 
-                            new File( uiModel.getProject().getFile( uiModel.camelFilePath ).getLocationURI() ) ) ) {
+                          new FileOutputStream( new File( uiModel.getProject()
+                                                          .getFile( uiModel.getCamelFilePath() ).getLocationURI() ) ) ) {
                     uiModel.camelConfigBuilder.saveConfig( camelConfigStream );
                 } catch ( final Exception e ) {
                     Activator.error( getShell(), e );
@@ -218,22 +218,22 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             // Ensure build of Java classes has completed
             try {
                 Job.getJobManager().join( ResourcesPlugin.FAMILY_AUTO_BUILD, null );
-            } catch (InterruptedException ie) {
+            } catch ( final InterruptedException ie ) {
                 // just keep on chugging
             }
-            
+
             // Open mapping editor
             final IEditorDescriptor desc =
                 PlatformUI.getWorkbench().getEditorRegistry().getEditors( file.getName(),
                                                                           Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID ) )[ 0 ];
             uiModel.getProject().refreshLocal( IProject.DEPTH_INFINITE, null );
-            IEditorPart editor =
-                    PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
-                                                                                             desc.getId() );
-            DataMapperEditor dmEditor = (DataMapperEditor) editor;
-            DataMapperEditorMappingPage page = (DataMapperEditorMappingPage) dmEditor.getSelectedPage();
-            page.mapper.setEndpointID(uiModel.getId());
-            page.mapper.setCamelPath(uiModel.getCamelFilePath());
+            final IEditorPart editor =
+                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
+                                                                                                 desc.getId() );
+            final TransformationEditor dmEditor = ( TransformationEditor ) editor;
+            final TransformationEditorMappingPage page = ( TransformationEditorMappingPage ) dmEditor.getSelectedPage();
+            page.mapper.setEndpointID( uiModel.getId() );
+            page.mapper.setCamelPath( uiModel.getCamelFilePath() );
 
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
@@ -241,7 +241,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         return true;
     }
-    
+
     private String selectModelClass( final JCodeModel model ) {
         for ( final Iterator< JPackage > pkgIter = model.packages(); pkgIter.hasNext(); ) {
             final JPackage pkg = pkgIter.next();
@@ -254,20 +254,21 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         }
         return null;
     }
-    
+
     class Model implements PropertyChangeListener {
-        
+
         final List< IProject > projects = new ArrayList<>( Arrays.asList( ResourcesPlugin.getWorkspace().getRoot().getProjects() ) );
         CamelConfigBuilder camelConfigBuilder;
-        
+
         private final PropertyChangeSupport changeSupport = new PropertyChangeSupport( this );
-        
+
         private IProject project;
         private String id;
         private String filePath = DEFAULT_FILE_PATH;
         private String sourceFilePath, targetFilePath;
         private ModelType sourceType, targetType;
         private String camelFilePath = CAMEL_CONFIG_PATH;
+
         /**
          * @param propertyName
          * @param listener
@@ -276,15 +277,16 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                final PropertyChangeListener listener ) {
             changeSupport.addPropertyChangeListener( propertyName, listener );
         }
-        
+
+        public String getCamelFilePath() {
+            return camelFilePath;
+        }
+
         /**
          * @return the transformation file path
          */
         public String getFilePath() {
             return filePath;
-        }
-        public String getCamelFilePath() {
-            return camelFilePath;
         }
 
         /**
@@ -293,59 +295,64 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         public String getId() {
             return id;
         }
-        
+
         /**
          * @return the project in which to create the transformation
          */
         public IProject getProject() {
             return project;
         }
-        
+
         /**
          * @return the source file path
          */
         public String getSourceFilePath() {
             return sourceFilePath;
         }
-        
+
         /**
          * @return the source type
          */
         public ModelType getSourceType() {
             return sourceType;
         }
-        
+
         /**
          * @return the target file path
          */
         public String getTargetFilePath() {
             return targetFilePath;
         }
-        
+
         /**
          * @return the target type
          */
         public ModelType getTargetType() {
             return targetType;
         }
-        
+
         /**
          * {@inheritDoc}
-         * 
+         *
          * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
          */
         @Override
         public void propertyChange( final PropertyChangeEvent event ) {
             changeSupport.firePropertyChange( event.getPropertyName(), event.getOldValue(), event.getNewValue() );
         }
-        
+
         /**
          * @param listener
          */
         public void removePropertyChangeListener( final PropertyChangeListener listener ) {
             changeSupport.removePropertyChangeListener( listener );
         }
-        
+
+        public void setCamelFilePath( final String filePath ) {
+            changeSupport.firePropertyChange( "camelFilePath", this.camelFilePath, this.camelFilePath = filePath.trim() );
+            setProject( project );
+        }
+
         /**
          * @param filePath
          */
@@ -353,18 +360,13 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             changeSupport.firePropertyChange( "filePath", this.filePath, this.filePath = filePath.trim() );
         }
 
-        public void setCamelFilePath( String filePath ) {
-            changeSupport.firePropertyChange( "camelFilePath", this.camelFilePath, this.camelFilePath = filePath.trim() );
-            setProject(project);
-        }
-        
         /**
          * @param id
          */
         public void setId( final String id ) {
             changeSupport.firePropertyChange( "id", this.id, this.id = id.trim() );
         }
-        
+
         /**
          * @param project
          */
@@ -376,33 +378,33 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             }
             try {
                 camelConfigBuilder =
-                        CamelConfigBuilder.loadConfig( new File( project.getFile( camelFilePath ).getLocationURI() ) );
+                    CamelConfigBuilder.loadConfig( new File( project.getFile( camelFilePath ).getLocationURI() ) );
             } catch ( final Exception e ) {
                 // swallow
             }
         }
-        
+
         /**
          * @param sourceFilePath
          */
         public void setSourceFilePath( final String sourceFilePath ) {
             changeSupport.firePropertyChange( "sourceFilePath", this.sourceFilePath, this.sourceFilePath = sourceFilePath.trim() );
         }
-        
+
         /**
          * @param sourceType
          */
         public void setSourceType( final ModelType sourceType ) {
             changeSupport.firePropertyChange( "sourceType", this.sourceType, this.sourceType = sourceType );
         }
-        
+
         /**
          * @param targetFilePath
          */
         public void setTargetFilePath( final String targetFilePath ) {
             changeSupport.firePropertyChange( "targetFilePath", this.targetFilePath, this.targetFilePath = targetFilePath.trim() );
         }
-        
+
         /**
          * @param targetType
          */
@@ -410,25 +412,25 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             changeSupport.firePropertyChange( "targetType", this.targetType, this.targetType = targetType );
         }
     }
-    
+
     enum ModelType {
-        
+
         CLASS( "Java Class", TransformType.JAVA ),
         JAVA( "Java Source", TransformType.JAVA ),
         JSON( "JSON", TransformType.JSON ),
         JSON_SCHEMA( "JSON Schema", TransformType.JSON ),
         XML( "XML", TransformType.XML ),
         XSD( "XSD", TransformType.XML );
-        
+
         final String text;
         final TransformType transformType;
-        
+
         private ModelType( final String text,
                            final TransformType transformType ) {
             this.text = text;
             this.transformType = transformType;
         }
-        
+
         @Override
         public String toString() {
             return text;

@@ -10,7 +10,7 @@ import org.eclipse.ui.part.MultiPageEditorActionBarContributor;
 /**
  * 
  */
-public class DataMapperEditorContributor extends MultiPageEditorActionBarContributor {
+public class TransformationEditorContributor extends MultiPageEditorActionBarContributor {
     
     /**
      * {@inheritDoc}

@@ -38,8 +38,9 @@ public class Util {
                     if ( type.isClass() && type.isStructureKnown() && !type.isAnonymous() && !type.isLocal()
                          && !Flags.isAbstract( type.getFlags() ) && Flags.isPublic( type.getFlags() )
                          && ( filter == null || filter.accept( type ) ) ) types.add( type );
-                } else if ( element instanceof IParent &&
-                            ( !( element instanceof IPackageFragmentRoot ) || !( ( IPackageFragmentRoot ) element ).isExternal() ) )
+                } else if ( element instanceof IParent && !element.getElementName().contains( "src/test" )
+                            && ( !( element instanceof IPackageFragmentRoot )
+                                 || !( ( IPackageFragmentRoot ) element ).isExternal() ) )
                     populateClasses( shell, ( IParent ) element, types, filter );
             }
         } catch ( final JavaModelException e ) {
