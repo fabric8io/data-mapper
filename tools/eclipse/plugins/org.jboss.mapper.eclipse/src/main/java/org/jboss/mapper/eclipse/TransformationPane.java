@@ -383,6 +383,7 @@ class TransformationPane extends Composite {
                 // something changed in the mapped fields (for decorators)
                 sourceModelPane.modelViewer.refresh();
                 targetModelPane.modelViewer.refresh();
+                xformViewer.xformsPane.layout(true);
             }
         } );
     }
@@ -447,6 +448,7 @@ class TransformationPane extends Composite {
         mapperConfig.removeAllMappings();
         mapperConfig.addClassMapping( sourceModel.getType(), targetModel.getType() );
         xformViewer.save();
+        xformViewer.xformsPane.layout(true);
     }
     
     class ModelPane {
@@ -456,5 +458,9 @@ class TransformationPane extends Composite {
         public ModelViewer modelViewer;
         public Handler handler;
         public CTabItem tab;
+    }
+
+    public void setCamelPath(String path) {
+        this.xformViewer.camelFilePath = path;
     }
 }

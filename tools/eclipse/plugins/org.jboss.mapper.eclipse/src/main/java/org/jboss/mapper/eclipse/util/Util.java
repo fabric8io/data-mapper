@@ -14,6 +14,8 @@ import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ui.JavaElementLabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
@@ -50,7 +52,8 @@ public class Util {
                                            final List< IResource > resources ) {
         try {
             for ( final IResource resource : container.members() ) {
-                if ( resource instanceof IContainer ) populateResources( shell, ( IContainer ) resource, resources );
+                if ( resource instanceof IContainer ) 
+                    populateResources( shell, ( IContainer ) resource, resources );
                 else resources.add( resource );
             }
         } catch ( final Exception e ) {
@@ -118,7 +121,8 @@ public class Util {
         final List< IResource > resources = new ArrayList<>();
         populateResources( shell, project, resources );
         dlg.setElements( resources.toArray() );
-        if ( dlg.open() == Window.OK ) return ( ( IFile ) dlg.getFirstResult() ).getProjectRelativePath().toString();
+        if ( dlg.open() == Window.OK ) 
+            return ( ( IFile ) dlg.getFirstResult() ).getProjectRelativePath().toString();
         return null;
     }
 
@@ -136,5 +140,28 @@ public class Util {
          *         {@link Util#selectClass(Shell, IProject, Filter)}
          */
         boolean accept( IType type );
+    }
+
+    public static String selectResourceFromWorkspace(Shell shell, final String extension,
+            final IProject project) {
+        IJavaProject javaProject = null;
+        if (project != null) {
+            javaProject = JavaCore.create(project);
+        }
+        ClasspathResourceSelectionDialog dialog = null;
+        if (javaProject == null) {
+            dialog = new ClasspathResourceSelectionDialog(shell, ResourcesPlugin.getWorkspace().getRoot(), "xml"); //$NON-NLS-1$
+        } else {
+            dialog = new ClasspathResourceSelectionDialog(shell, javaProject.getProject(), "xml"); //$NON-NLS-1$
+        }
+        dialog.setTitle("Select Camel XML File from Project");
+        dialog.setInitialPattern("*.xml"); //$NON-NLS-1$
+        dialog.open();
+        Object[] result = dialog.getResult();
+        if (result == null || result.length == 0 || !(result[0] instanceof IFile)) {
+            return null;
+        }
+        IFile resource = (IFile) result[0];
+        return resource.getProjectRelativePath().toString();
     }
 }

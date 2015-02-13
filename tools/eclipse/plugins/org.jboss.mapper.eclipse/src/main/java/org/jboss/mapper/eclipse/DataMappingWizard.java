@@ -51,7 +51,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
     
     private static final String MAIN_PATH = "src/main/";
     private static final String JAVA_PATH = MAIN_PATH + "java/";
-    private static final String RESOURCES_PATH = MAIN_PATH + "resources/";
+    public static final String RESOURCES_PATH = MAIN_PATH + "resources/";
     private static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
     private static final String DEFAULT_FILE_PATH = "transformation.xml";
     private static final String OBJECT_FACTORY_NAME = "ObjectFactory";
@@ -204,7 +204,8 @@ public class DataMappingWizard extends Wizard implements INewWizard {
                                                               uiModel.getSourceType().transformType, sourceClassName,
                                                               uiModel.getTargetType().transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream =
-                    new FileOutputStream( new File( uiModel.getProject().getFile( CAMEL_CONFIG_PATH ).getLocationURI() ) ) ) {
+                    new FileOutputStream( 
+                            new File( uiModel.getProject().getFile( uiModel.camelFilePath ).getLocationURI() ) ) ) {
                     uiModel.camelConfigBuilder.saveConfig( camelConfigStream );
                 } catch ( final Exception e ) {
                     Activator.error( getShell(), e );
@@ -215,17 +216,25 @@ public class DataMappingWizard extends Wizard implements INewWizard {
             dozerConfigBuilder.saveConfig( configStream );
             uiModel.getProject().refreshLocal( IProject.DEPTH_INFINITE, null );
             // Ensure build of Java classes has completed
-            Job.getJobManager().join( ResourcesPlugin.FAMILY_AUTO_BUILD, null );
+            try {
+                Job.getJobManager().join( ResourcesPlugin.FAMILY_AUTO_BUILD, null );
+            } catch (InterruptedException ie) {
+                // just keep on chugging
+            }
+            
             // Open mapping editor
             final IEditorDescriptor desc =
                 PlatformUI.getWorkbench().getEditorRegistry().getEditors( file.getName(),
                                                                           Platform.getContentTypeManager().getContentType( DozerConfigContentTypeDescriber.ID ) )[ 0 ];
-            final IEditorPart editor =
-                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
-                                                                                                 desc.getId() );
-            final DataMapperEditor dmEditor = ( DataMapperEditor ) editor;
-            final DataMapperEditorMappingPage page = ( DataMapperEditorMappingPage ) dmEditor.getSelectedPage();
-            page.mapper.setEndpointID( uiModel.getId() );
+            uiModel.getProject().refreshLocal( IProject.DEPTH_INFINITE, null );
+            IEditorPart editor =
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
+                                                                                             desc.getId() );
+            DataMapperEditor dmEditor = (DataMapperEditor) editor;
+            DataMapperEditorMappingPage page = (DataMapperEditorMappingPage) dmEditor.getSelectedPage();
+            page.mapper.setEndpointID(uiModel.getId());
+            page.mapper.setCamelPath(uiModel.getCamelFilePath());
+
         } catch ( final Exception e ) {
             Activator.error( getShell(), e );
             return false;
@@ -258,7 +267,7 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         private String filePath = DEFAULT_FILE_PATH;
         private String sourceFilePath, targetFilePath;
         private ModelType sourceType, targetType;
-        
+        private String camelFilePath = CAMEL_CONFIG_PATH;
         /**
          * @param propertyName
          * @param listener
@@ -274,7 +283,10 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         public String getFilePath() {
             return filePath;
         }
-        
+        public String getCamelFilePath() {
+            return camelFilePath;
+        }
+
         /**
          * @return the transformation ID that will be seen in the Camel editor
          */
@@ -340,6 +352,11 @@ public class DataMappingWizard extends Wizard implements INewWizard {
         public void setFilePath( final String filePath ) {
             changeSupport.firePropertyChange( "filePath", this.filePath, this.filePath = filePath.trim() );
         }
+
+        public void setCamelFilePath( String filePath ) {
+            changeSupport.firePropertyChange( "camelFilePath", this.camelFilePath, this.camelFilePath = filePath.trim() );
+            setProject(project);
+        }
         
         /**
          * @param id
@@ -353,11 +370,15 @@ public class DataMappingWizard extends Wizard implements INewWizard {
          */
         public void setProject( final IProject project ) {
             try {
-                camelConfigBuilder =
-                    CamelConfigBuilder.loadConfig( new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() ) );
                 changeSupport.firePropertyChange( "project", this.project, this.project = project );
             } catch ( final Exception e ) {
                 Activator.error( getShell(), e );
+            }
+            try {
+                camelConfigBuilder =
+                        CamelConfigBuilder.loadConfig( new File( project.getFile( camelFilePath ).getLocationURI() ) );
+            } catch ( final Exception e ) {
+                // swallow
             }
         }
         

@@ -22,7 +22,6 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -77,6 +76,7 @@ import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.camel.EndpointHelper;
 import org.jboss.mapper.camel.config.CamelEndpointFactoryBean;
 import org.jboss.mapper.eclipse.util.Util;
+import org.jboss.mapper.eclipse.dialogs.CamelEndpointSelectionDialog;
 import org.jboss.mapper.model.Model;
 
 class TransformationViewer extends Composite {
@@ -85,10 +85,6 @@ class TransformationViewer extends Composite {
     private static final String MAPPING_PROPERTY = "org.jboss.mapper.eclipse.mapping";
     private static final String OP_START_PROPERTY = "org.jboss.mapper.eclipse.opStart";
     private static final String OP_END_PROPERTY = "org.jboss.mapper.eclipse.opEnd";
-
-    private static final String MAIN_PATH = "src/main/";
-    private static final String RESOURCES_PATH = MAIN_PATH + "resources/";
-    private static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
 
     static final Image ADD_IMAGE = PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_OBJ_ADD );
     static final Image DELETE_IMAGE = PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_ETOOL_DELETE );
@@ -111,6 +107,7 @@ class TransformationViewer extends Composite {
     Stack< Model > targethistory = null;
     String endpointID = null;
     private final ListenerList _changeListeners;
+    String camelFilePath = null;
 
     TransformationViewer( final Composite parent,
                           final IFile configFile,
@@ -528,22 +525,24 @@ class TransformationViewer extends Composite {
                     System.out.println( "Updated endpoint uri targetModel to " + lastTarget.getName() );
                     needCamelUpdate = true;
                 }
-                if ( endpointID == null && needCamelUpdate ) {
-                    final InputDialog dialog = new InputDialog( getShell(), "Camel Endpoint ID?",
-                                                                "Please specify the ID of the endpoint to update in the Camel Context file.", null, null );
-                    if ( dialog.open() == Window.OK ) {
-                        endpointID = dialog.getValue();
+
+                if ((endpointID == null || camelFilePath == null) && needCamelUpdate) {
+                    CamelEndpointSelectionDialog dialog = 
+                            new CamelEndpointSelectionDialog(getShell(), configFile.getProject(), camelFilePath);
+                    if (dialog.open() == Window.OK) {
+                        endpointID = dialog.getEndpointID();
+                        camelFilePath = dialog.getCamelFilePath();
                     }
                 }
 
-                if ( endpointID != null && needCamelUpdate ) {
+                if (endpointID != null && camelFilePath != null && needCamelUpdate) {
 
-                    final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-                    final IFile file = root.getFileForLocation( configFile.getLocation() );
-                    final IProject project = file.getProject();
-                    final File camelFile = new File( project.getFile( CAMEL_CONFIG_PATH ).getLocationURI() );
-                    final CamelConfigBuilder builder = CamelConfigBuilder.loadConfig( camelFile );
-                    final CamelEndpointFactoryBean theEndpoint = builder.getEndpoint( endpointID );
+                    IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+                    IFile file = root.getFileForLocation(configFile.getLocation());
+                    IProject project = file.getProject();
+                    File camelFile = new File(project.getFile(camelFilePath).getLocationURI());
+                    CamelConfigBuilder builder = CamelConfigBuilder.loadConfig(camelFile);
+                    CamelEndpointFactoryBean theEndpoint = builder.getEndpoint(endpointID);
 
                     if ( theEndpoint != null ) {
                         System.out.println( "Found endpoint: " + endpointID );
