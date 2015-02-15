@@ -11,6 +11,9 @@
     "orderId": {
       "type": "string"
     },
+    "origin": {
+      "type": "string"
+    },
     "lineItems": {
         "type": "array",
         "items": {
