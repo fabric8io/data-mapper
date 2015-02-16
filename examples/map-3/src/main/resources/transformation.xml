@@ -3,7 +3,7 @@
     <mapping>
         <class-a>abcorder.ABCOrder</class-a>
         <class-b>xyzorder.XyzOrder</class-b>
-        <field>
+        <field custom-converter-id="_customMapping" custom-converter-param="org.example.MyMapping,map">
             <a>header.customerNum</a>
             <b>custId</b>
         </field>
