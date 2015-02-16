@@ -1,16 +1,13 @@
 ## Data Mapper
-The Data Mapper project provides graphical tooling to assist in the creation, configuration, and testing of data transformation within Apache Camel including:
+The Data Mapper project provides tooling to create, configure, and test data transformation in Apache Camel.  Highlights include:
 
-- A visual editor for mapping between source and target types.
-- A specialized [Camel component](https://github.com/fabric8io/data-mapper/wiki/Transformation-Endpoints) that coordinates all steps required for data tranformation (marshalling, mapping, unmarshalling) as a single unit of work.
-- OOTB support for mapping any combination of XML, Java, and JSON.  Users can further customize runtime configuration to support any-to-any transformation via Camel data formats.
-- Source and target models can be generated from schema definitions or instance documents.
-- Test support specific to data transformation.
+* A visual editor for mapping between Java-based data models.  Mapping is simply a matter of dragging a field from the source model to the target model.
+* The ability to generate Java-based models from XML Schema, XML instance documents, JSON schema, and JSON instance documents with automatic configuration of required data formats within Camel to handle marshalling to/from Java.
+* OOTB support for mapping any combination of XML, Java, and JSON.  Users can further customize runtime configuration to support any-to-any transformation via Camel data formats.
+* Runtime integration is based purely on Apache Camel and Dozer - no extra configuration files to keep track of!
 
 ## Getting Started
-The Data Mapper project contains both tooling and runtime components.  In order to get started, you'll want to install both pieces into your enivornment:
-* [Installing the Tooling](https://github.com/fabric8io/data-mapper/wiki/Tooling-Installation)
-* [Building the Camel Component](https://github.com/fabric8io/data-mapper/wiki/Building-The-Project)
+First off, you need to [install the tooling](https://github.com/fabric8io/data-mapper/wiki/Tooling-Installation).
 
 Once that's done, you can choose your own adventure:
 * [Learn the tooling with our example application](https://github.com/fabric8io/data-mapper/wiki/Example-Application-Walkthrough)
