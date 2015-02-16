@@ -5,6 +5,13 @@ This application provides an example of a Camel application which uses the tooli
 A complete list of issues addressed in milestone 3 can be found here:
 https://github.com/fabric8io/data-mapper/issues?q=is%3Aissue+is%3Aclosed+milestone%3A%22Milestone+3%22
 
+**Important note on configuration**: this application contains two Camel configuration files:
+* META-INF/spring/camel-context.xml : Spring-based configuration of a Camel application
+* OSGI-INF/blueprint/camel-blueprint.xml : OSGi Blueprint-based configuration of a Camel application
+
+Why two configuration files?  We want to demonstrate that the mapper works with both types of configuration.  If you want to use Spring, then select the Spring configuration in the Data Mapping wizard.  Once you are done with your mapping, you can test it out using ``mvn camel:run``.  If you want to deploy the application to Karaf, then reference the OSGi Blueprint configuration in the Data Mapping wizard and deploy using the features.xml present in the project.
+
+
 ####Running the App
 To build this project use
 ```
