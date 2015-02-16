@@ -4,16 +4,13 @@
    <extension
          point="org.eclipse.ui.newWizards">
       <wizard
-            class="org.jboss.mapper.eclipse.DozerMappingWizard"
-            icon="icons/transform16.png"
-            id="org.jboss.mapper.eclipse.dozer-mapping-wizard"
-            name="%dozer-mapping-wizard.name">
-      </wizard>
-      <wizard
             class="org.jboss.mapper.eclipse.NewTransformationWizard"
             icon="icons/transform16.png"
             id="org.jboss.mapper.eclipse.data-mapping-wizard"
             name="%data-mapping-wizard.name">
+         <description>
+            %data-mapping-wizard.description
+         </description>
       </wizard>
       <primaryWizard
             id="org.jboss.mapper.eclipse.data-mapping-wizard">
