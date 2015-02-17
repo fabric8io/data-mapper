@@ -53,7 +53,6 @@ import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.eclipse.NewTransformationWizard.Model;
 import org.jboss.mapper.eclipse.NewTransformationWizard.ModelType;
 import org.jboss.mapper.eclipse.util.JavaUtil;
-import org.jboss.mapper.eclipse.util.SWTValueUpdater;
 import org.jboss.mapper.eclipse.util.Util;
 
 class NewTransformationWizardPage extends WizardPage {
@@ -222,6 +221,7 @@ class NewTransformationWizardPage extends WizardPage {
         camelFilePathText.setLayoutData( GridDataFactory.swtDefaults().span( 1, 1 ).grab( true, false )
                                                .align( SWT.FILL, SWT.CENTER ).create() );
         camelFilePathText.setToolTipText( label.getToolTipText() );
+        
         final Button camelPathButton = new Button( page, SWT.NONE );
         camelPathButton.setText("...");
         camelPathButton.setToolTipText("Browse to select an available Camel file.");
@@ -336,32 +336,43 @@ class NewTransformationWizardPage extends WizardPage {
         ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT );
 
         // Bind camel file path widget to UI model
-        org.eclipse.core.databinding.Binding camelFilePathBinding = _context.bindValue(
-            SWTObservables.observeText(camelFilePathText, new int[] {SWT.Modify }),
-            BeanProperties.value( Model.class, "camelFilePath" ).observe( _model ),
-            new UpdateValueStrategy(UpdateValueStrategy.POLICY_CONVERT).
-                setBeforeSetValidator(
-                    new IValidator() {
-                    @Override
-                    public IStatus validate( Object value ) {
-                        if (value == null || value.toString().trim().isEmpty()) {
-                            return ValidationStatus.error( 
-                                    "The Camel file path must be supplied" );
-                        }
-                        if (value != null && !(value.toString().trim().isEmpty())) {
-                            try {
-                                CamelConfigBuilder.loadConfig( 
-                                        new File( _model.getProject().getFile((String) value).getLocationURI() ) );
-                            } catch ( final Exception e ) {
-                                return ValidationStatus.error( 
-                                        "The Camel file path must refer to a valid Camel file" );
-                            }
-                        }
-                        return ValidationStatus.ok();
+        widgetValue = WidgetProperties.text( SWT.Modify ).observe( camelFilePathText );
+        modelValue = BeanProperties.value( Model.class, "camelFilePath" ).observe( _model );
+        strategy = new UpdateValueStrategy();
+        strategy.setBeforeSetValidator( new IValidator() {
+                @Override
+                public IStatus validate( Object value ) {
+                    if (value == null || value.toString().trim().isEmpty()) {
+                        return ValidationStatus.error( 
+                                "The Camel file path must be supplied" );
                     }
-            }), null);
-        ControlDecorationSupport.create(
-                SWTValueUpdater.attach(camelFilePathBinding), SWT.TOP | SWT.LEFT);
+                    if (value != null && !(value.toString().trim().isEmpty())) {
+                        File testFile = null;
+                        try {
+                            String path = (String) value;
+                            testFile = new File( _model.getProject().getFile(path).getLocationURI()) ;
+                            if (!testFile.exists()) {
+                                path = NewTransformationWizard.RESOURCES_PATH + path;
+                                testFile = new File( _model.getProject().getFile(path).getLocationURI()) ;
+                                if (!testFile.exists()) {
+                                    return ValidationStatus.error( 
+                                            "The Camel file path must be a valid file location" );
+                                }
+                            }
+                        } catch (final Exception e) {
+                            
+                        }
+                        try {
+                            CamelConfigBuilder.loadConfig( testFile );
+                        } catch ( final Exception e ) {
+                            return ValidationStatus.error( 
+                                    "The Camel file path must refer to a valid Camel file" );
+                        }
+                    }
+                    return ValidationStatus.ok();
+                }
+        });
+        ControlDecorationSupport.create( _context.bindValue( widgetValue, modelValue, strategy, null ), SWT.LEFT | SWT.TOP );
 
         final ControlDecorationUpdater sourceUpdator = new ControlDecorationUpdater();
         final ControlDecorationUpdater targetUpdator = new ControlDecorationUpdater();
