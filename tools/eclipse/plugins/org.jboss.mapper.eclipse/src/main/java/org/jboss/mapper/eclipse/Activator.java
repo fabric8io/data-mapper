@@ -3,7 +3,7 @@ package org.jboss.mapper.eclipse;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -16,14 +16,12 @@ public class Activator extends AbstractUIPlugin {
     private static Activator plugin;
 
     /**
-     * @param shell
      * @param e
      */
-    public static void error( final Shell shell,
-                              final Throwable e ) {
+    public static void error( final Throwable e ) {
         final Status status =
             new Status( Status.ERROR, plugin.getBundle().getSymbolicName(), "Unexpected error: " + e.getMessage(), e );
-        ErrorDialog.openError( shell, "Error", status.getMessage(), status );
+        ErrorDialog.openError( Display.getCurrent().getActiveShell(), "Error", status.getMessage(), status );
         plugin.getLog().log( status );
     }
 

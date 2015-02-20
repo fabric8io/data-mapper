@@ -1,15 +1,15 @@
-/******************************************************************************* 
- * Copyright (c) 2014 Red Hat, Inc. 
- *  All rights reserved. 
- * This program is made available under the terms of the 
- * Eclipse Public License v1.0 which accompanies this distribution, 
- * and is available at http://www.eclipse.org/legal/epl-v10.html 
- * 
- * Contributors: 
- * Red Hat, Inc. - initial API and implementation 
+/*******************************************************************************
+ * Copyright (c) 2014 Red Hat, Inc.
+ *  All rights reserved.
+ * This program is made available under the terms of the
+ * Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Red Hat, Inc. - initial API and implementation
  *
  ******************************************************************************/
-package org.jboss.mapper.eclipse.util;
+package org.jboss.mapper.eclipse.internal.util;
 
 import org.eclipse.core.databinding.Binding;
 import org.eclipse.core.databinding.observable.DisposeEvent;
@@ -43,10 +43,11 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
 
     /**
      * Attach a value updater to the binding.
-     * 
+     *
      * @param binding the binding to attach to.
      * @return the binding, useful for chaining.
      */
+    @SuppressWarnings( "unused" )
     public static Binding attach(final Binding binding) {
         new SWTValueUpdater(binding);
         return binding;
@@ -82,6 +83,11 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
         ((IObservableValue) _target).addValueChangeListener(this);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.widgets.Event)
+     */
     @Override
     public void handleEvent(Event event) {
         if (_updating) {
@@ -130,6 +136,11 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
 
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.eclipse.core.databinding.observable.value.IValueChangeListener#handleValueChange(org.eclipse.core.databinding.observable.value.ValueChangeEvent)
+     */
     @Override
     public void handleValueChange(ValueChangeEvent event) {
         if (_updating) {
@@ -138,6 +149,11 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
         _dirty = true;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.eclipse.core.databinding.observable.IDisposeListener#handleDispose(org.eclipse.core.databinding.observable.DisposeEvent)
+     */
     @Override
     public void handleDispose(DisposeEvent event) {
         dispose();

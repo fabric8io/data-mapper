@@ -40,7 +40,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.dialogs.SelectionDialog;
 import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.eclipse.Activator;
-import org.jboss.mapper.eclipse.util.JavaUtil;
+import org.jboss.mapper.eclipse.internal.util.JavaUtil;
 import org.jboss.mapper.test.TestGenerator;
 
 /**
@@ -123,7 +123,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                 browsePackage.addSelectionListener(new SelectionListener(){
 
                     @Override
-                    public void widgetSelected(SelectionEvent e) {
+                    public void widgetSelected(SelectionEvent event) {
                         if (javaProject != null) {
                             try {
                                 SelectionDialog dialog =
@@ -133,8 +133,8 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                                     testClassPackageNameText.setText(result.getElementName());
                                     packageName = result.getElementName();
                                 }
-                            } catch (JavaModelException e1) {
-                                Activator.error( getShell(), e1 );
+                            } catch (JavaModelException e) {
+                                Activator.error( e );
                             }
                         }
                     }
@@ -231,7 +231,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
             if (findCamelContext != null) {
                 dozerConfigFile = (IFile) findCamelContext;
             } else {
-                Activator.error( getShell(), new Throwable("Can't find camel context file."));
+                Activator.error( new Throwable("Can't find camel context file."));
             }
         }
         if (project != null) {
@@ -242,7 +242,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
             try {
                 builder = CamelConfigBuilder.loadConfig(file);
             } catch (Exception e) {
-                Activator.error( getShell(), e );
+                Activator.error( e );
             }
         }
         if (javaProject != null) {
@@ -277,7 +277,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                 project.refreshLocal(IProject.DEPTH_INFINITE, new NullProgressMonitor());
                 return true;
             } catch (Exception e) {
-                Activator.error( getShell(), e );
+                Activator.error( e );
             }
         }
 

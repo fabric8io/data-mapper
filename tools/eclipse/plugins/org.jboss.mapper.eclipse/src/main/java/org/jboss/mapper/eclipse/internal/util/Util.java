@@ -1,4 +1,4 @@
-package org.jboss.mapper.eclipse.util;
+package org.jboss.mapper.eclipse.internal.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,26 +7,74 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ui.JavaElementLabelProvider;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.window.Window;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.jboss.mapper.eclipse.Activator;
-import org.jboss.mapper.eclipse.dialogs.ClasspathResourceSelectionDialog;
 
 /**
  *
  */
 public class Util {
+
+    /**
+     *
+     */
+    public static final String MAIN_PATH = "src/main/";
+
+    /**
+     *
+     */
+    public static final String RESOURCES_PATH = MAIN_PATH + "resources/";
+
+    /**
+     *
+     */
+    public static final Image ADD_IMAGE = PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_OBJ_ADD );
+
+    /**
+     *
+     */
+    public static final Image ADD_OPERATION_IMAGE = Activator.imageDescriptor( "addOperation16.gif" ).createImage();
+
+    /**
+     *
+     */
+    public static final ImageDescriptor ADD_OVERLAY_IMAGE_DESCRIPTOR = Activator.imageDescriptor( "addOverlay.gif" );
+
+    /**
+     *
+     */
+    public static final Image CHANGE_IMAGE = Activator.imageDescriptor( "change16.gif" ).createImage();
+
+    /**
+     *
+     */
+    public static final Image DELETE_IMAGE = PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_ETOOL_DELETE );
+
+    /**
+     *
+     */
+    public static final Image LITERAL_IMAGE = Activator.imageDescriptor( "literal16.gif" ).createImage();
+
+    /**
+     *
+     */
+    public static final Image RIGHT_ARROW_IMAGE = Activator.imageDescriptor( "rightArrow16.gif" ).createImage();
 
     private static void populateClasses( final Shell shell,
                                          final IParent parent,
@@ -39,13 +87,13 @@ public class Util {
                     if ( type.isClass() && type.isStructureKnown() && !type.isAnonymous() && !type.isLocal()
                          && !Flags.isAbstract( type.getFlags() ) && Flags.isPublic( type.getFlags() )
                          && ( filter == null || filter.accept( type ) ) ) types.add( type );
-                } else if ( element instanceof IParent && !element.getElementName().contains( "src/test" )
+                } else if ( element instanceof IParent && !element.getPath().toString().contains( "/test/" )
                             && ( !( element instanceof IPackageFragmentRoot )
-                                 || !( ( IPackageFragmentRoot ) element ).isExternal() ) )
+                            || !( ( IPackageFragmentRoot ) element ).isExternal() ) )
                     populateClasses( shell, ( IParent ) element, types, filter );
             }
         } catch ( final JavaModelException e ) {
-            Activator.error( shell, e );
+            Activator.error( e );
         }
     }
 
@@ -54,12 +102,11 @@ public class Util {
                                            final List< IResource > resources ) {
         try {
             for ( final IResource resource : container.members() ) {
-                if ( resource instanceof IContainer ) 
-                    populateResources( shell, ( IContainer ) resource, resources );
+                if ( resource instanceof IContainer ) populateResources( shell, ( IContainer ) resource, resources );
                 else resources.add( resource );
             }
         } catch ( final Exception e ) {
-            Activator.error( shell, e );
+            Activator.error( e );
         }
     }
 
@@ -123,9 +170,37 @@ public class Util {
         final List< IResource > resources = new ArrayList<>();
         populateResources( shell, project, resources );
         dlg.setElements( resources.toArray() );
-        if ( dlg.open() == Window.OK ) 
+        if ( dlg.open() == Window.OK )
             return ( ( IFile ) dlg.getFirstResult() ).getProjectRelativePath().toString();
         return null;
+    }
+
+    /**
+     * @param shell
+     * @param extension
+     * @param project
+     * @return The selected resource
+     */
+    public static IResource selectResourceFromWorkspace( final Shell shell,
+                                                         final String extension,
+                                                         final IProject project ) {
+        IJavaProject javaProject = null;
+        if ( project != null ) {
+            javaProject = JavaCore.create( project );
+        }
+        ClasspathResourceSelectionDialog dialog = null;
+        if ( javaProject == null ) {
+            dialog = new ClasspathResourceSelectionDialog( shell, ResourcesPlugin.getWorkspace().getRoot(), "xml" ); //$NON-NLS-1$
+        } else {
+            dialog = new ClasspathResourceSelectionDialog( shell, javaProject.getProject(), "xml" ); //$NON-NLS-1$
+        }
+        dialog.setTitle( "Select Camel XML File from Project" );
+        dialog.setInitialPattern( "*.xml" ); //$NON-NLS-1$
+        dialog.open();
+        final Object[] result = dialog.getResult();
+        if ( result == null || result.length == 0 || !( result[ 0 ] instanceof IFile ) ) { return null; }
+        final IFile resource = ( IFile ) result[ 0 ];
+        return resource;
     }
 
     private Util() {}
@@ -142,28 +217,5 @@ public class Util {
          *         {@link Util#selectClass(Shell, IProject, Filter)}
          */
         boolean accept( IType type );
-    }
-
-    public static IResource selectResourceFromWorkspace(Shell shell, final String extension,
-            final IProject project) {
-        IJavaProject javaProject = null;
-        if (project != null) {
-            javaProject = JavaCore.create(project);
-        }
-        ClasspathResourceSelectionDialog dialog = null;
-        if (javaProject == null) {
-            dialog = new ClasspathResourceSelectionDialog(shell, ResourcesPlugin.getWorkspace().getRoot(), "xml"); //$NON-NLS-1$
-        } else {
-            dialog = new ClasspathResourceSelectionDialog(shell, javaProject.getProject(), "xml"); //$NON-NLS-1$
-        }
-        dialog.setTitle("Select Camel XML File from Project");
-        dialog.setInitialPattern("*.xml"); //$NON-NLS-1$
-        dialog.open();
-        Object[] result = dialog.getResult();
-        if (result == null || result.length == 0 || !(result[0] instanceof IFile)) {
-            return null;
-        }
-        IFile resource = (IFile) result[0];
-        return resource;
     }
 }

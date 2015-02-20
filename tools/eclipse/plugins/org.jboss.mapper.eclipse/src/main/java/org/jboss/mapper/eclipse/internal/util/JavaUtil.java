@@ -8,7 +8,7 @@
  * Contributors:
  *     JBoss by Red Hat - Initial implementation.
  ************************************************************************************/
-package org.jboss.mapper.eclipse.util;
+package org.jboss.mapper.eclipse.internal.util;
 
 import java.io.File;
 import java.net.URL;

@@ -1,6 +1,7 @@
-package org.jboss.mapper.eclipse;
+package org.jboss.mapper.eclipse.internal.editor;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
@@ -27,12 +28,18 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import org.jboss.mapper.Literal;
-import org.jboss.mapper.MapperConfiguration;
 
-class LiteralsViewer extends Composite {
+/**
+ *
+ */
+public final class LiteralsViewer extends Composite {
 
-    LiteralsViewer( Composite parent,
-                     final MapperConfiguration mapperConfig ) {
+    /**
+     * @param parent
+     * @param literals
+     */
+    public LiteralsViewer( Composite parent,
+                     final List< Literal > literals ) {
         super( parent, SWT.NONE );
 
         setLayout( GridLayoutFactory.fillDefaults().create() );
@@ -101,8 +108,9 @@ class LiteralsViewer extends Composite {
                 }
             }
         } );
-        // Initialize literals from config
-        for ( Literal literal : mapperConfig.getLiterals() ) {
+
+        // Populate
+        for ( Literal literal : literals ) {
             listViewer.add( literal.getValue());
         }
     }

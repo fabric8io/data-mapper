@@ -1,15 +1,9 @@
-package org.jboss.mapper.eclipse;
+package org.jboss.mapper.eclipse.wizards;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.StringCharacterIterator;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -34,9 +28,14 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.jboss.mapper.MapperConfiguration;
-import org.jboss.mapper.TransformType;
-import org.jboss.mapper.camel.CamelConfigBuilder;
 import org.jboss.mapper.dozer.DozerMapperConfiguration;
+import org.jboss.mapper.eclipse.Activator;
+import org.jboss.mapper.eclipse.DozerConfigContentTypeDescriber;
+import org.jboss.mapper.eclipse.TransformationEditor;
+import org.jboss.mapper.eclipse.internal.util.Util;
+import org.jboss.mapper.eclipse.internal.wizards.FirstPage;
+import org.jboss.mapper.eclipse.internal.wizards.Model;
+import org.jboss.mapper.eclipse.internal.wizards.ModelType;
 import org.jboss.mapper.model.json.JsonModelGenerator;
 import org.jboss.mapper.model.xml.XmlModelGenerator;
 
@@ -49,11 +48,8 @@ import com.sun.codemodel.JPackage;
  */
 public class NewTransformationWizard extends Wizard implements INewWizard {
 
-    private static final String MAIN_PATH = "src/main/";
-    private static final String JAVA_PATH = MAIN_PATH + "java/";
-    public static final String RESOURCES_PATH = MAIN_PATH + "resources/";
-    private static final String CAMEL_CONFIG_PATH = RESOURCES_PATH + "META-INF/spring/camel-context.xml";
-    private static final String DEFAULT_FILE_PATH = "transformation.xml";
+    private static final String JAVA_PATH = Util.MAIN_PATH + "java/";
+    private static final String CAMEL_CONFIG_PATH = Util.RESOURCES_PATH + "META-INF/spring/camel-context.xml";
     private static final String OBJECT_FACTORY_NAME = "ObjectFactory";
 
     final Model uiModel = new Model();
@@ -62,7 +58,7 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
      *
      */
     public NewTransformationWizard() {
-        addPage( new NewTransformationWizardPage( uiModel ) );
+        addPage( new FirstPage( uiModel ) );
     }
 
     private String generateModel( final String filePath,
@@ -183,7 +179,7 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
     @Override
     public boolean performFinish() {
         // Save transformation file
-        final IFile file = uiModel.getProject().getFile( RESOURCES_PATH + uiModel.getFilePath() );
+        final IFile file = uiModel.getProject().getFile( Util.RESOURCES_PATH + uiModel.getFilePath() );
         if ( file.exists() &&
              !MessageDialog.openConfirm( getShell(),
                                          "Confirm",
@@ -198,17 +194,18 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
                 final String sourceClassName = generateModel( uiModel.getSourceFilePath(), uiModel.getSourceType() );
                 final String targetClassName = generateModel( uiModel.getTargetFilePath(), uiModel.getTargetType() );
                 // Update Camel config
-                final IPath resourcesPath = uiModel.getProject().getFolder( RESOURCES_PATH ).getFullPath();
+                final IPath resourcesPath = uiModel.getProject().getFolder( Util.RESOURCES_PATH ).getFullPath();
                 uiModel.camelConfigBuilder.addTransformation( uiModel.getId(),
                                                               file.getFullPath().makeRelativeTo( resourcesPath ).toString(),
                                                               uiModel.getSourceType().transformType, sourceClassName,
                                                               uiModel.getTargetType().transformType, targetClassName );
                 try ( FileOutputStream camelConfigStream =
-                    new FileOutputStream( 
-                            new File( uiModel.getProject().getFile( RESOURCES_PATH + uiModel.camelFilePath ).getLocationURI() ) ) ) {
+                    new FileOutputStream( new File( uiModel.getProject()
+                                                           .getFile( Util.RESOURCES_PATH + uiModel.getCamelFilePath() )
+                                                           .getLocationURI() ) ) ) {
                     uiModel.camelConfigBuilder.saveConfig( camelConfigStream );
                 } catch ( final Exception e ) {
-                    Activator.error( getShell(), e );
+                    Activator.error( e );
                     return false;
                 }
                 dozerConfigBuilder.addClassMapping( sourceClassName, targetClassName );
@@ -218,9 +215,7 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
             // Ensure build of Java classes has completed
             try {
                 Job.getJobManager().join( ResourcesPlugin.FAMILY_AUTO_BUILD, null );
-            } catch ( final InterruptedException ie ) {
-                // just keep on chugging
-            }
+            } catch ( final InterruptedException ignored ) {}
 
             // Open mapping editor
             final IEditorDescriptor desc =
@@ -230,13 +225,10 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
             final IEditorPart editor =
                 PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor( new FileEditorInput( file ),
                                                                                                  desc.getId() );
-            final TransformationEditor dmEditor = ( TransformationEditor ) editor;
-            final TransformationEditorMappingPage page = ( TransformationEditorMappingPage ) dmEditor.getSelectedPage();
-            page.mapper.setEndpointID( uiModel.getId() );
-            page.mapper.setCamelPath( uiModel.getCamelFilePath() );
-
+            ( ( TransformationEditor ) editor ).setCamelEndpoint( uiModel.getId(),
+                                                                  Util.RESOURCES_PATH + uiModel.getCamelFilePath() );
         } catch ( final Exception e ) {
-            Activator.error( getShell(), e );
+            Activator.error( e );
             return false;
         }
         return true;
@@ -253,197 +245,5 @@ public class NewTransformationWizard extends Wizard implements INewWizard {
             }
         }
         return null;
-    }
-
-    class Model implements PropertyChangeListener {
-
-        final List< IProject > projects = new ArrayList<>( Arrays.asList( ResourcesPlugin.getWorkspace().getRoot().getProjects() ) );
-        CamelConfigBuilder camelConfigBuilder;
-
-        private final PropertyChangeSupport changeSupport = new PropertyChangeSupport( this );
-
-        private IProject project;
-        private String id;
-        private String filePath = DEFAULT_FILE_PATH;
-        private String sourceFilePath, targetFilePath;
-        private ModelType sourceType, targetType;
-        private String camelFilePath;
-        
-        /**
-         * @param propertyName
-         * @param listener
-         */
-        public void addPropertyChangeListener( final String propertyName,
-                                               final PropertyChangeListener listener ) {
-            changeSupport.addPropertyChangeListener( propertyName, listener );
-        }
-
-        public String getCamelFilePath() {
-            return camelFilePath;
-        }
-
-        /**
-         * @return the transformation file path
-         */
-        public String getFilePath() {
-            return filePath;
-        }
-
-        /**
-         * @return the transformation ID that will be seen in the Camel editor
-         */
-        public String getId() {
-            return id;
-        }
-
-        /**
-         * @return the project in which to create the transformation
-         */
-        public IProject getProject() {
-            return project;
-        }
-
-        /**
-         * @return the source file path
-         */
-        public String getSourceFilePath() {
-            return sourceFilePath;
-        }
-
-        /**
-         * @return the source type
-         */
-        public ModelType getSourceType() {
-            return sourceType;
-        }
-
-        /**
-         * @return the target file path
-         */
-        public String getTargetFilePath() {
-            return targetFilePath;
-        }
-
-        /**
-         * @return the target type
-         */
-        public ModelType getTargetType() {
-            return targetType;
-        }
-
-        /**
-         * {@inheritDoc}
-         *
-         * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
-         */
-        @Override
-        public void propertyChange( final PropertyChangeEvent event ) {
-            changeSupport.firePropertyChange( event.getPropertyName(), event.getOldValue(), event.getNewValue() );
-        }
-
-        /**
-         * @param listener
-         */
-        public void removePropertyChangeListener( final PropertyChangeListener listener ) {
-            changeSupport.removePropertyChangeListener( listener );
-        }
-
-        public void setCamelFilePath( final String filePath ) {
-            changeSupport.firePropertyChange( "camelFilePath", this.camelFilePath, this.camelFilePath = filePath.trim() );
-            setProject( project );
-        }
-
-        /**
-         * @param filePath
-         */
-        public void setFilePath( final String filePath ) {
-            changeSupport.firePropertyChange( "filePath", this.filePath, this.filePath = filePath.trim() );
-        }
-
-        /**
-         * @param id
-         */
-        public void setId( final String id ) {
-            changeSupport.firePropertyChange( "id", this.id, this.id = id.trim() );
-        }
-
-        /**
-         * @param project
-         */
-        public void setProject( final IProject project ) {
-            try {
-                changeSupport.firePropertyChange( "project", this.project, this.project = project );
-            } catch ( final Exception e ) {
-                Activator.error( getShell(), e );
-            }
-
-            if (camelFilePath != null && !camelFilePath.trim().isEmpty()) {
-                try {
-                    IFile test = project.getFile( camelFilePath );
-                    if (!test.exists()) {
-                        test = project.getFile( RESOURCES_PATH + camelFilePath );
-                    }
-                    if (test != null && test.exists()) {
-                        File camelFile = new File( test.getLocationURI() );
-                        camelConfigBuilder = CamelConfigBuilder.loadConfig( camelFile );
-                    }
-                } catch ( final Exception e ) {
-                    // swallow
-//                    e.printStackTrace();
-                }
-            }
-        }
-
-        /**
-         * @param sourceFilePath
-         */
-        public void setSourceFilePath( final String sourceFilePath ) {
-            changeSupport.firePropertyChange( "sourceFilePath", this.sourceFilePath, this.sourceFilePath = sourceFilePath.trim() );
-        }
-
-        /**
-         * @param sourceType
-         */
-        public void setSourceType( final ModelType sourceType ) {
-            changeSupport.firePropertyChange( "sourceType", this.sourceType, this.sourceType = sourceType );
-        }
-
-        /**
-         * @param targetFilePath
-         */
-        public void setTargetFilePath( final String targetFilePath ) {
-            changeSupport.firePropertyChange( "targetFilePath", this.targetFilePath, this.targetFilePath = targetFilePath.trim() );
-        }
-
-        /**
-         * @param targetType
-         */
-        public void setTargetType( final ModelType targetType ) {
-            changeSupport.firePropertyChange( "targetType", this.targetType, this.targetType = targetType );
-        }
-    }
-
-    enum ModelType {
-
-        CLASS( "Java Class", TransformType.JAVA ),
-        JAVA( "Java Source", TransformType.JAVA ),
-        JSON( "JSON", TransformType.JSON ),
-        JSON_SCHEMA( "JSON Schema", TransformType.JSON ),
-        XML( "XML", TransformType.XML ),
-        XSD( "XSD", TransformType.XML );
-
-        final String text;
-        final TransformType transformType;
-
-        private ModelType( final String text,
-                           final TransformType transformType ) {
-            this.text = text;
-            this.transformType = transformType;
-        }
-
-        @Override
-        public String toString() {
-            return text;
-        }
     }
 }

@@ -14,19 +14,22 @@ import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.core.runtime.content.ITextContentDescriber;
 
 /**
- * 
+ *
  */
 public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
-    
-    static final String ID = "org.jboss.mapper.eclipse.dozer-config-content-type";
-    
+
+    /**
+     *
+     */
+    public static final String ID = "org.jboss.mapper.eclipse.dozer-config-content-type";
+
     private static final QualifiedName[] SUPPORTED_OPTIONS = new QualifiedName[] { IContentDescription.CHARSET };
     private static final String ROOT_ELEMENT = "<mappingsxmlns=";
     private static final String XMLNS = "http://dozer.sourceforge.net";
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.core.runtime.content.IContentDescriber#describe(java.io.InputStream,
      *      org.eclipse.core.runtime.content.IContentDescription)
      */
@@ -35,10 +38,10 @@ public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
                          final IContentDescription description ) throws IOException {
         return describe( new InputStreamReader( contents ), description );
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.core.runtime.content.ITextContentDescriber#describe(java.io.Reader,
      *      org.eclipse.core.runtime.content.IContentDescription)
      */
@@ -51,10 +54,10 @@ public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
         final int ndx = text.indexOf( ROOT_ELEMENT );
         return ndx > 0 && text.indexOf( XMLNS ) > ndx ? ITextContentDescriber.VALID : ITextContentDescriber.INVALID;
     }
-    
+
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.eclipse.core.runtime.content.IContentDescriber#getSupportedOptions()
      */
     @Override

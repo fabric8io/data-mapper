@@ -1,16 +1,15 @@
-/******************************************************************************* 
- * Copyright (c) 2015 Red Hat, Inc. 
- *  All rights reserved. 
- * This program is made available under the terms of the 
- * Eclipse Public License v1.0 which accompanies this distribution, 
- * and is available at http://www.eclipse.org/legal/epl-v10.html 
- * 
- * Contributors: 
- * Red Hat, Inc. - initial API and implementation 
+/*******************************************************************************
+ * Copyright (c) 2012-2015 Red Hat, Inc.
+ *  All rights reserved.
+ * This program is made available under the terms of the
+ * Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Red Hat, Inc. - initial API and implementation
  ******************************************************************************/
-package org.jboss.mapper.eclipse.dialogs;
+package org.jboss.mapper.eclipse.internal.util;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
@@ -24,50 +23,51 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
-import org.jboss.mapper.camel.CamelConfigBuilder;
 
 /**
- * Allows user to select a Camel resource on the project's classpath.
- * TODO - work in progress - the CamelResourceFilter implementation is VERY resource intensive
- * has to be a better way to introspect the file to see whether it's a valid camel route file or not
+ * Allows user to select a resource on the project's classpath.
+ *
+ * @author bfitzpat
+ * @author Rob Cernich
  */
-public class CamelResourceClasspathSelectionDialog extends FilteredResourcesSelectionDialog {
+class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog {
 
-    private Set<String> _fileExtensions;
-    private IJavaModel _fJavaModel;
+    Set<String> _fileExtensions;
+    IJavaModel _fJavaModel;
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
+     * @param title
      */
-    public CamelResourceClasspathSelectionDialog(Shell parentShell, IContainer container, String title) {
+    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String title) {
         this(parentShell, container, Collections.<String> emptySet(), title);
     }
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
      * @param fileExtension the type of files to display; may be null
+     * @param title
      */
-    public CamelResourceClasspathSelectionDialog(Shell parentShell, IContainer container, 
-            String fileExtension, String title) {
+    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String fileExtension, String title) {
         this(parentShell, container, fileExtension == null ? Collections.<String> emptySet() : Collections
                 .singleton(fileExtension), title);
     }
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
-     * 
+     *
      * @param parentShell the parent shell
      * @param container the root container
      * @param fileExtensions the types of files to display; may be null
+     * @param title
      */
-    public CamelResourceClasspathSelectionDialog(Shell parentShell, IContainer container, 
-            Set<String> fileExtensions, String title) {
+    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, Set<String> fileExtensions, String title) {
         super(parentShell, false, container, IResource.FILE);
         _fJavaModel = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
         _fileExtensions = fileExtensions == null ? Collections.<String> emptySet() : fileExtensions;
@@ -76,38 +76,17 @@ public class CamelResourceClasspathSelectionDialog extends FilteredResourcesSele
 
     @Override
     protected ItemsFilter createFilter() {
-        return new CamelResourceFilter();
+        return new ClasspathResourceFilter();
     }
 
-    private class CamelResourceFilter extends ResourceFilter {
+    class ClasspathResourceFilter extends ResourceFilter {
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog.
-         * ResourceFilter#matchItem(java.lang.Object)
-         */
         @Override
         public boolean matchItem(Object item) {
             IResource resource = (IResource) item;
             return super.matchItem(item)
                     && (_fileExtensions == null || _fileExtensions.isEmpty() || _fileExtensions.contains(resource
                             .getFullPath().getFileExtension())) && select(resource);
-        }
-        
-        private boolean fileIsSupportedCamel(Object item) {
-            try {
-                IResource resource = (IResource) item;
-                File testFile = new File( resource.getLocationURI() );
-                System.out.println("Testing " + testFile.toString());
-                if (testFile.exists()) {
-                    CamelConfigBuilder.loadConfig( testFile );
-                    return true;
-                }
-            } catch ( final Exception e ) {
-                // ignore
-            }
-            return false;
         }
 
         private boolean isParentOnClassPath(IJavaProject javaProject, IResource resource) {
@@ -129,7 +108,7 @@ public class CamelResourceClasspathSelectionDialog extends FilteredResourcesSele
          * <code>FilteredResourcesSelectionDialog</code> result of this method
          * must be combined with the <code>matchItem</code> method from super
          * class (<code>ResourceFilter</code>).
-         * 
+         *
          * @param resource A resource
          * @return <code>true</code> if item matches against given conditions
          *         <code>false</code> otherwise
@@ -138,25 +117,16 @@ public class CamelResourceClasspathSelectionDialog extends FilteredResourcesSele
             IProject project = resource.getProject();
             IJavaProject javaProject = JavaCore.create(project);
             try {
-                boolean isSupported = fileIsSupportedCamel(resource);
-                return (javaProject != null && isParentOnClassPath(javaProject, resource) && isSupported)
-                        || (project.getNature(JavaCore.NATURE_ID) != null && _fJavaModel.contains(resource) && isSupported);
+                return (javaProject != null && isParentOnClassPath(javaProject, resource))
+                        || (project.getNature(JavaCore.NATURE_ID) != null && _fJavaModel.contains(resource));
             } catch (CoreException e) {
                 return false;
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog.
-         * ResourceFilter
-         * #equalsFilter(org.eclipse.ui.dialogs.FilteredItemsSelectionDialog
-         * .ItemsFilter)
-         */
         @Override
         public boolean equalsFilter(ItemsFilter filter) {
-            return filter instanceof CamelResourceFilter && super.equalsFilter(filter);
+            return filter instanceof ClasspathResourceFilter && super.equalsFilter(filter);
         }
     }
 
