@@ -227,6 +227,7 @@ final class Mapping {
                 }
                 sourceText.setText( model.getName() );
                 sourceText.setToolTipText( fullyQualifiedName( model ) );
+                editor.refreshSourceModelViewer();
                 return newMapping;
             }
 
@@ -247,6 +248,7 @@ final class Mapping {
                 final MappingOperation< ?, ? > newMapping = editor.map( mapping.getSource(), dragModel );
                 targetText.setText( dragModel.getName() );
                 targetText.setToolTipText( fullyQualifiedName( dragModel ) );
+                editor.refreshTargetModelViewer();
                 return newMapping;
             }
         } );

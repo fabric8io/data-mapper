@@ -208,6 +208,8 @@ public class TransformationEditor extends EditorPart {
     void dropOnTarget( final Object object,
                        final Model targetModel ) throws Exception {
         mappingsViewer.createMapping( this, map( object, targetModel ) );
+        refreshSourceModelViewer();
+        refreshTargetModelViewer();
     }
 
     /**
@@ -303,6 +305,20 @@ public class TransformationEditor extends EditorPart {
     }
 
     /**
+     *
+     */
+    public void refreshSourceModelViewer() {
+        sourceModelTabFolder.refresh();
+    }
+
+    /**
+     *
+     */
+    public void refreshTargetModelViewer() {
+        targetModelTabFolder.refresh();
+    }
+
+    /**
      * @throws Exception
      */
     public void save() throws Exception {
@@ -364,6 +380,8 @@ public class TransformationEditor extends EditorPart {
      */
     public void unmap( final MappingOperation< ?, ? > mapping ) {
         config.removeMapping( mapping );
+        refreshSourceModelViewer();
+        refreshTargetModelViewer();
     }
 
     void updateHelpText( final Text helpText ) {

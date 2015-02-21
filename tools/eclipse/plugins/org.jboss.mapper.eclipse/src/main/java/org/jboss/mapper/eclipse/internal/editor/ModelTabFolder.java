@@ -112,7 +112,7 @@ public class ModelTabFolder extends CTabFolder {
             model = editor.changeModel( model, name );
             tab.setText( title + ": " + model.getName() );
             modelViewer.rootModel = model;
-            modelViewer.treeViewer.refresh();
+            refresh();
             layout();
         } catch ( final Exception e ) {
             Activator.error( e );
@@ -161,6 +161,13 @@ public class ModelTabFolder extends CTabFolder {
             if ( resource instanceof IFolder ) findClasses( ( IFolder ) resource, classes );
             else if ( resource.getName().endsWith( ".class" ) ) classes.add( resource );
         }
+    }
+
+    /**
+     *
+     */
+    public void refresh() {
+        modelViewer.treeViewer.refresh();
     }
 
     /**
