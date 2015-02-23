@@ -1,3 +1,12 @@
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse.wizards;
 
 import java.io.File;
@@ -62,11 +71,12 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
      *
      */
     public NewTransformationTestWizard() {
-        addPage( constructMainPage() );
+        addPage(constructMainPage());
     }
 
     private IWizardPage constructMainPage() {
-        return new WizardPage( "New Transformation Test", "New Transformation Test", Activator.imageDescriptor( "transform.png" ) ) {
+        return new WizardPage("New Transformation Test", "New Transformation Test",
+                Activator.imageDescriptor("transform.png")) {
 
             protected Text testClassNameText;
             protected Text testClassPackageNameText;
@@ -78,49 +88,50 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
              * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
              */
             @Override
-            public void createControl( final Composite parent ) {
-                setDescription( "Specify the transformation endpoint to test, then provide the class name and java package for the generated test class." );
-                final Composite page = new Composite( parent, SWT.NONE );
-                setControl( page );
-                page.setLayout( GridLayoutFactory.swtDefaults().spacing( 0, 5 ).numColumns( 3 ).create() );
-                Label label = new Label( page, SWT.NONE );
-                label.setText( "Transformation ID:" );
-                label.setToolTipText( "Transformation endpoint to test" );
-                transformationIDViewer = new ComboViewer( new Combo( page, SWT.READ_ONLY ) );
-                transformationIDViewer.getCombo().setLayoutData( GridDataFactory.swtDefaults()
-                        .grab( true, false )
-                        .span( 2, 1 )
-                        .align( SWT.FILL, SWT.CENTER )
-                        .create() );
+            public void createControl(final Composite parent) {
+                setDescription("Specify the transformation endpoint to test, " 
+                        + "then provide the class name and java package for the generated test class.");
+                final Composite page = new Composite(parent, SWT.NONE);
+                setControl(page);
+                page.setLayout(GridLayoutFactory.swtDefaults().spacing(0, 5).numColumns(3).create());
+                Label label = new Label(page, SWT.NONE);
+                label.setText("Transformation ID:");
+                label.setToolTipText("Transformation endpoint to test");
+                transformationIDViewer = new ComboViewer(new Combo(page, SWT.READ_ONLY));
+                transformationIDViewer.getCombo().setLayoutData(GridDataFactory.swtDefaults()
+                        .grab(true, false)
+                        .span(2, 1)
+                        .align(SWT.FILL, SWT.CENTER)
+                        .create());
 
                 new Label(page, SWT.NONE).setText("Test Class Name:");
-                label.setToolTipText( "Name of the generated test class" );
+                label.setToolTipText("Name of the generated test class");
                 testClassNameText = new Text(page, SWT.BORDER);
-                testClassNameText.setLayoutData( GridDataFactory.swtDefaults()
-                        .grab( true, false )
-                        .span( 2, 1 )
-                        .align( SWT.FILL, SWT.CENTER )
-                        .create() );
-                testClassNameText.addModifyListener(new ModifyListener(){
+                testClassNameText.setLayoutData(GridDataFactory.swtDefaults()
+                        .grab(true, false)
+                        .span(2, 1)
+                        .align(SWT.FILL, SWT.CENTER)
+                        .create());
+                testClassNameText.addModifyListener(new ModifyListener() {
                     @Override
-                    public void modifyText(ModifyEvent e) {
+                    public void modifyText(ModifyEvent event) {
                         className = testClassNameText.getText().trim();
                         validatePage();
                     }
                 });
 
                 new Label(page, SWT.NONE).setText("Test Class Package:");
-                label.setToolTipText( "Package where the test class is to be generated" );
+                label.setToolTipText("Package where the test class is to be generated");
                 testClassPackageNameText = new Text(page, SWT.BORDER);
-                testClassPackageNameText.setLayoutData( GridDataFactory.swtDefaults()
-                        .grab( true, false )
-                        .align( SWT.FILL, SWT.CENTER )
-                        .create() );
+                testClassPackageNameText.setLayoutData(GridDataFactory.swtDefaults()
+                        .grab(true, false)
+                        .align(SWT.FILL, SWT.CENTER)
+                        .create());
                 Button browsePackage = new Button(page, SWT.PUSH);
                 browsePackage.setText("...");
                 browsePackage.setLayoutData(new GridData());
                 browsePackage.setToolTipText("Select existing package.");
-                browsePackage.addSelectionListener(new SelectionListener(){
+                browsePackage.addSelectionListener(new SelectionListener() {
 
                     @Override
                     public void widgetSelected(SelectionEvent event) {
@@ -129,70 +140,76 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                                 SelectionDialog dialog =
                                         JavaUI.createPackageDialog(getShell(), javaProject, 0);
                                 if (dialog.open() == SelectionDialog.OK) {
-                                    IPackageFragment result = (IPackageFragment) dialog.getResult()[0];
+                                    IPackageFragment result =
+                                            (IPackageFragment) dialog.getResult()[0];
                                     testClassPackageNameText.setText(result.getElementName());
                                     packageName = result.getElementName();
                                 }
                             } catch (JavaModelException e) {
-                                Activator.error( e );
+                                Activator.error(e);
                             }
                         }
                     }
 
                     @Override
-                    public void widgetDefaultSelected(SelectionEvent e) {
+                    public void widgetDefaultSelected(SelectionEvent event) {
                         // empty
                     }
                 });
-                testClassPackageNameText.addModifyListener(new ModifyListener(){
+                testClassPackageNameText.addModifyListener(new ModifyListener() {
                     @Override
-                    public void modifyText(ModifyEvent e) {
+                    public void modifyText(ModifyEvent event) {
                         packageName = testClassPackageNameText.getText().trim();
                         validatePage();
                     }
                 });
-                if (packageName !=  null) {
+                if (packageName != null) {
                     testClassPackageNameText.setText(packageName);
                 }
 
-                transformationIDViewer.setLabelProvider( new LabelProvider() {
+                transformationIDViewer.setLabelProvider(new LabelProvider() {
                     @Override
-                    public String getText( final Object element ) {
-                        return ( ( String ) element );
+                    public String getText(final Object element) {
+                        return ((String) element);
                     }
-                } );
+                });
                 if (builder != null) {
-                    transformationIDViewer.add( builder.getTransformEndpointIds().toArray() );
+                    transformationIDViewer.add(builder.getTransformEndpointIds().toArray());
                 }
 
-                transformationIDViewer.getCombo().addSelectionListener( new SelectionAdapter() {
+                transformationIDViewer.getCombo().addSelectionListener(new SelectionAdapter() {
 
                     @Override
-                    public void widgetSelected( final SelectionEvent event ) {
-                        transformID = (String) ( ( IStructuredSelection ) transformationIDViewer.getSelection() ).getFirstElement();
+                    public void widgetSelected(final SelectionEvent event) {
+                        transformID =
+                                (String) ((IStructuredSelection) transformationIDViewer
+                                        .getSelection()).getFirstElement();
                         validatePage();
                     }
-                } );
+                });
                 validatePage();
             }
 
             void validatePage() {
-                if (!transformationIDViewer.getSelection().isEmpty() &&
-                        !testClassNameText.getText().trim().isEmpty() &&
-                        !testClassPackageNameText.getText().trim().isEmpty()) {
+                if (!transformationIDViewer.getSelection().isEmpty()
+                        && !testClassNameText.getText().trim().isEmpty()
+                        && !testClassPackageNameText.getText().trim().isEmpty()) {
                     if (javaProject != null) {
                         IStatus packageOK = JavaUtil.validatePackageName(packageName, javaProject);
                         if (!packageOK.isOK()) {
                             setErrorMessage(packageOK.getMessage());
                         } else {
-                            IStatus classNameOK = JavaUtil.validateClassFileName(className, javaProject);
+                            IStatus classNameOK =
+                                    JavaUtil.validateClassFileName(className, javaProject);
                             if (!classNameOK.isOK()) {
                                 setErrorMessage(classNameOK.getMessage());
                             } else {
                                 try {
-                                    IType foundType = javaProject.findType(packageName + "." + className);
+                                    IType foundType =
+                                            javaProject.findType(packageName + "." + className);
                                     if (foundType != null) {
-                                        setErrorMessage("A generated test class with that name and package already exists.");
+                                        setErrorMessage("A generated test class with that "
+                                                + "name and package already exists.");
                                     } else {
                                         setErrorMessage(null);
                                     }
@@ -202,10 +219,10 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                             }
                         }
                     }
-                    setPageComplete( true );
+                    setPageComplete(true);
                     return;
                 }
-                setPageComplete( false );
+                setPageComplete(false);
             }
         };
     }
@@ -213,12 +230,13 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
     /**
      * {@inheritDoc}
      *
-     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
+     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
+     *      org.eclipse.jface.viewers.IStructuredSelection)
      */
     @Override
     public void init(IWorkbench workbench, IStructuredSelection selection) {
         // what are we passing in? assume we're right-clicking on the dozer file
-        if ( selection.size() != 1 ) {
+        if (selection.size() != 1) {
             return;
         }
         Object selectedObject = selection.getFirstElement();
@@ -227,27 +245,28 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
             project = dozerConfigFile.getProject();
         } else if (selectedObject != null && selectedObject instanceof IProject) {
             project = (IProject) selectedObject;
-            IResource findCamelContext = project.findMember("src/main/resources/META-INF/spring/camel-context.xml");
+            IResource findCamelContext =
+                    project.findMember("src/main/resources/META-INF/spring/camel-context.xml");
             if (findCamelContext != null) {
                 dozerConfigFile = (IFile) findCamelContext;
             } else {
-                Activator.error( new Throwable("Can't find camel context file."));
+                Activator.error(new Throwable("Can't find camel context file."));
             }
         }
         if (project != null) {
             javaProject = JavaCore.create(project);
         }
-        if ( dozerConfigFile != null ) {
-            File file = new File( dozerConfigFile.getLocationURI() );
+        if (dozerConfigFile != null) {
+            File file = new File(dozerConfigFile.getLocationURI());
             try {
                 builder = CamelConfigBuilder.loadConfig(file);
             } catch (Exception e) {
-                Activator.error( e );
+                Activator.error(e);
             }
         }
         if (javaProject != null) {
             IJavaElement element = JavaUtil.getInitialPackageForProject(javaProject);
-            if (element !=  null) {
+            if (element != null) {
                 packageName = element.getElementName();
             }
         }
@@ -277,7 +296,7 @@ public class NewTransformationTestWizard extends Wizard implements INewWizard {
                 project.refreshLocal(IProject.DEPTH_INFINITE, new NullProgressMonitor());
                 return true;
             } catch (Exception e) {
-                Activator.error( e );
+                Activator.error(e);
             }
         }
 

@@ -1,3 +1,12 @@
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse.internal.editor;
 
 import java.util.Iterator;
@@ -38,80 +47,90 @@ public final class LiteralsViewer extends Composite {
      * @param parent
      * @param literals
      */
-    public LiteralsViewer( Composite parent,
-                     final List< Literal > literals ) {
-        super( parent, SWT.NONE );
+    public LiteralsViewer(Composite parent,
+            final List<Literal> literals) {
+        super(parent, SWT.NONE);
 
-        setLayout( GridLayoutFactory.fillDefaults().create() );
-        setBackground( parent.getBackground() );
+        setLayout(GridLayoutFactory.fillDefaults().create());
+        setBackground(parent.getBackground());
 
-        final ToolBar toolBar = new ToolBar( this, SWT.NONE );
-        final ToolItem addButton = new ToolItem( toolBar, SWT.PUSH );
-        addButton.setImage( PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_OBJ_ADD ) );
-        addButton.setToolTipText( "Add a new literal" );
-        final ToolItem deleteButton = new ToolItem( toolBar, SWT.PUSH );
-        deleteButton.setImage( PlatformUI.getWorkbench().getSharedImages().getImage( ISharedImages.IMG_ETOOL_DELETE ) );
-        deleteButton.setToolTipText( "Delete the selected literal(s)" );
-        deleteButton.setEnabled( false );
+        final ToolBar toolBar = new ToolBar(this, SWT.NONE);
+        final ToolItem addButton = new ToolItem(toolBar, SWT.PUSH);
+        addButton.setImage(PlatformUI.getWorkbench().getSharedImages()
+                .getImage(ISharedImages.IMG_OBJ_ADD));
+        addButton.setToolTipText("Add a new literal");
+        final ToolItem deleteButton = new ToolItem(toolBar, SWT.PUSH);
+        deleteButton.setImage(PlatformUI.getWorkbench().getSharedImages()
+                .getImage(ISharedImages.IMG_ETOOL_DELETE));
+        deleteButton.setToolTipText("Delete the selected literal(s)");
+        deleteButton.setEnabled(false);
 
-        final ListViewer listViewer = new ListViewer( this );
-        listViewer.getList().setLayoutData( GridDataFactory.fillDefaults().grab( true, true ).create() );
-        listViewer.addDragSupport( DND.DROP_MOVE,
-                                        new Transfer[] { LocalSelectionTransfer.getTransfer() },
-                                        new DragSourceAdapter() {
+        final ListViewer listViewer = new ListViewer(this);
+        listViewer.getList()
+                .setLayoutData(GridDataFactory.fillDefaults().grab(true, true).create());
+        listViewer.addDragSupport(DND.DROP_MOVE,
+                new Transfer[] {LocalSelectionTransfer.getTransfer()},
+                new DragSourceAdapter() {
+
+                    @Override
+                    public void dragSetData(final DragSourceEvent event) {
+                        if (LocalSelectionTransfer.getTransfer().isSupportedType(event.dataType)) {
+                            LocalSelectionTransfer.getTransfer().setSelection(
+                                    listViewer.getSelection());
+                        }
+                    }
+                });
+        listViewer.setComparator(new ViewerComparator());
+        listViewer.setLabelProvider(new ColumnLabelProvider() {
 
             @Override
-            public void dragSetData( final DragSourceEvent event ) {
-                if ( LocalSelectionTransfer.getTransfer().isSupportedType( event.dataType ) )
-                    LocalSelectionTransfer.getTransfer().setSelection( listViewer.getSelection() );
+            public String getText(final Object element) {
+                return (String) element;
             }
-        } );
-        listViewer.setComparator( new ViewerComparator() );
-        listViewer.setLabelProvider( new ColumnLabelProvider() {
+        });
+        addButton.addSelectionListener(new SelectionAdapter() {
 
             @Override
-            public String getText( final Object element ) {
-                return ( String ) element;
-            }
-        } );
-        addButton.addSelectionListener( new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent event) {
+                final InputDialog dlg = new InputDialog(getShell(),
+                        "Add Literal",
+                        "Enter a new literal value",
+                        null,
+                        new IInputValidator() {
 
-            @Override
-            public void widgetSelected( SelectionEvent event ) {
-                final InputDialog dlg = new InputDialog( getShell(),
-                                                         "Add Literal",
-                                                         "Enter a new literal value",
-                                                         null,
-                                                         new IInputValidator() {
-
-                                                             @Override
-                                                             public String isValid( String text ) {
-                                                                 return listViewer.getList().indexOf( text ) < 0 ? null : "Value already exists";
-                                                             }
-                                                         } );
-                if ( dlg.open() == Window.OK ) listViewer.add( dlg.getValue() ); // TODO should be a literal
-            }
-        } );
-        listViewer.addSelectionChangedListener( new ISelectionChangedListener() {
-
-            @Override
-            public void selectionChanged( SelectionChangedEvent event ) {
-                deleteButton.setEnabled( !event.getSelection().isEmpty() );
-            }
-        } );
-        deleteButton.addSelectionListener( new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected( SelectionEvent event ) {
-                for ( final Iterator< ? > iter = ( ( IStructuredSelection ) listViewer.getSelection() ).iterator(); iter.hasNext(); ) {
-                    listViewer.remove( iter.next() );
+                            @Override
+                            public String isValid(String text) {
+                                return listViewer.getList().indexOf(text) < 0 ? null
+                                        : "Value already exists";
+                            }
+                        });
+                if (dlg.open() == Window.OK) {
+                    listViewer.add(dlg.getValue()); // TODO should be a literal
                 }
             }
-        } );
+        });
+        listViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+            @Override
+            public void selectionChanged(SelectionChangedEvent event) {
+                deleteButton.setEnabled(!event.getSelection().isEmpty());
+            }
+        });
+        deleteButton.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                for (final Iterator<?> iter =
+                        ((IStructuredSelection) listViewer.getSelection()).iterator(); iter
+                        .hasNext();) {
+                    listViewer.remove(iter.next());
+                }
+            }
+        });
 
         // Populate
-        for ( Literal literal : literals ) {
-            listViewer.add( literal.getValue());
+        for (Literal literal : literals) {
+            listViewer.add(literal.getValue());
         }
     }
 }

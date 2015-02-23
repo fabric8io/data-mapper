@@ -1,7 +1,12 @@
-/**
- * Copyright 2014 Turnip Solutions, LLC.
- * All rights reserved.
- */
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse;
 
 import java.io.IOException;
@@ -23,7 +28,8 @@ public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
      */
     public static final String ID = "org.jboss.mapper.eclipse.dozer-config-content-type";
 
-    private static final QualifiedName[] SUPPORTED_OPTIONS = new QualifiedName[] { IContentDescription.CHARSET };
+    private static final QualifiedName[] SUPPORTED_OPTIONS =
+            new QualifiedName[] {IContentDescription.CHARSET};
     private static final String ROOT_ELEMENT = "<mappingsxmlns=";
     private static final String XMLNS = "http://dozer.sourceforge.net";
 
@@ -34,9 +40,9 @@ public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
      *      org.eclipse.core.runtime.content.IContentDescription)
      */
     @Override
-    public int describe( final InputStream contents,
-                         final IContentDescription description ) throws IOException {
-        return describe( new InputStreamReader( contents ), description );
+    public int describe(final InputStream contents,
+            final IContentDescription description) throws IOException {
+        return describe(new InputStreamReader(contents), description);
     }
 
     /**
@@ -46,13 +52,14 @@ public class DozerConfigContentTypeDescriber implements ITextContentDescriber {
      *      org.eclipse.core.runtime.content.IContentDescription)
      */
     @Override
-    public int describe( final Reader contents,
-                         final IContentDescription description ) throws IOException {
-        final char[] buf = new char[ 200 ];
-        contents.read( buf );
-        final String text = String.valueOf( buf ).replaceAll( "\\s", "" );
-        final int ndx = text.indexOf( ROOT_ELEMENT );
-        return ndx > 0 && text.indexOf( XMLNS ) > ndx ? ITextContentDescriber.VALID : ITextContentDescriber.INVALID;
+    public int describe(final Reader contents,
+            final IContentDescription description) throws IOException {
+        final char[] buf = new char[200];
+        contents.read(buf);
+        final String text = String.valueOf(buf).replaceAll("\\s", "");
+        final int ndx = text.indexOf(ROOT_ELEMENT);
+        return ndx > 0 && text.indexOf(XMLNS) > ndx ? ITextContentDescriber.VALID
+                : ITextContentDescriber.INVALID;
     }
 
     /**

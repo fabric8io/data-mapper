@@ -1,13 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2012-2015 Red Hat, Inc.
- *  All rights reserved.
- * This program is made available under the terms of the
- * Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors:
- * Red Hat, Inc. - initial API and implementation
- ******************************************************************************/
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse.internal.util;
 
 import java.util.Collections;
@@ -32,8 +31,8 @@ import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
  */
 class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog {
 
-    Set<String> _fileExtensions;
-    IJavaModel _fJavaModel;
+    Set<String> fileExtensions;
+    IJavaModel fJavaModel;
 
     /**
      * Create a new ClasspathResourceSelectionDialog.
@@ -43,7 +42,7 @@ class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog 
      * @param title
      */
     ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String title) {
-        this(parentShell, container, Collections.<String> emptySet(), title);
+        this(parentShell, container, Collections.<String>emptySet(), title);
     }
 
     /**
@@ -54,9 +53,11 @@ class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog 
      * @param fileExtension the type of files to display; may be null
      * @param title
      */
-    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String fileExtension, String title) {
-        this(parentShell, container, fileExtension == null ? Collections.<String> emptySet() : Collections
-                .singleton(fileExtension), title);
+    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, String fileExtension,
+            String title) {
+        this(parentShell, container, fileExtension == null ? Collections.<String>emptySet()
+                : Collections
+                        .singleton(fileExtension), title);
     }
 
     /**
@@ -67,10 +68,11 @@ class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog 
      * @param fileExtensions the types of files to display; may be null
      * @param title
      */
-    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container, Set<String> fileExtensions, String title) {
+    ClasspathResourceSelectionDialog(Shell parentShell, IContainer container,
+            Set<String> fileExtensions, String title) {
         super(parentShell, false, container, IResource.FILE);
-        _fJavaModel = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
-        _fileExtensions = fileExtensions == null ? Collections.<String> emptySet() : fileExtensions;
+        fJavaModel = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
+        this.fileExtensions = fileExtensions == null ? Collections.<String>emptySet() : fileExtensions;
         setTitle(title);
     }
 
@@ -85,8 +87,9 @@ class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog 
         public boolean matchItem(Object item) {
             IResource resource = (IResource) item;
             return super.matchItem(item)
-                    && (_fileExtensions == null || _fileExtensions.isEmpty() || _fileExtensions.contains(resource
-                            .getFullPath().getFileExtension())) && select(resource);
+                    && (fileExtensions == null || fileExtensions.isEmpty() || fileExtensions
+                            .contains(resource
+                                    .getFullPath().getFileExtension())) && select(resource);
         }
 
         private boolean isParentOnClassPath(IJavaProject javaProject, IResource resource) {
@@ -118,7 +121,8 @@ class ClasspathResourceSelectionDialog extends FilteredResourcesSelectionDialog 
             IJavaProject javaProject = JavaCore.create(project);
             try {
                 return (javaProject != null && isParentOnClassPath(javaProject, resource))
-                        || (project.getNature(JavaCore.NATURE_ID) != null && _fJavaModel.contains(resource));
+                        || (project.getNature(JavaCore.NATURE_ID) != null && fJavaModel
+                                .contains(resource));
             } catch (CoreException e) {
                 return false;
             }

@@ -1,15 +1,13 @@
 /*
  * Copyright 2014 Red Hat Inc. and/or its affiliates and other contributors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,  
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific
+ * language governing permissions and limitations under the License.
  */
 package org.jboss.mapper.camel;
 
@@ -33,11 +31,12 @@ import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 
 /**
- * CamelConfigBuilder provides read/write access to Camel configuration used 
- * in a data transformation project.  This class assumes that all Camel configuration
- * is stored in a Spring application context.  Any changes to Camel configuration
- * through direct methods on this class or the underlying CamelContextFactoryBean
- * config model are in-memory only and not persisted until saveConfig() is called.
+ * CamelConfigBuilder provides read/write access to Camel configuration used in
+ * a data transformation project. This class assumes that all Camel
+ * configuration is stored in a Spring application context. Any changes to Camel
+ * configuration through direct methods on this class or the underlying
+ * CamelContextFactoryBean config model are in-memory only and not persisted
+ * until saveConfig() is called.
  */
 public class CamelSpringBuilder extends CamelConfigBuilder {
 
@@ -52,9 +51,10 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
                 .createUnmarshaller().unmarshal(camelConfig, CamelContextFactoryBean.class);
         camelContext = ccfb.getValue();
     }
-    
+
     /**
      * Returns the top-level object model for Camel configuration.
+     * 
      * @return Camel Context configuration
      */
     public CamelContextFactoryBean getCamelContext() {
@@ -62,9 +62,10 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
     }
 
     /**
-     * Add a transformation to the Camel configuration.  This method adds all 
+     * Add a transformation to the Camel configuration. This method adds all
      * required data formats, Dozer configuration, and the camel-transform
      * endpoint definition to the Camel config.
+     * 
      * @param transformId id for the transformation
      * @param dozerConfigPath path to Dozer config for transformation
      * @param source type of the source data
@@ -74,13 +75,13 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
      * @throws Exception failed to create transformation
      */
     public void addTransformation(String transformId, String dozerConfigPath,
-            TransformType source, String sourceClass, 
+            TransformType source, String sourceClass,
             TransformType target, String targetClass) throws Exception {
-        
+
         // Add data formats
         DataFormat unmarshaller = createDataFormat(source, sourceClass);
         DataFormat marshaller = createDataFormat(target, targetClass);
-        
+
         // Create a transformation endpoint
         String unmarshallerId = unmarshaller != null ? unmarshaller.getId() : null;
         String marshallerId = marshaller != null ? marshaller.getId() : null;
@@ -91,7 +92,7 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         endpoint.setId(transformId);
         camelContext.getEndpoint().add(endpoint);
     }
-    
+
     public List<String> getTransformEndpointIds() {
         List<String> endpointIds = new LinkedList<String>();
         for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
@@ -101,7 +102,7 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return endpointIds;
     }
-    
+
     public CamelEndpoint getEndpoint(String endpointId) {
         CamelEndpointFactoryBean endpoint = null;
         for (CamelEndpointFactoryBean ep : camelContext.getEndpoint()) {
@@ -112,7 +113,7 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return new CamelEndpoint(endpoint);
     }
-    
+
     // If the JAXB config model for CamelContext was changed, call this method
     // to marshal those changes into the DOM for the Spring application context
     protected void updateCamelContext() throws JAXBException {
@@ -125,27 +126,27 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
 
     private DataFormat createDataFormat(TransformType type, String className) throws Exception {
         DataFormat dataFormat;
-        
+
         switch (type) {
-        case JSON :
-            dataFormat = createJsonDataFormat();
-            break;
-        case XML :
-            dataFormat = createJaxbDataFormat(getPackage(className));
-            break;
-        case JAVA :
-            dataFormat = null;
-            break;
-        default :
-            throw new Exception("Unsupported data format type: " + type);
+            case JSON:
+                dataFormat = createJsonDataFormat();
+                break;
+            case XML:
+                dataFormat = createJaxbDataFormat(getPackage(className));
+                break;
+            case JAVA:
+                dataFormat = null;
+                break;
+            default:
+                throw new Exception("Unsupported data format type: " + type);
         }
-        
+
         return dataFormat;
     }
 
     private DataFormat createJsonDataFormat() throws Exception {
         final String id = "transform-json";
-        
+
         DataFormat dataFormat = getDataFormat(id);
         if (dataFormat == null) {
             // Looks like we need to create a new one
@@ -157,7 +158,7 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return dataFormat;
     }
-    
+
     private List<DataFormat> getDataFormats() {
         DataFormatsDefinition dfd = camelContext.getDataFormats();
         if (dfd == null) {
@@ -166,7 +167,7 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return dfd.getAvroOrBarcodeOrBase64();
     }
-    
+
     private DataFormat getDataFormat(String id) {
         DataFormat dataFormat = null;
         for (DataFormat df : getDataFormats()) {
@@ -177,11 +178,11 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return dataFormat;
     }
-    
+
     private DataFormat createJaxbDataFormat(String contextPath) throws Exception {
         final String id = contextPath.replaceAll("\\.", "");
         DataFormat dataFormat = getDataFormat(id);
-        
+
         if (dataFormat == null) {
             JaxbDataFormat df = new JaxbDataFormat();
             df.setContextPath(contextPath);
@@ -202,5 +203,5 @@ public class CamelSpringBuilder extends CamelConfigBuilder {
         }
         return jaxbCtx;
     }
-    
+
 }

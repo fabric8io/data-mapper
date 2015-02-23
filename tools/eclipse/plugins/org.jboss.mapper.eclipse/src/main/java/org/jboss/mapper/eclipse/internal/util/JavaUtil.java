@@ -1,13 +1,12 @@
-/*************************************************************************************
- * Copyright (c) 2014 Red Hat, Inc. and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors:
- *     JBoss by Red Hat - Initial implementation.
- ************************************************************************************/
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse.internal.util;
 
 import java.io.File;
@@ -45,12 +44,15 @@ public final class JavaUtil {
      *
      * @throws Exception if something goes wrong.
      */
-    public static ClassLoader getProjectClassLoader(IJavaProject javaProject, ClassLoader parentClassLoader)
+    public static ClassLoader getProjectClassLoader(IJavaProject javaProject,
+            ClassLoader parentClassLoader)
             throws Exception {
         IProject project = javaProject.getProject();
         IWorkspaceRoot root = project.getWorkspace().getRoot();
         List<URL> urls = new ArrayList<>();
-        urls.add(new File(project.getLocation() + "/" + javaProject.getOutputLocation().removeFirstSegments(1) + "/") //$NON-NLS-1$ //$NON-NLS-2$
+        urls.add(new File(project.getLocation()
+                + "/" + javaProject.getOutputLocation().removeFirstSegments(1)
+                + "/") //$NON-NLS-1$ //$NON-NLS-2$
                 .toURI().toURL());
         for (IClasspathEntry classpathEntry : javaProject.getResolvedClasspath(true)) {
             if (classpathEntry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
@@ -58,7 +60,8 @@ public final class JavaUtil {
                 IProject otherProject = root.getProject(projectPath.segment(0));
                 IJavaProject otherJavaProject = JavaCore.create(otherProject);
                 urls.add(new File(otherProject.getLocation() + "/" //$NON-NLS-1$
-                        + otherJavaProject.getOutputLocation().removeFirstSegments(1) + "/").toURI().toURL()); //$NON-NLS-1$
+                        + otherJavaProject.getOutputLocation().removeFirstSegments(1)
+                        + "/").toURI().toURL()); //$NON-NLS-1$
             } else if (classpathEntry.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
                 urls.add(new File(classpathEntry.getPath().toOSString()).toURI().toURL());
             }
@@ -72,8 +75,7 @@ public final class JavaUtil {
     /**
      * Create a new JavaUtil.
      */
-    private JavaUtil() {
-    }
+    private JavaUtil() {}
 
     /**
      * Returns the first non-empty package in the project's first source folder.
@@ -96,7 +98,8 @@ public final class JavaUtil {
             for (int i = 0; i < packages.length; i++) {
                 IPackageFragment frag = (IPackageFragment) packages[i];
                 element = frag;
-                if (!frag.isDefaultPackage() && (!frag.hasSubpackages() || frag.containsJavaResources())) {
+                if (!frag.isDefaultPackage()
+                        && (!frag.hasSubpackages() || frag.containsJavaResources())) {
                     element = frag;
                     break;
                 }
@@ -158,7 +161,8 @@ public final class JavaUtil {
     /**
      * @param javaProject
      * @param folder
-     * @return <code>true</code> if the supplied folder was successfully added to the supplied Java project
+     * @return <code>true</code> if the supplied folder was successfully added
+     *         to the supplied Java project
      */
     public static boolean addFolderToProjectClasspath(IJavaProject javaProject, IResource folder) {
         IClasspathEntry[] entries;
@@ -167,8 +171,8 @@ public final class JavaUtil {
             IClasspathEntry[] newEntries = new IClasspathEntry[entries.length + 1];
             System.arraycopy(entries, 0, newEntries, 0, entries.length);
 
-            IPath srcPath= javaProject.getPath().append(folder.getProjectRelativePath());
-            IClasspathEntry srcEntry= JavaCore.newSourceEntry(srcPath, null);
+            IPath srcPath = javaProject.getPath().append(folder.getProjectRelativePath());
+            IClasspathEntry srcEntry = JavaCore.newSourceEntry(srcPath, null);
 
             newEntries[entries.length] = JavaCore.newSourceEntry(srcEntry.getPath());
             javaProject.setRawClasspath(newEntries, null);
@@ -181,12 +185,13 @@ public final class JavaUtil {
     /**
      * @param javaProject
      * @param folder
-     * @return <code>true</code> if the supplied folder is part of the supplied Java project's classpath
+     * @return <code>true</code> if the supplied folder is part of the supplied
+     *         Java project's classpath
      */
     public static boolean findFolderOnProjectClasspath(IJavaProject javaProject, IResource folder) {
         IClasspathEntry[] entries;
         try {
-            IPath srcPath= javaProject.getPath().append(folder.getProjectRelativePath());
+            IPath srcPath = javaProject.getPath().append(folder.getProjectRelativePath());
             entries = javaProject.getRawClasspath();
             for (IClasspathEntry entry : entries) {
                 if (entry.getPath().equals(srcPath)) {
@@ -201,11 +206,12 @@ public final class JavaUtil {
 
     /**
      * @param context
-     * @return the Java source and runtime compliance levels for the project containing the supplied Java element
+     * @return the Java source and runtime compliance levels for the project
+     *         containing the supplied Java element
      */
     public static String[] getSourceComplianceLevels(IJavaElement context) {
         if (context != null) {
-            IJavaProject javaProject= context.getJavaProject();
+            IJavaProject javaProject = context.getJavaProject();
             if (javaProject != null) {
                 return new String[] {
                         javaProject.getOption(JavaCore.COMPILER_SOURCE, true),
@@ -222,21 +228,25 @@ public final class JavaUtil {
     /**
      * @param name
      * @param context
-     * @return a status indicating whether the supplied package name is valid for the supplied Java element
+     * @return a status indicating whether the supplied package name is valid
+     *         for the supplied Java element
      */
     public static IStatus validatePackageName(String name, IJavaElement context) {
-        String[] sourceComplianceLevels= getSourceComplianceLevels(context);
-        return JavaConventions.validatePackageName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
+        String[] sourceComplianceLevels = getSourceComplianceLevels(context);
+        return JavaConventions.validatePackageName(name, sourceComplianceLevels[0],
+                sourceComplianceLevels[1]);
     }
 
     /**
      * @param name
      * @param context
-     * @return a status indicating whether the supplied class name is valid for the supplied Java element
+     * @return a status indicating whether the supplied class name is valid for
+     *         the supplied Java element
      */
     public static IStatus validateClassFileName(String name, IJavaElement context) {
-        String[] sourceComplianceLevels= getSourceComplianceLevels(context);
-        return JavaConventions.validateJavaTypeName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
+        String[] sourceComplianceLevels = getSourceComplianceLevels(context);
+        return JavaConventions.validateJavaTypeName(name, sourceComplianceLevels[0],
+                sourceComplianceLevels[1]);
     }
 
     /**
@@ -249,7 +259,8 @@ public final class JavaUtil {
      * @return the relative path.
      */
     public static IPath getJavaPathForResource(final IResource resource) {
-        if (resource == null || resource.getType() == IResource.PROJECT || resource.getType() == IResource.ROOT) {
+        if (resource == null || resource.getType() == IResource.PROJECT
+                || resource.getType() == IResource.ROOT) {
             return null;
         }
         IJavaProject project = JavaCore.create(resource.getProject());

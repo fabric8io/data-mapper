@@ -1,15 +1,13 @@
 /*
  * Copyright 2014 Red Hat Inc. and/or its affiliates and other contributors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+ * applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific
+ * language governing permissions and limitations under the License.
  */
 package org.jboss.mapper.model;
 
@@ -36,12 +34,12 @@ public class Model {
     }
 
     public Model addChild(String name, String type) {
-        Model n = new Model(name, type);
-        n.parent = this;
-        n.name = name;
-        n.type = type;
-        children.put(name, n);
-        return n;
+        Model node = new Model(name, type);
+        node.parent = this;
+        node.name = name;
+        node.type = type;
+        children.put(name, node);
+        return node;
     }
 
     public void print(PrintStream out) {
@@ -89,12 +87,11 @@ public class Model {
         return listFields(fields, this.children.values(), "");
     }
 
-    public List<String> listFields(List<String> fieldList,
+    public List<String> listFields(List<String> fieldList, 
             Collection<Model> fields, String prefix) {
         for (Model field : fields) {
             fieldList.add(prefix + field.getName());
-            listFields(fieldList, field.children.values(),
-                    prefix + field.getName() + ".");
+            listFields(fieldList, field.children.values(), prefix + field.getName() + ".");
         }
         return fieldList;
     }
@@ -113,10 +110,9 @@ public class Model {
         } else if (obj == this) {
             return true;
         }
-        Model comp = (Model)obj;
+        Model comp = (Model) obj;
         return isEqual(modelClass, comp.getModelClass())
                 && isEqual(name, comp.getName())
-                //&& isEqual(parent, comp.parent)
                 && isEqual(type, comp.type)
                 && isEqual(children, comp.children);
     }
@@ -151,18 +147,18 @@ public class Model {
         return sb.toString();
     }
 
-    private boolean isEqual(Object a, Object b) {
+    private boolean isEqual(Object objA, Object objB) {
         // basic checks
-        if (a == null && b == null) {
+        if (objA == null && objB == null) {
             return true;
-        } else if (a == null || b == null) {
+        } else if (objA == null || objB == null) {
             return false;
         } else {
-            return a.equals(b);
+            return objA.equals(objB);
         }
     }
 
-    private int hash(Object ... vals) {
+    private int hash(Object... vals) {
         int hash = 7;
         for (Object val : vals) {
             if (val != null) {

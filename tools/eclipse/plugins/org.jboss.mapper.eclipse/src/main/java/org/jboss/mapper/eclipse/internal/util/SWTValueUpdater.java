@@ -1,14 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2014 Red Hat, Inc.
- *  All rights reserved.
- * This program is made available under the terms of the
- * Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+/******************************************************************************
+ * Copyright (c) 2015 Red Hat, Inc. and others. 
+ * All rights reserved. This program and the accompanying materials are 
+ * made available under the terms of the Eclipse Public License v1.0 which 
+ * accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors:
- * Red Hat, Inc. - initial API and implementation
- *
- ******************************************************************************/
+ * Contributors: JBoss by Red Hat - Initial implementation.
+ *****************************************************************************/
 package org.jboss.mapper.eclipse.internal.util;
 
 import org.eclipse.core.databinding.Binding;
@@ -47,40 +45,42 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
      * @param binding the binding to attach to.
      * @return the binding, useful for chaining.
      */
-    @SuppressWarnings( "unused" )
+    @SuppressWarnings("unused")
     public static Binding attach(final Binding binding) {
         new SWTValueUpdater(binding);
         return binding;
     }
 
-    private Control _control;
-    private final org.eclipse.core.databinding.Binding _binding;
-    private final IObservable _target;
-    private boolean _dirty;
-    private boolean _updating;
+    private Control control;
+    private final org.eclipse.core.databinding.Binding binding;
+    private final IObservable target;
+    private boolean dirty;
+    private boolean updating;
 
     private SWTValueUpdater(final org.eclipse.core.databinding.Binding binding) {
-        _binding = binding;
-        _target = _binding.getTarget();
-        if (_target instanceof ISWTObservable && ((ISWTObservable) _binding.getTarget()).getWidget() instanceof Control) {
-            _control = (Control) ((ISWTObservable) _binding.getTarget()).getWidget();
-        } else if (_target instanceof IViewerObservable) {
-            _control = ((IViewerObservable) _target).getViewer().getControl();
+        this.binding = binding;
+        target = binding.getTarget();
+        if (target instanceof ISWTObservable
+                && ((ISWTObservable) binding.getTarget()).getWidget() instanceof Control) {
+            control = (Control) ((ISWTObservable) binding.getTarget()).getWidget();
+        } else if (target instanceof IViewerObservable) {
+            control = ((IViewerObservable) target).getViewer().getControl();
         } else {
-            throw new IllegalArgumentException("target of binding must be an ISWTObservable whose widget is a Control.");
+            throw new IllegalArgumentException(
+                    "target of binding must be an ISWTObservable whose widget is a Control.");
         }
         addListeners();
     }
 
     private void addListeners() {
-        WidgetListenerUtil.asyncAddListener(_control, SWT.KeyUp, this);
-        WidgetListenerUtil.asyncAddListener(_control, SWT.FocusOut, this);
-        WidgetListenerUtil.asyncAddListener(_control, SWT.FocusIn, this);
-        WidgetListenerUtil.asyncAddListener(_control, SWT.DefaultSelection, this);
-        WidgetListenerUtil.asyncAddListener(_control, SWT.Selection, this);
-        WidgetListenerUtil.asyncAddListener(_control, SWT.Dispose, this);
-        _target.addDisposeListener(this);
-        ((IObservableValue) _target).addValueChangeListener(this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.KeyUp, this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.FocusOut, this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.FocusIn, this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.DefaultSelection, this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.Selection, this);
+        WidgetListenerUtil.asyncAddListener(control, SWT.Dispose, this);
+        target.addDisposeListener(this);
+        ((IObservableValue) target).addValueChangeListener(this);
     }
 
     /**
@@ -90,46 +90,47 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
      */
     @Override
     public void handleEvent(Event event) {
-        if (_updating) {
+        if (updating) {
             return;
         }
         if (event.type == SWT.KeyUp) {
             if (event.keyCode == SWT.ESC) {
-                if (_binding.isDisposed()) {
+                if (binding.isDisposed()) {
                     dispose();
                     return;
                 }
-                _updating = true;
+                updating = true;
                 try {
-                    _binding.updateModelToTarget();
+                    binding.updateModelToTarget();
                 } finally {
-                    _updating = false;
+                    updating = false;
                 }
-                if (_control instanceof Text) {
-                    ((Text) _control).setSelection(0, ((Text) _control).getCharCount());
+                if (control instanceof Text) {
+                    ((Text) control).setSelection(0, ((Text) control).getCharCount());
                 }
-                _dirty = false;
+                dirty = false;
             }
-        } else if (event.type == SWT.FocusOut || event.type == SWT.DefaultSelection || event.type == SWT.Selection) {
-            if (_binding.isDisposed()) {
+        } else if (event.type == SWT.FocusOut || event.type == SWT.DefaultSelection
+                || event.type == SWT.Selection) {
+            if (binding.isDisposed()) {
                 dispose();
                 return;
             }
-            if (((IStatus) _binding.getValidationStatus().getValue()).getSeverity() == IStatus.ERROR) {
-                _control.setFocus();
+            if (((IStatus) binding.getValidationStatus().getValue()).getSeverity() == IStatus.ERROR) {
+                control.setFocus();
                 return;
             }
-            if (_dirty) {
-                _updating = true;
+            if (dirty) {
+                updating = true;
                 try {
-                    _binding.updateTargetToModel();
+                    binding.updateTargetToModel();
                 } finally {
-                    _updating = false;
+                    updating = false;
                 }
-                _dirty = false;
+                dirty = false;
             }
         } else if (event.type == SWT.FocusIn) {
-            _dirty = false;
+            dirty = false;
         } else if (event.type == SWT.Dispose) {
             dispose();
         }
@@ -139,20 +140,18 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
     /**
      * {@inheritDoc}
      *
-     * @see org.eclipse.core.databinding.observable.value.IValueChangeListener#handleValueChange(org.eclipse.core.databinding.observable.value.ValueChangeEvent)
      */
     @Override
     public void handleValueChange(ValueChangeEvent event) {
-        if (_updating) {
+        if (updating) {
             return;
         }
-        _dirty = true;
+        dirty = true;
     }
 
     /**
      * {@inheritDoc}
      *
-     * @see org.eclipse.core.databinding.observable.IDisposeListener#handleDispose(org.eclipse.core.databinding.observable.DisposeEvent)
      */
     @Override
     public void handleDispose(DisposeEvent event) {
@@ -160,16 +159,16 @@ public final class SWTValueUpdater implements Listener, IDisposeListener, IValue
     }
 
     private synchronized void dispose() {
-        if (_control != null) {
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.KeyUp, this);
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.FocusOut, this);
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.FocusIn, this);
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.DefaultSelection, this);
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.Selection, this);
-            WidgetListenerUtil.asyncRemoveListener(_control, SWT.Dispose, this);
-            _control = null;
-            _target.removeDisposeListener(this);
-            ((IObservableValue) _target).removeValueChangeListener(this);
+        if (control != null) {
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.KeyUp, this);
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.FocusOut, this);
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.FocusIn, this);
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.DefaultSelection, this);
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.Selection, this);
+            WidgetListenerUtil.asyncRemoveListener(control, SWT.Dispose, this);
+            control = null;
+            target.removeDisposeListener(this);
+            ((IObservableValue) target).removeValueChangeListener(this);
         }
     }
 }
